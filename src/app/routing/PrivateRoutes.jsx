@@ -34,6 +34,8 @@ import { ProfileDetails } from '../modules/accounts/components/settings/cards/Pr
 import { Settings } from '../modules/accounts/components/settings/Settings'
 import { Invoices }  from '../pages/Sales/Invoices'
 import { SalesView } from '../pages/Sales/SalesView'
+import { MarketRates } from '../pages/MarketRates/MarketRates'
+import { CreateRate } from '../pages/MarketRates/CreateRate'
 
 
 
@@ -275,7 +277,24 @@ const PrivateRoutes = () => {
           }
         />
 
+       
+<Route
+          path='market-rates/*'
+          element={
+            <SuspensedView>
+              <MarketRates />
+            </SuspensedView>
+          }
+        />
 
+<Route
+         path='market-rates/create-rates/*'
+        element={
+          <SuspensedView>
+            <CreateRate />  
+          </SuspensedView>
+        }
+        />   
 
 
 

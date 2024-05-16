@@ -9,6 +9,8 @@ import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { AnalyticsOutlined } from "@mui/icons-material";
+
 const SidebarMenuMain = () => {
   // const {userPermisson}=useContext(UserContext);
   const userPermisson = JSON.parse(sessionStorage.getItem("userPermisson"));
@@ -93,6 +95,15 @@ const SidebarMenuMain = () => {
           <AccountCircleIcon style={{ color: "orange", fontSize: "25px" }} />
         }
         title="User"
+        fontIcon="bi-layers"
+      />
+
+<SidebarMenuItem
+        to="/market-rates"
+        icon={
+          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Market Rates"
         fontIcon="bi-layers"
       />
     </>
