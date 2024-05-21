@@ -62,7 +62,7 @@ function a11yProps(index) {
     'aria-controls': `simple-tabpanel-${index}`,
   };
 }
-export const MarketRates = () => {
+export const DailyRate = () => {
   const navigate = useNavigate();
 
   const [value, setValue] = React.useState(0);
@@ -82,7 +82,7 @@ export const MarketRates = () => {
     
     const fetchPlans = async () => {
       try {
-        const response = await axios.get(`${Base_url}api/market_rates`); 
+        const response = await axios.get(`${Base_url}api/daily_rates`); 
         console.log('Fetched plans:', response.data);
         setData(response.data);
       } catch (error) {
@@ -98,7 +98,7 @@ export const MarketRates = () => {
    
      try {
         // Send a POST request to the backend API endpoint
-        const response = await axios.delete(`${Base_url}api/market_rates/${id}`);
+        const response = await axios.delete(`${Base_url}api/daily_rates/${id}`);
         console.log('Response:', response.data);
         setUpdate((prev)=>prev+1)
         // Optionally, you can redirect the user or show a success message here
@@ -125,7 +125,7 @@ export const MarketRates = () => {
   };
 
   const handelAddClick = ()=>{
-    navigate("create-rates")
+    navigate("create-daily-rates")
   }
 
   function formatDate(dateString) {
@@ -153,14 +153,14 @@ export const MarketRates = () => {
           <Box style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <Box>
             <Typography style={{fontSize:"40px",fontWeight:600,fontFamily:"sans-serif"}} >
-             Market Rates
+             Daily Rates
             </Typography>
             </Box>
            
 
             <Box>
               
-              <Button variant="contained" style={{marginLeft:"20px",background:"#FF8604"}} startIcon={<AddIcon />} onClick={handelAddClick}>Add</Button>
+              <Button variant="contained" style={{marginLeft:"20px",background:"#FF8604"}} startIcon={<AddIcon />} onClick={handelAddClick}>Update</Button>
             </Box>
           </Box>
              
@@ -192,32 +192,32 @@ export const MarketRates = () => {
           <Box sx={{ width: '100%',marginTop:"20px",height:"70vh",overflow:"auto" }}>
       
           <Grid container spacing={2} >
-            {
-                Data.map((el,index)=>{
-                    return    <Grid key={index} item xs={4}>
-                            <div style={{border:"1px solid #e0e0e0",padding:"20px",borderRadius:"20px",position:"relative"}}>
-                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                    <span style={{fontWeight:"bold",fontSize:"21px"}}>{el.name.toUpperCase()}</span>
-                                    <span style={{fontSize:"21px"}}>Rs.{el.price}</span>
-                                </div>
-                                <div>
-                                    <span style={{fontSize:"16px"}}>{el.category}</span>
-                                </div>
+          {
+    Data.map((el, index) => (
+        <Grid key={index} item xs={6}>
+            <div style={{border: "1px solid #e0e0e0", padding: "20px", borderRadius: "20px"}}>
+                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+                    <span style={{fontWeight: "bold", fontSize: "21px"}}>{el.name.toUpperCase()}</span>
+                </div>
 
-                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                    <span style={{fontSize:"14px"}}>Date :{formatDate(el.date)}</span>
-                                    <span style={{fontSize:"14px"}}>Time :{el.time}</span>
-                                </div>
+                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+                    <span style={{fontSize: "14px"}}>Date: {formatDate(el.date)}</span>
+                </div>
 
-                                <div style={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"20px"}}>
-                                <CancelOutlinedIcon onClick={()=>handleDelete(el._id)} style={{fontSize:"24px",color:"crimson",marginRight:"20px"}} />
-                                <EditRoundedIcon style={{fontSize:"24px",color:"crimson"}} />
-                                
-                                </div>
-                            </div>
-                    </Grid>
-                })
-            }
+                <div style={{textAlign: "left"}}>
+                    {/* Splitting text by comma and rendering each part in a new line */}
+                    {el.text.split(',').map((textPart, idx) => (
+                        <Typography key={idx}>{textPart}</Typography>
+                    ))}
+                </div>
+
+                <div style={{display: "flex", justifyContent: "right", alignItems: "center", marginTop: "20px"}}>
+                    <CancelOutlinedIcon onClick={() => handleDelete(el._id)} style={{fontSize: "24px", color: "crimson", marginRight: "20px"}} />
+                </div>
+            </div>
+        </Grid>
+    ))
+}
         
 {/* 
                 <Grid item xs={3}>

@@ -36,6 +36,8 @@ import { Invoices }  from '../pages/Sales/Invoices'
 import { SalesView } from '../pages/Sales/SalesView'
 import { MarketRates } from '../pages/MarketRates/MarketRates'
 import { CreateRate } from '../pages/MarketRates/CreateRate'
+import { DailyRate } from '../pages/MarketRates/DailyRate'
+import { UpdateDailyRates } from '../pages/MarketRates/UpdateDailyRates'
 
 
 
@@ -286,6 +288,23 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
+        <Route
+          path='daily-rates/*'
+          element={
+            <SuspensedView>
+              <DailyRate />
+            </SuspensedView>
+          }
+        />
+
+<Route
+         path='daily-rates/create-daily-rates/*'
+        element={
+          <SuspensedView>
+            <UpdateDailyRates />  
+          </SuspensedView>
+        }
+        /> 
 
 <Route
          path='market-rates/create-rates/*'

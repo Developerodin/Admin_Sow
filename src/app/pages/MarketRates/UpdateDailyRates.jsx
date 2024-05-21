@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Import axios for making HTTP requests
-import { Button, TextField, FormControl, RadioGroup, Card,CardContent,FormControlLabel, Radio, Box, InputLabel, Select, MenuItem } from '@mui/material';
+import { Button, TextField, FormControl, RadioGroup, Card,CardContent,FormControlLabel, Radio, Box, InputLabel, Select, MenuItem, TextareaAutosize } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Base_url } from '../../Config/BaseUrl'; 
 
 
-export const CreateRate = () => {
+export const UpdateDailyRates = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    category: '',
+    name:'',
+    text: '',
     date: '', 
-    time: '', 
-    price:''
   });
 
   const [CategoriesData, setCategoriesData] = useState([]);
@@ -29,14 +27,12 @@ export const CreateRate = () => {
      console.log("Data ==>",formData);
      try {
         // Send a POST request to the backend API endpoint
-        const response = await axios.post(`${Base_url}api/market_rates/`, formData);
+        const response = await axios.post(`${Base_url}api/daily_rates/`, formData);
         console.log('Response:', response.data);
         setFormData({
-            name: '',
-            category: '',
+            name:'',
+            text: '',
             date: '', 
-            time: '', 
-            price:''
         })
         handleBackButton();
         // Optionally, you can redirect the user or show a success message here
@@ -50,20 +46,6 @@ export const CreateRate = () => {
     window.history.back();
   };
 
-  const getCategories = async () => {
-    try {
-      const response = await axios.get(`${Base_url}api/category`);
-      setCategoriesData(response.data);
-      console.log("Categories all", response.data)
-      return response.data;
-    } catch (error) {
-      throw error.response.data;
-    }
-  };
-
-  useEffect(()=>{
-    getCategories();
-  },[])
 
   return (
     <Card>
@@ -93,30 +75,16 @@ export const CreateRate = () => {
                 marginLeft: "15px",
               }}
             >
-              <h3 className="fw-bolder ">Create Market Rate</h3>
+              <h3 className="fw-bolder ">Update Daily Rate</h3>
             </div>
           </div>
         </Box>
 
         <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginTop: "20px",
-          }}
+         
         >
           <form onSubmit={handleSubmit}>
-            <Box
-              sx={{
-                width: "400px",
-                padding: "20px",
-                border: "1px solid #ccc",
-                borderRadius: "5px",
-              }}
-            >
-              <TextField
+          <TextField
                 fullWidth
                 margin="normal"
                 label="Name"
@@ -124,49 +92,7 @@ export const CreateRate = () => {
                 value={formData.name}
                 onChange={handleInputChange}
               />
-              <TextField
-                fullWidth
-                margin="normal"
-                label="Price"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-              />
-
-<FormControl fullWidth margin="normal">
-  <InputLabel id="category-label">Category</InputLabel>
-  <Select
-    labelId="category-label"
-    id="category-select"
-    name="category"
-    value={formData.category}
-    onChange={handleInputChange}
-    label="Category"
-  >
-    <MenuItem value="">
-      <em>None</em>
-    </MenuItem>
-    {
-      CategoriesData && CategoriesData.map((el,index)=>{
-        return <MenuItem key={index} value={el.name}>{el.name}</MenuItem>
-      })
-    }
-    
-    
-    {/* Add more categories as needed */}
-  </Select>
-</FormControl>
-
-<TextField
-type="time"
-                fullWidth
-                margin="normal"
-            
-                name="time"
-                value={formData.time}
-                onChange={handleInputChange}
-              />
-
+                
 <TextField
 type="date"
                 fullWidth
@@ -176,6 +102,15 @@ type="date"
                 value={formData.date}
                 onChange={handleInputChange}
               />
+
+            
+
+<TextareaAutosize style={{width:"100%",padding:"10px"}} aria-label="Rates Text" name="text"
+                value={formData.text}
+                onChange={handleInputChange} minRows={6} placeholder="Rates Text" />
+           
+
+
            
               <Box
                 sx={{
@@ -189,7 +124,7 @@ type="date"
                   Submit
                 </Button>
               </Box>
-            </Box>
+           
           </form>
         </Box>
 

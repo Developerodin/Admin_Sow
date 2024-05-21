@@ -106,6 +106,15 @@ const SidebarMenuMain = () => {
         title="Market Rates"
         fontIcon="bi-layers"
       />
+
+<SidebarMenuItem
+        to="/daily-rates"
+        icon={
+          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Daily Rates"
+        fontIcon="bi-layers"
+      />
     </>
   );
 };
