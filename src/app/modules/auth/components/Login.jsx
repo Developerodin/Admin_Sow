@@ -47,13 +47,16 @@ export function Login() {
     const AuthValue = sessionStorage.getItem("authValue");
     const user=JSON.parse(sessionStorage.getItem('User')) || null;
     console.log("storedAuthValue",AuthValue)
-    if(user && user.status === true){
+    if(user ){
+      console.log("In if conditon")
       if(AuthValue === 'true'){
+        console.log("In if conditon 2",AuthValue)
         // window.location.reload();
         navigate("/dashboard");
         console.log("hii from navigate")
       }
       else{
+        console.log("In else conditon 2",AuthValue)
         navigate("/auth");
       }
     }
@@ -78,11 +81,12 @@ export function Login() {
         // const user=
         
         if(userData && userData.status === "success"){
-          setCurrentUser(userData.data.user);
+          setCurrentUser(userData.data.admin);
           // localStorage.setItem("authValue", "true");
           // localStorage.setItem("User",JSON.stringify(userData.data.user));
           sessionStorage.setItem("authValue", "true");
-          sessionStorage.setItem('User', JSON.stringify(userData.data.user));
+          sessionStorage.setItem('User', JSON.stringify(userData.data.admin));
+    
           sessionStorage.setItem('token',userData.token);
           
           // expires in 7 days
@@ -181,7 +185,7 @@ export function Login() {
       ) : (
         <div className='mb-10 bg-light-info p-8 rounded'>
           <div className='text-info'>
-            Use account <strong>admin121@gmail.com</strong> and password <strong>admin123</strong> to
+            Use account <strong>admin@gmail.com</strong> and password <strong>admin@1234</strong> to
             continue.
           </div>
         </div>
