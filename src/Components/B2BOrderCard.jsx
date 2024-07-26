@@ -13,7 +13,7 @@ export const B2BOrdersCard = ({Fun,Data}) => {
       <Typography sx={{fontSize:"17px"}}>From :</Typography>
       </Box>
       <Box sx={{marginLeft:"10px"}}>
-        <Typography sx={{fontSize:"17px"}}>{Data.from.name}</Typography>
+        <Typography sx={{fontSize:"17px"}}>{ Data.from?.name || 'Default Name'}</Typography>
       </Box>
     </Box>
 

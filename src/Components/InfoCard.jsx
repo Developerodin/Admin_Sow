@@ -4,6 +4,7 @@ import LocalPhoneIcon from '@mui/icons-material/LocalPhone';
 import FmdGoodIcon from '@mui/icons-material/FmdGood';
 import { Box, Button, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { GenralTabel } from '../app/TabelComponents/GenralTable';
 
 export const InfoCard = ({Data}) => {
   const navigate = useNavigate()

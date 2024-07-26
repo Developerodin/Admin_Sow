@@ -23,6 +23,14 @@ import { useNavigate } from "react-router-dom";
 import { Base_url } from "../../Config/BaseUrl";
 import axios from "axios";
 import { B2BOrdersCard } from "../../../Components/B2BOrderCard";
+import { GenralTabel } from "../../TabelComponents/GenralTable";
+import BorderColorIcon from "@mui/icons-material/BorderColor";
+import DeleteIcon from "@mui/icons-material/Delete";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";      
+
+
+
+
 const style = {
   position: "absolute",
   top: "50%",
@@ -186,6 +194,8 @@ export const B2BOrders = () => {
   useEffect(() => {
     getOrders();
   }, []);
+
+
 
   return (
     <Box>
@@ -352,7 +362,7 @@ export const B2BOrders = () => {
             {
                 OrdersData && OrdersData.map((el,index)=>{
                    return <Grid item xs={12} sm={6} md={6} lg={3} key={index}>
-                    <B2BOrdersCard Fun={()=>handleViewOrderClick(el)} Data={el}/>
+                    <B2BOrdersCard Fun={()=>handleViewOrderClick(el._id)} Data={el}/>
                     </Grid>
                 
                     })}
