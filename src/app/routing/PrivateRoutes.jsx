@@ -25,10 +25,13 @@ import { ViewCategories } from '../pages/Categories/ViewCategories'
 import { CreateInvoice } from '../pages/Sales/CreateInvoice'
 import { AddVendors } from '../pages/Vendors/AddVendors'
 import { VendorsView } from '../pages/Vendors/VendorsView'
+import { EditVendors } from '../pages/Vendors/EditVendors'
 import { B2BOrders } from '../pages/Orders/B2BOrders'
 import { AddB2BOrder } from '../pages/Orders/AddB2BOrder'
 import { AddUsers } from '../pages/Users/AddUsers'
 import { AddOrder } from '../pages/Orders/AddOrders'
+import { EditOrder } from '../pages/Orders/EditOrders'
+
 import { ViewB2bOrder } from '../pages/Orders/ViewB2bOrder.jsx'
 import { ProfileDetails } from '../modules/accounts/components/settings/cards/ProfileDetails'
 import { Settings } from '../modules/accounts/components/settings/Settings'
@@ -103,6 +106,14 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
+        <Route
+          path='vendors/edit/:id'
+          element={
+            <SuspensedView>
+              <EditVendors />
+            </SuspensedView>
+          }
+        />
 
 <Route
           path='rates/*'
@@ -126,6 +137,14 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <AddOrder />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path='orders/edit/:id'
+          element={
+            <SuspensedView>
+              <EditOrder />
             </SuspensedView>
           }
         />

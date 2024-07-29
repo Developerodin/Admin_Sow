@@ -21,6 +21,7 @@ import { Base_url } from '../../Config/BaseUrl';
 import { GenralTabel } from '../../TabelComponents/GenralTable';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import BorderColorIcon from '@mui/icons-material/BorderColor';
 
 
 import axios from 'axios';
@@ -256,7 +257,7 @@ export const ViewCategories = () => {
       Name:el.name,
       Price:`₹${el.price}`,
       Unit:el.unit,
-      Update:<RemoveRedEyeIcon  onClick={()=>handelSubCategoryEditOpen(index)}/>,
+      Update:<BorderColorIcon  onClick={()=>handelSubCategoryEditOpen(index)}/>,
       Delete:<DeleteIcon onClick={()=>handleDeleteClick(el._id)}/>
     }
   });

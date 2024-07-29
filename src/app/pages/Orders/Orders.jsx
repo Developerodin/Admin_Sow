@@ -214,6 +214,10 @@ export const Orders = () => {
     navigate("add");
   };
 
+  const handleUpdateOrder = (orderId) => {
+    navigate(`edit/${orderId}`);
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -247,7 +251,7 @@ export const Orders = () => {
       ),
       'Order Date': new Date(order.orderDate).toLocaleDateString(),
       View: <RemoveRedEyeIcon />,
-      Update: <BorderColorIcon />,
+      Update: <BorderColorIcon onClick={() => handleUpdateOrder(order._id)} />,
       Delete: <DeleteIcon onClick={() => handleDeleteClick(order._id)}/>,
     };
   });

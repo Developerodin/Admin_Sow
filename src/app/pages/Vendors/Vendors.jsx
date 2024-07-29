@@ -185,6 +185,10 @@ export const Vendors = () => {
     navigate(`view/${id}`)
   }
 
+  const handelUpdate = (id)=>{
+    navigate(`edit/${id}`)
+  }
+
   const columns = [
     { name: "Name" },
     { name: "Email" },
@@ -207,7 +211,7 @@ export const Vendors = () => {
     status: collector.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={collector.active} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(collector._id)}/>,
-    update: <BorderColorIcon onClick={() => console.log("Update", collector._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(collector._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(collector._id)}/>
   }));
 
@@ -220,7 +224,7 @@ export const Vendors = () => {
     status: wholesaler.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={wholesaler.active} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(wholesaler._id)}/>,
-    update: <BorderColorIcon onClick={() => console.log("Update", wholesaler._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(wholesaler._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(wholesaler._id)}/>
   }));
 
@@ -233,7 +237,7 @@ export const Vendors = () => {
     status: mediator.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={mediator.active} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(mediator._id)}/>,
-    update: <BorderColorIcon onClick={() => console.log("Update", mediator._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(mediator._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(mediator._id)}/>
   }));
 
@@ -246,7 +250,7 @@ export const Vendors = () => {
     status: factory.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={factory.active} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(factory._id)}/>,
-    update: <BorderColorIcon onClick={() => console.log("Update", factory._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(factory._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(factory._id)}/>
   }));
 
