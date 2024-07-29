@@ -7,7 +7,11 @@ import {
   InputAdornment,
   Tabs,
   Typography,
-  TextField,
+  TextField,Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
@@ -26,7 +30,8 @@ import { B2BOrdersCard } from "../../../Components/B2BOrderCard";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
 import DeleteIcon from "@mui/icons-material/Delete";
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";      
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";    
+  
 
 
 
@@ -100,6 +105,9 @@ export const B2BOrders = () => {
 
   const [open, setOpen] = useState(false);
   const [OrdersData, setOrderData] = useState([]);
+  const [deleteId, setDeleteId] = useState(null);
+  const [update, setupdate] = useState(0);
+  const [open1, setOpen1] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false);
@@ -178,10 +186,29 @@ export const B2BOrders = () => {
     try {
       const response = await axios.delete(`${Base_url}api/b2b_orders/${id}`);
       return response.data;
+      setupdate((prev) => prev + 1);
     } catch (error) {
       throw error.response.data;
     }
   };
+  
+  const handleDeleteClick = (ID) => {
+    setDeleteId(ID);
+    setOpen1(true);
+  };
+
+  const handleCloseone = () => {
+    setOpen1(false);
+    setDeleteId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteOrder(deleteId);
+    }
+    handleCloseone();
+  };
+
 
   const handelOrderClick = () => {
     navigate("add");
@@ -194,6 +221,37 @@ export const B2BOrders = () => {
   useEffect(() => {
     getOrders();
   }, []);
+
+  
+
+  const columns = [
+    { name: 'Order From' },
+    { name: 'Order To' },
+    { name: 'Category' },
+    { name: 'Quantity' },
+    { name: 'Amount' },
+    { name: 'Status' },
+    { name: 'Order Date' },
+    { name: 'View' },
+    { name: 'Update' },
+    { name: 'Delete' },
+  ];
+
+  const rows = OrdersData.map((el, index) => {
+    return {
+      'Order From': el.from ? el.from.name : 'Default Name',
+      'Order To': el.to && el.to.name ? el.to.name : 'Unknown',
+      Category: el.details && el.details.category ? el.details.category : 'Unknown',
+      Quantity: el.details && el.details.quantity ? el.details.quantity : 'Unknown',
+      Amount: el.totalAmount,
+      Status: el.status,
+      'Order Date': new Date(el.orderDate).toLocaleDateString(),
+      View: <RemoveRedEyeIcon onClick={() => handleViewOrderClick(el._id)} />,
+      Update: <BorderColorIcon onClick={() => updateOrder(el._id)}  />,
+      Delete: <DeleteIcon onClick={() => handleDeleteClick(el._id)} />,
+    };
+  });
+
 
 
 
@@ -358,7 +416,7 @@ export const B2BOrders = () => {
       <CustomTabPanel value={value} index={0}>
        
 
-         <Grid container spacing={2}>
+         {/* <Grid container spacing={2}>
             {
                 OrdersData && OrdersData.map((el,index)=>{
                    return <Grid item xs={12} sm={6} md={6} lg={3} key={index}>
@@ -366,7 +424,8 @@ export const B2BOrders = () => {
                     </Grid>
                 
                     })}
-              </Grid>
+              </Grid> */}
+              <GenralTabel rows={rows} column={columns} />
             </CustomTabPanel>
 
             <CustomTabPanel value={value} index={1}>
@@ -375,6 +434,25 @@ export const B2BOrders = () => {
           </Box>
         </CardContent>
       </Card>
+      <Dialog
+        open={open1}
+        onClose={handleCloseone}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Do you really want to delete this order?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseone}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
