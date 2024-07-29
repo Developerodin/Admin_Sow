@@ -31,7 +31,7 @@ import { AddB2BOrder } from '../pages/Orders/AddB2BOrder'
 import { AddUsers } from '../pages/Users/AddUsers'
 import { AddOrder } from '../pages/Orders/AddOrders'
 import { EditOrder } from '../pages/Orders/EditOrders'
-
+import { EditB2BOrder } from '../pages/Orders/EditB2BOrder'
 import { ViewB2bOrder } from '../pages/Orders/ViewB2bOrder.jsx'
 import { ProfileDetails } from '../modules/accounts/components/settings/cards/ProfileDetails'
 import { Settings } from '../modules/accounts/components/settings/Settings'
@@ -169,6 +169,14 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <ViewB2bOrder />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path='b2b_orders/edit/:id'
+          element={
+            <SuspensedView>
+              <EditB2BOrder />
             </SuspensedView>
           }
         />

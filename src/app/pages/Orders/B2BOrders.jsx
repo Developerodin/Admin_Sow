@@ -202,6 +202,10 @@ export const B2BOrders = () => {
     setDeleteId(null);
   };
 
+  const handleUpdateOrderClick = (orderId) => {
+    navigate(`/b2b_orders/edit/${orderId}`);
+  };
+
   const handleConfirmDelete = async () => {
     if (deleteId) {
       await deleteOrder(deleteId);
@@ -247,7 +251,7 @@ export const B2BOrders = () => {
       Status: el.status,
       'Order Date': new Date(el.orderDate).toLocaleDateString(),
       View: <RemoveRedEyeIcon onClick={() => handleViewOrderClick(el._id)} />,
-      Update: <BorderColorIcon onClick={() => updateOrder(el._id)}  />,
+      Update: <BorderColorIcon onClick={() => handleUpdateOrderClick(el._id)}  />,
       Delete: <DeleteIcon onClick={() => handleDeleteClick(el._id)} />,
     };
   });

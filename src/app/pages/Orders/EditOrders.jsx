@@ -13,16 +13,15 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 export const EditOrder = () => {
   const { id } = useParams();
   const [orderId, setOrderId] = useState(id);
-    const [totalAmount, setTotalAmount] = useState(0);
   const [formData, setFormData] = useState({
     user: '',
     category: '',
-    quantity: '',
-    totalAmount: '',
+    quantity: 0,
+    totalAmount: 0,
     sub_category: ''
   });
 
-  const [update, setUpdate] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [subCategoryData, setSubCategoryData] = useState([]);
   const [selectedSubcategoryData, setSelectedSubcategoryData] = useState({});
   const [usersData, setUsersdata] = useState([]);
@@ -37,17 +36,34 @@ export const EditOrder = () => {
       };
 
       if (name === 'category') {
-        const selectedCategory = CategoriesData.find(vendor => vendor._id === value);
+        const selectedCategory = CategoriesData.find(cat => cat._id === value);
         if (selectedCategory) {
           setSubCategoryData(selectedCategory.sub_category);
+          setFormData({
+            ...newFormData,
+            sub_category: '',
+            totalAmount: 0
+          });
+          setTotalAmount(0);
         }
       } else if (name === 'sub_category') {
-        const selectedSubcategory = subCategoryData.find(el => el.name === value);
+        const selectedSubcategory = subCategoryData.find(sub => sub.name === value);
         setSelectedSubcategoryData(selectedSubcategory);
-      } else if (name === 'quantity') {
-        const price = selectedSubcategoryData.price || 0;
-        const total = parseInt(price) * value;
+        const price = selectedSubcategory ? parseFloat(selectedSubcategory.price) : 0;
+        const total = price * formData.quantity;
         setTotalAmount(total);
+        setFormData({
+          ...newFormData,
+          totalAmount: total
+        });
+      } else if (name === 'quantity') {
+        const price = selectedSubcategoryData.price ? parseFloat(selectedSubcategoryData.price) : 0;
+        const total = parseInt(value) * price;
+        setTotalAmount(total);
+        setFormData({
+          ...newFormData,
+          totalAmount: total
+        });
       }
 
       return newFormData;
@@ -74,7 +90,7 @@ export const EditOrder = () => {
       totalAmount: 0,
       sub_category: ''
     });
-    setTotalAmount("");
+    setTotalAmount(0);
     handelBack();
   };
 
@@ -94,7 +110,6 @@ export const EditOrder = () => {
         totalAmount: Data.totalAmount,
         status: Data.status
       });
-      setUpdate(prev => prev + 1);
     } catch (error) {
       console.error('Error updating order:', error);
     }
@@ -106,14 +121,12 @@ export const EditOrder = () => {
         const response = await axios.get(`${Base_url}api/orders/${orderId}`);
         const data = response.data;
 
-        // Extract relevant data from response
         const customerName = data.customer.name;
         const category = data.details.category._id;
         const subCategory = data.details.sub_category;
         const quantity = data.details.quantity;
-        const totalAmount = data.totalAmount || 0; // Set default value
+        const totalAmount = data.totalAmount || 0;
 
-        // Update formData state
         setFormData({
           user: customerName,
           category: category,
@@ -122,12 +135,20 @@ export const EditOrder = () => {
           totalAmount: totalAmount,
         });
 
-        // Set subCategoryData and selectedSubcategoryData based on fetched data
         const selectedCategory = CategoriesData.find(cat => cat._id === category);
         if (selectedCategory) {
           setSubCategoryData(selectedCategory.sub_category);
           const selectedSubcategory = selectedCategory.sub_category.find(sub => sub.name === subCategory);
           setSelectedSubcategoryData(selectedSubcategory);
+          if (selectedSubcategory && selectedSubcategory.price) {
+            const price = parseFloat(selectedSubcategory.price);
+            const total = price * quantity;
+            setTotalAmount(total);
+            setFormData(prevState => ({
+              ...prevState,
+              totalAmount: total,
+            }));
+          }
         }
       }
     } catch (error) {
@@ -152,20 +173,21 @@ export const EditOrder = () => {
     try {
       const response = await axios.get(`${Base_url}api/category`);
       setCategoriesData(response.data);
-      return response.data;
     } catch (error) {
-      throw error.response.data;
+      console.error('Error fetching categories:', error);
     }
   };
 
   useEffect(() => {
     fetchUser();
     getCategories();
-  }, [update]);
+  }, []);
 
   useEffect(() => {
-    fetchOrderDetails();
-  }, [orderId]);
+    if (CategoriesData.length > 0) {
+      fetchOrderDetails();
+    }
+  }, [orderId, CategoriesData]);
 
   const handelBack = () => {
     window.history.back();
@@ -198,9 +220,9 @@ export const EditOrder = () => {
                     value={formData.user}
                     onChange={handleInputChange}
                   >
-                    {usersData.map((vendor) => (
-                      <MenuItem key={vendor._id} value={vendor._id}>
-                        {vendor.name}
+                    {usersData.map((user) => (
+                      <MenuItem key={user._id} value={user.name}>
+                        {user.name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -217,9 +239,9 @@ export const EditOrder = () => {
                     value={formData.category}
                     onChange={handleInputChange}
                   >
-                    {CategoriesData.map((vendor) => (
-                      <MenuItem key={vendor._id} value={vendor._id}>
-                        {vendor.name}
+                    {CategoriesData.map((category) => (
+                      <MenuItem key={category._id} value={category._id}>
+                        {category.name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -236,9 +258,9 @@ export const EditOrder = () => {
                     value={formData.sub_category}
                     onChange={handleInputChange}
                   >
-                    {subCategoryData.map((el) => (
-                      <MenuItem key={el.name} value={el.name}>
-                        {el.name} {el.price} / {el.unit}
+                    {subCategoryData.map((sub) => (
+                      <MenuItem key={sub.name} value={sub.name}>
+                        {sub.name} {sub.price && `${sub.price} / ${sub.unit}`}
                       </MenuItem>
                     ))}
                   </Select>
@@ -262,8 +284,8 @@ export const EditOrder = () => {
                   label="Total Amount"
                   type="number"
                   name="totalAmount"
-                  value={formData.totalAmount}
-                    onChange={handleInputChange}
+                  value={totalAmount}
+                  InputProps={{ readOnly: true }}
                 />
               </Grid>
 
