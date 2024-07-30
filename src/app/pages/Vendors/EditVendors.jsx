@@ -4,27 +4,24 @@ import {
   Box,
   Button,
   TextField,
-  Stack,
+  Grid,
+  Card,
+  CardContent,
   Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-    Grid,
-    Card,
-    CardContent,
-
-
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Base_url } from "../../Config/BaseUrl";
 import { ThemColor } from "../../Them/ThemColor";
-import { BASE_URL, Base_url } from "../../Config/BaseUrl";
 
 export const EditVendors = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [Formdata, setFormData] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     gender: "",
     email: "",
@@ -36,45 +33,46 @@ export const EditVendors = () => {
     city: "",
     pincode: "",
     country: "",
-    panNo:"",
-    addharCardNo:"",
-    addharAddress:""
-   
+    panNo: "",
+    addharCardNo: "",
+    addharAddress: ""
   });
-  const [Category, setCategory] = React.useState('');
-  const [VendorType, setVendorType] = React.useState('');
-  
+  const [Category, setCategory] = useState('');
+  const [VendorType, setVendorType] = useState('');
+  const [PanimageFile1, setPanImageFile1] = useState(null);
+  const [PanimageFile2, setPanImageFile2] = useState(null);
+  const [AddharimageFile1, setAddharImageFile1] = useState(null);
+  const [AddharimageFile2, setAddharImageFile2] = useState(null);
 
-  const [imageFile, setImageFile] = useState(null);
-  const [PanimageFile1,setPanImageFile1] = useState(null)
-  const [PanimageFile2,setPanImageFile2] = useState(null)
-  const [AddharimageFile1,setAddharImageFile1] = useState(null)
-  const [AddharimageFile2,setAddharImageFile2] = useState(null)
   const handelGoBack = () => {
     window.history.back();
   };
 
   const handleChange = (event) => {
-      setCategory(event.target.value);
+    setCategory(event.target.value);
   };
 
   const handleVendorTypeChange = (event) => {
-      setVendorType(event.target.value);
+    setVendorType(event.target.value);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...Formdata, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
+
   const handleFileChange1 = (e) => {
     setPanImageFile1(e.target.files[0]);
   };
+
   const handleFileChange2 = (e) => {
     setPanImageFile2(e.target.files[0]);
   };
+
   const handleFileChange3 = (e) => {
     setAddharImageFile1(e.target.files[0]);
   };
+
   const handleFileChange4 = (e) => {
     setAddharImageFile2(e.target.files[0]);
   };
@@ -89,7 +87,7 @@ export const EditVendors = () => {
           gender: vendorData.gender || "",
           email: vendorData.email || "",
           password: vendorData.password || "",
-          confirmPassword: vendorData.confirmPassword || "",
+          confirmPassword: "",
           mobile: vendorData.mobile || "",
           dob: vendorData.dob || "",
           Address: vendorData.Address || "",
@@ -97,28 +95,27 @@ export const EditVendors = () => {
           pincode: vendorData.pincode || "",
           country: vendorData.country || "",
           panNo: vendorData.panNo || "",
-          addharCardNo: vendorData.addharCardNo || "",
-          addharAddress: vendorData.addharAddress || ""
+          addharCardNo: vendorData.adharData.AdhharNo || "",
+          addharAddress: vendorData.adharData.Address || ""
         });
-        setCategory(vendorData.category || '');
+        setCategory(vendorData.categories.length > 0 ? vendorData.categories[0].name : '');
         setVendorType(vendorData.registerAs || '');
       } catch (error) {
         console.error("Error fetching vendor data:", error);
       }
     };
-
+  
     fetchVendorData();
   }, [id]);
-
   
-
-  
-
   const handleSubmit = async () => {
     const formDataToSend = new FormData();
-    Object.keys(Formdata).forEach(key => {
-      formDataToSend.append(key, Formdata[key]);
+    
+    // Append all form data fields
+    Object.keys(formData).forEach(key => {
+      formDataToSend.append(key, formData[key]);
     });
+  
     formDataToSend.append("category", Category);
     formDataToSend.append("registerAs", VendorType);
   
@@ -127,7 +124,10 @@ export const EditVendors = () => {
     if (AddharimageFile1) formDataToSend.append("addharImageFile1", AddharimageFile1);
     if (AddharimageFile2) formDataToSend.append("addharImageFile2", AddharimageFile2);
   
-    console.log('FormData to Send:', formDataToSend); // Debugging line
+    // Log the FormData contents for debugging
+    for (let pair of formDataToSend.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
   
     try {
       const response = await axios.put(`${Base_url}api/b2b/${id}`, formDataToSend, {
@@ -146,7 +146,6 @@ export const EditVendors = () => {
       console.error("Error:", error.message);
     }
   };
-
    
 
       
@@ -321,7 +320,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Name"
                       name="name"
-                      value={Formdata.name}
+                      value={formData.name}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -355,7 +354,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Gender"
                       name="gender"
-                      value={Formdata.gender}
+                      value={formData.gender}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -367,7 +366,7 @@ export const EditVendors = () => {
                       type="Eamil"
                       label="email"
                       name="email"
-                      value={Formdata.email}
+                      value={formData.email}
                       onChange={handleInputChange}
                       fullWidth
                       multiline
@@ -379,7 +378,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Mobile"
                       name="mobile"
-                      value={Formdata.mobile}
+                      value={formData.mobile}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -390,7 +389,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Password"
                       name="password"
-                      value={Formdata.password}
+                      value={formData.password}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -401,7 +400,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Confirm Password"
                       name="confirmPassword"
-                      value={Formdata.confirmPassword}
+                      value={formData.confirmPassword}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -414,7 +413,7 @@ export const EditVendors = () => {
                     <TextField
                       label="D O B"
                       name="dob"
-                      value={Formdata.dob}
+                      value={formData.dob}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -425,7 +424,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Pan Card Number"
                       name="panNo"
-                      value={Formdata.panNo}
+                      value={formData.panNo}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -436,7 +435,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Addhar Card Number"
                       name="addharCardNo"
-                      value={Formdata.addharCardNo}
+                      value={formData.addharCardNo}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -449,7 +448,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Address"
                       name="Address"
-                      value={Formdata.Address}
+                      value={formData.Address}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -460,7 +459,7 @@ export const EditVendors = () => {
                     <TextField
                       label="City"
                       name="city"
-                      value={Formdata.city}
+                      value={formData.city}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -471,7 +470,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Pincode"
                       name="pincode"
-                      value={Formdata.pincode}
+                      value={formData.pincode}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -482,7 +481,7 @@ export const EditVendors = () => {
                     <TextField
                       label="Country"
                       name="country"
-                      value={Formdata.country}
+                      value={formData.country}
                       onChange={handleInputChange}
                       fullWidth
                       required
