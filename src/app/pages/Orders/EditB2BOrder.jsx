@@ -22,17 +22,30 @@ export const EditB2BOrder = () => {
     });
     const [b2bVendors, setB2BVendors] = useState([]);
     const [toData, setToData] = useState([]);
+    const [categoriesData, setCategoriesData] = useState([]);
     const [subCategoryData, setSubCategoryData] = useState([]);
     const [selectedSubcategoryData, setSelectedSubcategoryData] = useState({});
 
+    
+    useEffect(() => {
+        const getCategories = async () => {
+            try {
+                const response = await axios.get(`${Base_url}api/category`);
+                setCategoriesData(response.data);
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        getCategories();
+    }, []);
+
+    
     useEffect(() => {
         const fetchB2BOrder = async () => {
             try {
                 const response = await axios.get(`${Base_url}api/b2b_orders/${id}`);
                 const orderData = response.data;
-
-                // Debugging
-                console.log('Order Data:', orderData);
 
                 setFormData({
                     from: orderData.from._id,
@@ -49,10 +62,6 @@ export const EditB2BOrder = () => {
 
                 const selectedSubcategory = subCategories.find(sc => sc.name === orderData.details.sub_category) || {};
                 setSelectedSubcategoryData(selectedSubcategory);
-
-                // Debugging
-                console.log('Sub Categories:', subCategories);
-                console.log('Selected Subcategory:', selectedSubcategory);
 
             } catch (error) {
                 console.error('Error fetching order:', error);
@@ -83,10 +92,10 @@ export const EditB2BOrder = () => {
 
         fetchB2BOrder();
         fetchB2BUser();
-    }, [id]);
+    }, [id, formData.from]);
 
+    
     useEffect(() => {
-        // Update options when `from` changes
         if (formData.from) {
             const selectedVendor = b2bVendors.find(vendor => vendor._id === formData.from);
             if (selectedVendor) {
@@ -101,20 +110,21 @@ export const EditB2BOrder = () => {
         }
     }, [formData.from, b2bVendors]);
 
+    
     useEffect(() => {
-        // Update subcategories when `to` or `category` changes
         if (formData.to) {
             const selectedVendor = b2bVendors.find(vendor => vendor._id === formData.to);
             if (selectedVendor) {
-                const subCategories = selectedVendor.categories.find(cat => cat.name === formData.category)?.sub_category || [];
+                const selectedCategory = categoriesData.find(cat => cat.name === formData.category);
+                const subCategories = selectedCategory?.sub_category || [];
                 setSubCategoryData(subCategories);
 
-                // Update selected subcategory if it exists
+                
                 const selectedSubcategory = subCategories.find(sc => sc.name === formData.sub_category) || {};
                 setSelectedSubcategoryData(selectedSubcategory);
             }
         }
-    }, [formData.to, formData.category, b2bVendors]);
+    }, [formData.to, formData.category, b2bVendors, categoriesData]);
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -217,13 +227,23 @@ export const EditB2BOrder = () => {
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Category"
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleInputChange}
-                                />
+                                <FormControl fullWidth>
+                                    <InputLabel id="category-select-label">Category</InputLabel>
+                                    <Select
+                                        fullWidth
+                                        labelId="category-select-label"
+                                        label="Category"
+                                        name="category"
+                                        value={formData.category || ''}
+                                        onChange={handleInputChange}
+                                    >
+                                        {categoriesData.map(category => (
+                                            <MenuItem key={category._id} value={category.name}>
+                                                {category.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth>
@@ -266,9 +286,9 @@ export const EditB2BOrder = () => {
                                 />
                             </Grid>
                         </Grid>
-                        <Box sx={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                        <Box sx={{ marginTop: '20px', textAlign:'right' }}>
                             <Button variant="contained" onClick={handleSubmit}>
-                                Submit
+                                Submit  
                             </Button>
                         </Box>
                     </Box>
