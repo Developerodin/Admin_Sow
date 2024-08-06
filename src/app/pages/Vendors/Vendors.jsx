@@ -138,7 +138,7 @@ export const Vendors = () => {
 
   const deleteUser = async (ID) => {
     try {
-      const res = await axios.delete(`${Base_url}api/category/${ID}`);
+      const res = await axios.delete(`${Base_url}api/b2b/${ID}`);
       console.log(res);
       setupdate((prev) => prev + 1);
     } catch (err) {
