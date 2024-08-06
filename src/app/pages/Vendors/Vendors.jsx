@@ -8,9 +8,18 @@ import {
   Tabs,
   Typography,
   TextField,
+  Switch,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
+import BorderColorIcon from '@mui/icons-material/BorderColor';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import PropTypes from "prop-types";
 import { createTheme } from "@mui/material/styles";
 import { ThemeProvider } from "@mui/material/styles";
@@ -22,6 +31,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Base_url } from "../../Config/BaseUrl";
 import { toAbsoluteUrl } from "../../../_metronic/helpers";
+import { GenralTabel } from "../../TabelComponents/GenralTable";
+import Checkbox from "@mui/material/Checkbox";
 
 const orangeTheme = createTheme({
   palette: {
@@ -73,6 +84,9 @@ export const Vendors = () => {
   const [WholesalersData, setWholesalersData] = useState([]);
   const [MediatorsData, setMediatorsData] = useState([]);
   const [FactoryData, setFactoryData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
@@ -146,9 +160,101 @@ export const Vendors = () => {
     }
   };
 
+  const handleDeleteClick = (ID) => {
+    setDeleteId(ID);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setDeleteId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteUser(deleteId);
+    }
+    handleClose();
+  };
+
   useEffect(() => {
     fetchB2BUser();
   }, [update]);
+
+  const handelView = (id)=>{
+    navigate(`view/${id}`)
+  }
+
+  const handelUpdate = (id)=>{
+    navigate(`edit/${id}`)
+  }
+
+  const columns = [
+    { name: "Name" },
+    { name: "Email" },
+    { name: "Phone" },
+    { name: "Address" },
+    { name: "City" },
+    { name: "Status" },
+    { name: "Active" },
+    { name: "View" },
+    { name: "Update" },
+    { name: "Delete" }
+  ];
+
+  const rows = CollectorsData.map((collector, index) => ({
+    name: collector.name,
+    email: collector.email,
+    phone: collector.mobile,
+    address: collector.Address,
+    city: collector.city,
+    status: collector.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
+    active: <Switch checked={collector.active} />,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(collector._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(collector._id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(collector._id)}/>
+  }));
+
+  const rows2 = WholesalersData.map((wholesaler, index) => ({
+    name: wholesaler.name,
+    email: wholesaler.email,
+    phone: wholesaler.mobile,
+    address: wholesaler.Address,
+    city: wholesaler.city,
+    status: wholesaler.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
+    active: <Switch checked={wholesaler.active} />,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(wholesaler._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(wholesaler._id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(wholesaler._id)}/>
+  }));
+
+  const rows3 = MediatorsData.map((mediator, index) => ({
+    name: mediator.name,
+    email: mediator.email,
+    phone: mediator.mobile,
+    address: mediator.Address,
+    city: mediator.city,
+    status: mediator.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
+    active: <Switch checked={mediator.active} />,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(mediator._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(mediator._id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(mediator._id)}/>
+  }));
+
+  const rows4 = FactoryData.map((factory, index) => ({
+    name: factory.name,
+    email: factory.email,
+    phone: factory.mobile,
+    address: factory.Address,
+    city: factory.city,
+    status: factory.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
+    active: <Switch checked={factory.active} />,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(factory._id)}/>,
+    update: <BorderColorIcon onClick={() => handelUpdate(factory._id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(factory._id)}/>
+  }));
+
+
 
   return (
     <Box>
@@ -311,113 +417,95 @@ export const Vendors = () => {
               overflow: "auto",
             }}
           >
-            <CustomTabPanel value={value} index={0}>
-              <Grid container spacing={2}>
-                {CollectorsData && CollectorsData.length > 0 ? (
-                  CollectorsData.map((el, index) => {
-                    return (
-                      <Grid key={index} item xs={12} sm={6} md={4} lg={3}>
-                        <InfoCard Data={el} />
-                      </Grid>
-                    );
-                  })
-                ) : (
-                  <Grid item xs={12} style={{ textAlign: "center" }}>
-                    <div style={{ textAlign: "center", height: "300px" }}>
-                      <img
-                        src={toAbsoluteUrl(
-                          "/media/illustrations/dozzy-1/5-dark.png"
-                        )}
-                        style={{ height: "90%" }}
-                        alt=""
-                      />
-                      <h2>No Collectors Data Found</h2>
-                    </div>
-                  </Grid>
-                )}
-              </Grid>
-            </CustomTabPanel>
+           <CustomTabPanel value={value} index={0}>
+          {CollectorsData && CollectorsData.length > 0 ? (
+            <GenralTabel rows={rows} column={columns} />
+          ) : (
+            <Grid item xs={12} style={{ textAlign: "center" }}>
+              <div style={{ textAlign: "center", height: "300px" }}>
+                <img
+                  src={toAbsoluteUrl("/media/illustrations/dozzy-1/5-dark.png")}
+                  style={{ height: "90%" }}
+                  alt=""
+                />
+                <h2>No Collectors Data Found</h2>
+              </div>
+            </Grid>
+          )}
+        </CustomTabPanel>
 
-            <CustomTabPanel value={value} index={1}>
-              <Grid container spacing={2}>
-                {WholesalersData && WholesalersData.length > 0 ? (
-                  WholesalersData.map((el, index) => {
-                    return (
-                      <Grid key={index} item xs={13} sm={7} md={5} lg={4}>
-                        <InfoCard Data={el} />
-                      </Grid>
-                    );
-                  })
-                ) : (
-                  <Grid item xs={12} style={{ textAlign: "center" }}>
-                    <div style={{ textAlign: "center", height: "300px" }}>
-                      <img
-                        src={toAbsoluteUrl(
-                          "/media/illustrations/dozzy-1/5-dark.png"
-                        )}
-                        style={{ height: "90%" }}
-                        alt=""
-                      />
-                      <h2>No Wholesalers Data Found</h2>
-                    </div>
-                  </Grid>
-                )}
-              </Grid>
-            </CustomTabPanel>
+        <CustomTabPanel value={value} index={1}>
+          {WholesalersData && WholesalersData.length > 0 ? (
+            <GenralTabel rows={rows2} column={columns} />
+          ) : (
+            <Grid item xs={12} style={{ textAlign: "center" }}>
+              <div style={{ textAlign: "center", height: "300px" }}>
+                <img
+                  src={toAbsoluteUrl("/media/illustrations/dozzy-1/5-dark.png")}
+                  style={{ height: "90%" }}
+                  alt=""
+                />
+                <h2>No Wholesalers Data Found</h2>
+              </div>
+            </Grid>
+          )}
+        </CustomTabPanel>
 
-            <CustomTabPanel value={value} index={2}>
-              <Grid container spacing={2}>
-                {MediatorsData && MediatorsData.length > 0 ? (
-                  MediatorsData.map((el, index) => {
-                    return (
-                      <Grid key={index} item xs={13} sm={7} md={5} lg={4}>
-                        <InfoCard Data={el} />
-                      </Grid>
-                    );
-                  })
-                ) : (
-                  <Grid item xs={12} style={{ textAlign: "center" }}>
-                    <div style={{ textAlign: "center", height: "300px" }}>
-                      <img
-                        src={toAbsoluteUrl(
-                          "/media/illustrations/dozzy-1/5-dark.png"
-                        )}
-                        style={{ height: "90%" }}
-                        alt=""
-                      />
-                      <h2>No Mediators Data Found</h2>
-                    </div>
-                  </Grid>
-                )}
-              </Grid>
-            </CustomTabPanel>
+        <CustomTabPanel value={value} index={2}>
+          {MediatorsData && MediatorsData.length > 0 ? (
+            <GenralTabel rows={rows3} column={columns} />
+          ) : (
+            <Grid item xs={12} style={{ textAlign: "center" }}>
+              <div style={{ textAlign: "center", height: "300px" }}>
+                <img
 
-            <CustomTabPanel value={value} index={3}>
-              <Grid container spacing={2}>
-                {FactoryData && FactoryData.length > 0 ? (
-                  FactoryData.map((el, index) => {
-                    return (
-                      <Grid key={index} item xs={12} sm={6} md={4} lg={3}>
-                        <InfoCard Data={el} />
-                      </Grid>
-                    );
-                  })
-                ) : (
-                  <Grid item xs={12} style={{ textAlign: "center" }}>
-                    <div style={{ textAlign: "center", height: "300px" }}>
-                      <img
-                        src={toAbsoluteUrl(
-                          "/media/illustrations/dozzy-1/5-dark.png"
-                        )}
-                        style={{ height: "90%" }}
-                        alt=""
-                      />
-                      <h2>No Factory Data Found</h2>
-                    </div>
-                  </Grid>
-                )}
-              </Grid>
-            </CustomTabPanel>
+                  src={toAbsoluteUrl("/media/illustrations/dozzy-1/5-dark.png")}  
+                  style={{ height: "90%" }}
+                  alt=""
+                />
+                <h2>No Mediators Data Found</h2>
+              </div>
+            </Grid>
+          )}
+        </CustomTabPanel>
+
+        <CustomTabPanel value={value} index={3}>
+          {FactoryData && FactoryData.length > 0 ? (
+            <GenralTabel rows={rows4} column={columns} />
+          ) : (
+            <Grid item xs={12} style={{ textAlign: "center" }}>
+              <div style={{ textAlign: "center", height: "300px" }}>
+                <img
+                  src={toAbsoluteUrl("/media/illustrations/dozzy-1/5-dark.png")}
+                  style={{ height: "90%" }}
+                  alt=""
+                />
+                <h2>No Factory Data Found</h2>
+              </div>
+            </Grid>
+          )}
+        </CustomTabPanel>
+         <Dialog
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this user?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
           </Box>
         </CardContent>
       </Card>

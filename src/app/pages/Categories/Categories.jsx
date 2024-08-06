@@ -1,4 +1,7 @@
-import { Box, Button, Card, CardContent, Tab,InputAdornment, Tabs, Typography, TextField } from '@mui/material'
+import { Box, Button, Card, CardContent, Tab,InputAdornment, Tabs, Typography, TextField ,Dialog,DialogTitle,
+  DialogActions,
+  DialogContent,
+  DialogContentText,} from '@mui/material'
 import React, { useEffect,useState } from 'react'
 import AddIcon from '@mui/icons-material/Add';
 import PropTypes from 'prop-types';
@@ -15,6 +18,11 @@ import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { Base_url } from '../../Config/BaseUrl';
+import { GenralTabel } from '../../TabelComponents/GenralTable';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import BorderColor from '@mui/icons-material/BorderColor';
+import DeleteIcon from '@mui/icons-material/Delete';
+
 const style = {
   position: 'absolute',
   top: '50%',
@@ -79,6 +87,9 @@ export const Categories = () => {
     })
   } 
   const [open2, setOpen2] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [open3, setOpen3] = useState(false);
+
   const handleOpen2 = () => setOpen2(true);
   const handleClose2 = () =>{
     setOpen2(false);
@@ -210,6 +221,43 @@ export const Categories = () => {
   useEffect(()=>{
     getCategories()
   },[update])
+
+  const handleDeleteClick = (ID) => {
+    setDeleteId(ID);
+    setOpen3(true);
+  };
+
+  const handleCloseone = () => {
+    setOpen3(false);
+    setDeleteId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteCategory(deleteId);
+    }
+    handleCloseone();
+  };
+
+  const columns = [
+    { name: 'Category' },
+    { name: 'Sub Categories' },
+    
+    { name: "View Sub Categories" },
+    { name: "Update" },
+    { name: "Delete" },
+  ];
+  
+  const rows = CategoriesData.map((el) => {
+    return {
+      Category: el.name,
+      "Sub Categories": el.sub_category.length,
+      View: <RemoveRedEyeIcon onClick={()=>handelView(el._id)} />,
+      Update: <BorderColor onClick={()=>handelEditCategoryOpen(el)} />,
+      Delete: <DeleteIcon onClick={()=>handleDeleteClick(el._id)} />,
+    };
+  });
+
   return (
     <Box >
 
@@ -270,16 +318,7 @@ export const Categories = () => {
             </Box>
             </Box>
 
-         <Grid container spacing={2}>
-          {
-            CategoriesData && CategoriesData.map((el,index)=>{
-              return <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-              <CategoriesCard Data ={el} fun={(id)=>deleteCategory(id)} funEdit={()=>handelEditCategoryOpen(el)} />
-              </Grid>
-            })
-          }
-                
-              </Grid>
+         <GenralTabel rows={rows} column={columns} />
         
       </CustomTabPanel>
 
@@ -409,6 +448,27 @@ export const Categories = () => {
     </Box>
         </Box>
       </Modal>
+      <Dialog
+          open={open3}
+          onClose={handleCloseone}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this category?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseone} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
    </Box>
   )
 }

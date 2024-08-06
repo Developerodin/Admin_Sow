@@ -1,30 +1,27 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Box,
   Button,
+  TextField,
+  Grid,
   Card,
   CardContent,
-  Stack,
-  TextField,
-  TextareaAutosize,
   Typography,
-  Select,
   FormControl,
-  MenuItem,
   InputLabel,
-  Checkbox,
-  ListItemText
+  Select,
+  MenuItem,
 } from "@mui/material";
-import React, { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useNavigate } from "react-router-dom";
 import { Base_url } from "../../Config/BaseUrl";
-import axios from "axios";
-import Grid from "@mui/material/Grid";
 import { ThemColor } from "../../Them/ThemColor";
 
-export const AddVendors = () => {
+export const EditVendors = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [Formdata, setFormData] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     gender: "",
     email: "",
@@ -46,9 +43,8 @@ export const AddVendors = () => {
   const [PanimageFile2, setPanImageFile2] = useState(null);
   const [AddharimageFile1, setAddharImageFile1] = useState(null);
   const [AddharimageFile2, setAddharImageFile2] = useState(null);
-  
 
-  const handleGoBack = () => {
+  const handelGoBack = () => {
     window.history.back();
   };
 
@@ -62,7 +58,7 @@ export const AddVendors = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...Formdata, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleFileChange1 = (e) => {
@@ -81,92 +77,78 @@ export const AddVendors = () => {
     setAddharImageFile2(e.target.files[0]);
   };
 
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append("name", Formdata.name);
-    formData.append("gender", Formdata.gender);
-    formData.append("email", Formdata.email);
-    formData.append("category", Category);
-    formData.append("password", Formdata.password);
-    formData.append("mobile", Formdata.mobile);
-    formData.append("dob", Formdata.dob);
-    formData.append("Address", Formdata.Address);
-    formData.append("city", Formdata.city);
-    formData.append("pincode", Formdata.pincode);
-    formData.append("country", Formdata.country);
-    formData.append("panNo", Formdata.panNo);
-    formData.append("registerAs", VendorType);
-
-    const subCategoryData = [
-      { name: "test", price: "20", unit: "kg" }
-    ];
-    formData.append("categories", JSON.stringify(subCategoryData));
-
-    const adharData = {
-      AdhharNo: Formdata.addharCardNo,
-      Name: '',
-      Address: Formdata.addharAddress
-    };
-    formData.append("adharData", JSON.stringify(adharData));
-
-    const imageFiles = [PanimageFile1, PanimageFile2, AddharimageFile1, AddharimageFile2];
-    imageFiles.forEach((image) => {
-      if (image) {
-        formData.append("images", image);
-      }
-    });
-
-    console.log("Form Data ===>", formData);
-
-    try {
-      const response = await axios.post(`${Base_url}api/b2b`, formData);
-      if (response.status === 201) {
-        const newProduct = response.data;
-        console.log("New product created:", newProduct);
+  useEffect(() => {
+    const fetchVendorData = async () => {
+      try {
+        const response = await axios.get(`${Base_url}api/b2b/${id}`);
+        const vendorData = response.data;
         setFormData({
-          name: "",
-          gender: "",
-          email: "",
-          password: "",
+          name: vendorData.name || "",
+          gender: vendorData.gender || "",
+          email: vendorData.email || "",
+          password: vendorData.password || "",
           confirmPassword: "",
-          mobile: "",
-          dob: "",
-          Address: "",
-          city: "",
-          pincode: "",
-          country: "",
-          panNo: "",
-          addharCardNo: "",
-          addharAddress: ""
+          mobile: vendorData.mobile || "",
+          dob: vendorData.dob || "",
+          Address: vendorData.Address || "",
+          city: vendorData.city || "",
+          pincode: vendorData.pincode || "",
+          country: vendorData.country || "",
+          panNo: vendorData.panNo || "",
+          addharCardNo: vendorData.adharData.AdhharNo || "",
+          addharAddress: vendorData.adharData.Address || ""
         });
-
-        handleGoBack();
+        setCategory(vendorData.categories.length > 0 ? vendorData.categories[0].name : '');
+        setVendorType(vendorData.registerAs || '');
+      } catch (error) {
+        console.error("Error fetching vendor data:", error);
+      }
+    };
+  
+    fetchVendorData();
+  }, [id]);
+  
+  const handleSubmit = async () => {
+    const formDataToSend = new FormData();
+    
+    // Append all form data fields
+    Object.keys(formData).forEach(key => {
+      formDataToSend.append(key, formData[key]);
+    });
+  
+    formDataToSend.append("category", Category);
+    formDataToSend.append("registerAs", VendorType);
+  
+    if (PanimageFile1) formDataToSend.append("panImageFile1", PanimageFile1);
+    if (PanimageFile2) formDataToSend.append("panImageFile2", PanimageFile2);
+    if (AddharimageFile1) formDataToSend.append("addharImageFile1", AddharimageFile1);
+    if (AddharimageFile2) formDataToSend.append("addharImageFile2", AddharimageFile2);
+  
+    // Log the FormData contents for debugging
+    for (let pair of formDataToSend.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+  
+    try {
+      const response = await axios.put(`${Base_url}api/b2b/${id}`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+  
+      if (response.status === 200) {
+        console.log("Vendor updated successfully:", response.data);
+        handelGoBack(); // Navigate back to the previous page
       } else {
-        console.error("Error creating product:", response.statusText);
+        console.error("Error updating vendor:", response.statusText);
       }
     } catch (error) {
       console.error("Error:", error.message);
     }
   };
-
    
 
-      const Expertise = [
-        "Hatha",
-        "Vinyasa Flow",
-        "Iyenger Yoga",
-        "Power Yoga",
-        "Ashtanga",
-        "YIN",
-        "Restorative",
-        "Meditation",
-        "Pranayama (Breath Work)",
-        "Kids Yoga",
-        "Pre & Postnatal",
-        "Mudra",
-        "Laughter Yoga",
-        "Sound Healing",
-      ];
+      
     return (
       <Box>
         <Box style={{ marginTop: "30px" }}>
@@ -174,11 +156,11 @@ export const AddVendors = () => {
             <CardContent>
               <Box style={{ display: "flex", alignItems: "center" }}>
                 <ArrowBackIcon
-                  onClick={handleGoBack}
+                  onClick={handelGoBack}
                   style={{ marginRight: "20px", color: `${ThemColor.buttons}` }}
                 />
                 <Typography variant="h6" style={{ letterSpacing: 1 }}>
-                  Add new vendor
+                  Edit vendor
                 </Typography>
               </Box>
   
@@ -338,7 +320,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Name"
                       name="name"
-                      value={Formdata.name}
+                      value={formData.name}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -372,7 +354,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Gender"
                       name="gender"
-                      value={Formdata.gender}
+                      value={formData.gender}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -384,7 +366,7 @@ export const AddVendors = () => {
                       type="Eamil"
                       label="email"
                       name="email"
-                      value={Formdata.email}
+                      value={formData.email}
                       onChange={handleInputChange}
                       fullWidth
                       multiline
@@ -396,7 +378,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Mobile"
                       name="mobile"
-                      value={Formdata.mobile}
+                      value={formData.mobile}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -407,7 +389,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Password"
                       name="password"
-                      value={Formdata.password}
+                      value={formData.password}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -418,7 +400,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Confirm Password"
                       name="confirmPassword"
-                      value={Formdata.confirmPassword}
+                      value={formData.confirmPassword}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -431,7 +413,7 @@ export const AddVendors = () => {
                     <TextField
                       label="D O B"
                       name="dob"
-                      value={Formdata.dob}
+                      value={formData.dob}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -442,7 +424,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Pan Card Number"
                       name="panNo"
-                      value={Formdata.panNo}
+                      value={formData.panNo}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -453,7 +435,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Addhar Card Number"
                       name="addharCardNo"
-                      value={Formdata.addharCardNo}
+                      value={formData.addharCardNo}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -466,7 +448,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Address"
                       name="Address"
-                      value={Formdata.Address}
+                      value={formData.Address}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -477,7 +459,7 @@ export const AddVendors = () => {
                     <TextField
                       label="City"
                       name="city"
-                      value={Formdata.city}
+                      value={formData.city}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -488,7 +470,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Pincode"
                       name="pincode"
-                      value={Formdata.pincode}
+                      value={formData.pincode}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -499,7 +481,7 @@ export const AddVendors = () => {
                     <TextField
                       label="Country"
                       name="country"
-                      value={Formdata.country}
+                      value={formData.country}
                       onChange={handleInputChange}
                       fullWidth
                       required
@@ -582,7 +564,7 @@ export const AddVendors = () => {
                         onClick={handleSubmit}
                         size="large"
                       >
-                        Submit
+                        Update
                       </Button>
                     </Box>
                   </Grid>

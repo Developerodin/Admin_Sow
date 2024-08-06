@@ -1,4 +1,8 @@
-import { Box, Button, Card, CardContent, Tab,InputAdornment, Tabs, Typography, TextField } from '@mui/material'
+import { Box, Button, Card, CardContent, Tab,InputAdornment, Tabs, Typography, TextField, Switch,Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle, } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import AddIcon from '@mui/icons-material/Add';
 import PropTypes from 'prop-types';
@@ -15,6 +19,11 @@ import { Base_url } from '../../Config/BaseUrl';
 import Modal from '@mui/material/Modal';
 import axios from 'axios';
 import CloseIcon from '@mui/icons-material/Close';
+import { GenralTabel } from '../../TabelComponents/GenralTable';
+import BorderColorIcon from '@mui/icons-material/BorderColor';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+
 const style = {
   position: 'absolute',
   top: '50%',
@@ -75,6 +84,8 @@ export const Users = () => {
   const [update,setupdate] = useState(0);
   const [open, setOpen] = useState(false);
   const [OrdersData,setOrderData] = useState([]);
+  
+  const [deleteId, setDeleteId] = useState(null);
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false);
@@ -139,10 +150,56 @@ const navigate = useNavigate()
     }
   }
 
+  const handleDeleteClick = (ID) => {
+    setDeleteId(ID);
+    setOpen(true);
+  };
+
+  const handleCloseone = () => {
+    setOpen(false);
+    setDeleteId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteUser(deleteId);
+    }
+    handleCloseone();
+  };
+
   const handelViewUserClick = (userId)=>{
     navigate(`/users/view/${userId}`);
     
   }
+
+  const columns = [
+    { name: 'Name' },
+    { name: 'Mobile' },
+    { name: 'Email' },
+    { name: 'Address' },
+    { name: 'City' },
+    { name:'Status'},
+    { name: "Active" },
+    { name: "View" },
+    { name: "Update" },
+    { name: "Delete" },
+  ];
+
+  const rows = AllUsersData.map((el,index)=>{
+    return {
+      Name:el.name,
+      Mobile:el.mobile,
+      Email:el.email,
+      Address:el.Address,
+      City:el.city,
+      Status:el.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
+      Active:<Switch checked={el.active} />,
+      View:<RemoveRedEyeIcon onClick={()=>handelViewUserClick(el._id)}/>,
+      Update:<BorderColorIcon onClick={()=>navigate(`/users/update/${el._id}`)}/>,
+      Delete:<DeleteIcon  onClick={()=>handleDeleteClick(el._id)}/>,
+
+    }
+  })
 
 
 
@@ -192,24 +249,34 @@ const navigate = useNavigate()
           </Box>
          
          <Box sx={{marginTop:"50px"}}>
-         <Grid container spacing={2}>
-          {
-            AllUsersData && AllUsersData.map((el,index)=>{
-              return <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-              <UserCard Data={el} fun={()=>handelViewUserClick(el._id)}/>
-              </Grid>
-            })
-          }
-                
-
-              </Grid>
+          <GenralTabel rows={rows} column={columns} />
 
          </Box>
           
     
         </CardContent>
        </Card>
-
+       <Dialog
+          open={open}
+          onClose={handleCloseone}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this user?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseone} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
        
    </Box>
   )

@@ -8,6 +8,11 @@ import {
   Tabs,
   Typography,
   TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
@@ -24,6 +29,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import { Base_url } from "../../Config/BaseUrl";
 import axios from "axios";
+import { GenralTabel } from "../../TabelComponents/GenralTable";
+import BorderColorIcon from "@mui/icons-material/BorderColor";
+import DeleteIcon from "@mui/icons-material/Delete";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";    
+
 const style = {
   position: "absolute",
   top: "50%",
@@ -92,6 +102,9 @@ export const Orders = () => {
   const [searchInput, setSearchInput] = useState("");
   const [orders, setOrders] = useState([]);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [update, setupdate] = useState(0);
+  const [open1, setOpen1] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const handleChange = (event, newValue) => {
@@ -172,19 +185,76 @@ export const Orders = () => {
   const deleteOrder = async (id) => {
     try {
       const response = await axios.delete(`${Base_url}api/b2b_orders/${id}`);
+      setupdate((prev) => prev + 1);
       return response.data;
     } catch (error) {
+      console.error("Error deleting order:", error);
       throw error.response.data;
     }
+  };
+  
+  const handleDeleteClick = (ID) => {
+    setDeleteId(ID);
+    setOpen1(true);
+  };
+  
+  const handleCloseone = () => {
+    setOpen1(false);
+    setDeleteId(null);
+  };
+  
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteOrder(deleteId);
+    }
+    handleCloseone();
   };
 
   const handelAddorder = () => {
     navigate("add");
   };
 
+  const handleUpdateOrder = (orderId) => {
+    navigate(`edit/${orderId}`);
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const columns = [
+    { name: 'Name' },
+    { name: 'Phone' },
+    { name: 'Address' },
+    {name:'City'},
+    { name: 'Category' },
+    { name: 'Total Amount' },
+    { name: 'Status' },
+    { name: 'Order Date' },
+    { name: 'View' },
+    { name: 'Update' },
+    { name: 'Delete' },
+  ];
+
+  const rows = orders.map((order) => {
+    return {
+      Name: order.customer.name,
+      Phone: order.customer.mobile,
+      Address: order.customer.Address,
+      City: order.customer.city,
+      Category: order.details.category.name,
+      'Total Amount': order.totalAmount,
+      Status: order.status === 'assigned' ? (
+        <Button color='success' variant="contained">Assigned</Button>
+      ) : (
+        <Button color='error' variant="contained">Not assigned</Button>
+      ),
+      'Order Date': new Date(order.orderDate).toLocaleDateString(),
+      View: <RemoveRedEyeIcon />,
+      Update: <BorderColorIcon onClick={() => handleUpdateOrder(order._id)} />,
+      Delete: <DeleteIcon onClick={() => handleDeleteClick(order._id)}/>,
+    };
+  });
 
   return (
     <Box>
@@ -314,7 +384,7 @@ export const Orders = () => {
             }}
           >
             <CustomTabPanel value={value} index={0}>
-              <Grid container spacing={2}>
+              {/* <Grid container spacing={2}>
                 {orders &&
                   orders.map((el, index) => {
                     return (
@@ -332,7 +402,8 @@ export const Orders = () => {
                       </Grid>
                     );
                   })}
-              </Grid>
+              </Grid> */}
+              <GenralTabel rows={rows} column={columns} />
             </CustomTabPanel>
 
             <CustomTabPanel value={value} index={1}>
@@ -432,6 +503,25 @@ export const Orders = () => {
           </Box>
         </Box>
       </Modal>
+      <Dialog
+        open={open1}
+        onClose={handleCloseone}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Are you sure?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Do you really want to delete this order?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseone}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

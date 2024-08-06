@@ -91,7 +91,7 @@ export const GenralTabel = (props) => {
             <TableHead>
               <TableRow>
                 {column.map((el, index) => (
-                  <TableCell key={index + 123} align="center" sx={{ fontWeight: "bold" }}>
+                  <TableCell key={index + 123} align="center" sx={{fontWeight:600,fontSize:15,color:"grey"}}>
                     {el.name}
                   </TableCell>
                 ))}
@@ -110,7 +110,7 @@ export const GenralTabel = (props) => {
                   return (
                     <TableRow key={index + 1234} tabIndex={-1}>
                       {data2.map((els, index) => (
-                        <TableCell key={index + 13} align="center">
+                        <TableCell key={index + 13} align="center" sx={{fontSize:'13px'}}>
                           {els}
                         </TableCell>
                       ))}

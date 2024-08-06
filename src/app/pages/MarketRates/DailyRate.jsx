@@ -64,7 +64,7 @@ function a11yProps(index) {
 }
 export const DailyRate = () => {
   const navigate = useNavigate();
-
+  const [expandedCards, setExpandedCards] = useState({});
   const [value, setValue] = React.useState(0);
   const [searchInput, setSearchInput] = React.useState('');
    const [update,setUpdate] = useState(0)
@@ -142,6 +142,12 @@ export const DailyRate = () => {
     return `${formattedDay}:${formattedMonth}:${formattedYear}`;
   }
 
+  const handleReadMore = (index) => {
+    setExpandedCards((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
   return (
     <Box >
@@ -191,51 +197,63 @@ export const DailyRate = () => {
 
           <Box sx={{ width: '100%',marginTop:"20px",height:"70vh",overflow:"auto" }}>
       
-          <Grid container spacing={2} >
-          {
-    Data.map((el, index) => (
-        <Grid key={index} item xs={6}>
-            <div style={{border: "1px solid #e0e0e0", padding: "20px", borderRadius: "20px"}}>
-                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                    <span style={{fontWeight: "bold", fontSize: "21px"}}>{el.name.toUpperCase()}</span>
-                </div>
+          <Grid container spacing={2}>
+      {Data.map((el, index) => {
+        const isExpanded = expandedCards[index];
+        return (
+          <Grid key={index} item xs={6}>
+            <div
+              style={{
+                border: '1px solid #e0e0e0',
+                padding: '20px',
+                borderRadius: '20px',
+                height: isExpanded ? 'auto' : '275px',
+                overflow: 'hidden',
+                position: 'relative',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '21px' }}>{el.name.toUpperCase()}</span>
+              </div>
 
-                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-                    <span style={{fontSize: "14px"}}>Date: {formatDate(el.date)}</span>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>Date: {formatDate(el.date)}</span>
+              </div>
 
-                <div style={{textAlign: "left"}}>
-                    {/* Splitting text by comma and rendering each part in a new line */}
-                    {el.text.split(',').map((textPart, idx) => (
-                        <Typography key={idx}>{textPart}</Typography>
-                    ))}
-                </div>
+              <div style={{ textAlign: 'left' }}>
+                {el.text.split(',').map((textPart, idx) => (
+                  <Typography key={idx}>{textPart}</Typography>
+                ))}
+              </div>
 
-                <div style={{display: "flex", justifyContent: "right", alignItems: "center", marginTop: "20px"}}>
-                    <CancelOutlinedIcon onClick={() => handleDelete(el._id)} style={{fontSize: "24px", color: "crimson", marginRight: "20px"}} />
+              <div style={{ display: 'flex', justifyContent: 'right', alignItems: 'center', marginTop: '20px' }}>
+                <CancelOutlinedIcon
+                  onClick={() => handleDelete(el._id)}
+                  style={{ fontSize: '24px', color: 'crimson', marginRight: '20px' }}
+                />
+              </div>
+
+              {!isExpanded && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'white',
+                    padding: '5px 10px',
+                  }}
+                >
+                  <Button onClick={() => handleReadMore(index)} variant="contained" color="primary">
+                    Read More
+                  </Button>
                 </div>
+              )}
             </div>
-        </Grid>
-    ))
-}
-        
-{/* 
-                <Grid item xs={3}>
-                <PlansCard />
-                </Grid>
-
-
-                <Grid item xs={3}>
-                <PlansCard />
-                </Grid>
-
-
-                <Grid item xs={3}>
-                <PlansCard />
-                
-                </Grid> */}
-
-              </Grid>
+          </Grid>
+        );
+      })}
+    </Grid>
 
 
     </Box>

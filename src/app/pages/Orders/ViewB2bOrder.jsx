@@ -56,7 +56,7 @@ const handelGoBack = () => {
                 <ArrowBackIosIcon style={{fontSize:"16px",color:"#fff"}}/>
              </div>
              <div style={{display:"flex",justifyContent:"center",alignItems:"center",marginLeft:"15px"}}>
-                    <h3 className="fw-bolder " >{orderData.from.registerAs}  Details</h3>
+                    <h3 className="fw-bolder " >{orderData.form ? orderData.from.registerAs : 'Default'}  Details</h3>
                   </div>
                   </div>
 
@@ -66,44 +66,44 @@ const handelGoBack = () => {
                   <div className="row mb-6">
                     <label className="col-lg-4 fw-bold text-muted">Name</label>
                     <div className="col-lg-8">
-                      <span className="fw-bolder fs-6">{orderData.from.name && orderData.from}</span>
+                      <span className="fw-bolder fs-6">{orderData.from ? orderData.from.name : 'Default Name'}</span>
                     </div>
                   </div>
                   <div className="row mb-6">
                     <label className="col-lg-4 fw-bold text-muted">Email</label>
                     <div className="col-lg-8">
-                      <span className="fw-bolder fs-6">{orderData.from.email}</span>
+                      <span className="fw-bolder fs-6">{orderData.from ?  orderData.from.email : 'Default'}</span>
                     </div>
                   </div>
                   <div className="row mb-6">
                     <label className="col-lg-4 fw-bold text-muted">Phone</label>
                     <div className="col-lg-8">
-                      <span className="fw-bolder fs-6">{orderData.from.mobile}</span>
+                      <span className="fw-bolder fs-6">{orderData.from ? orderData.from.mobile : 'Default'}</span>
                     </div>
                   </div>
                   <div className="row mb-6">
                     <label className="col-lg-4 fw-bold text-muted">Address</label>
                     <div className="col-lg-8">
-                      <span className="fw-bolder fs-6">{orderData.from.Address}</span>
+                      <span className="fw-bolder fs-6">{orderData.from ? orderData.from.Address : 'Default'}</span>
                     </div>
                   </div>
                   <div className="row mb-6">
                     <label className="col-lg-4 fw-bold text-muted">City</label>
                     <div className="col-lg-8">
-                      <span className="fw-bolder fs-6">{orderData.from.city}</span>
+                      <span className="fw-bolder fs-6">{orderData.from ? orderData.from.city : 'Default'}</span>
                     </div>
                   </div>
                   <div className="row mb-6">
                     <label className="col-lg-4 fw-bold text-muted">Country</label>
                     <div className="col-lg-8">
-                      <span className="fw-bolder fs-6">{orderData.from.country}</span>
+                      <span className="fw-bolder fs-6">{orderData.from ? orderData.from.country : 'Default'}</span>
                     </div>
                   </div>
                 </div>
               </div><div className="card mb-5 mb-xl-10" id="kt_profile_details_view">
                   <div className="card-header cursor-pointer">
                     <div className="card-title m-0">
-                      <h3 className="fw-bolder m-0">{orderData.to.registerAs}  Details</h3>
+                      <h3 className="fw-bolder m-0">{orderData.to.registerAs }  Details</h3>
                     </div>
                   </div>
                   <div className="card-body p-9">
@@ -174,7 +174,7 @@ const handelGoBack = () => {
                     <div className="row mb-6">
                       <label className="col-lg-4 fw-bold text-muted">Order From</label>
                       <div className="col-lg-8">
-                        <span className="fw-bolder fs-6">{orderData.from.name}</span>
+                        <span className="fw-bolder fs-6">{orderData.from ? orderData.from.name : 'Default'}</span>
                       </div>
                     </div>
                     <div className="row mb-6">
