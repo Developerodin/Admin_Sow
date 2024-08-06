@@ -188,6 +188,27 @@ export const Vendors = () => {
   const handelUpdate = (id)=>{
     navigate(`edit/${id}`)
   }
+  const handleStatusChange = (event,userId) => {
+    const newStatus = event.target.checked;
+    updateUserStatus(userId,newStatus);
+  };
+
+  const updateUserStatus = async (userId,status1) => {
+    try {
+      const response = await axios.patch(`${Base_url}api/b2b/updateStatus/${userId}`, { status:status1 });
+
+      if (response.status === 200) {
+        // setMessage('User status updated successfully.');
+        setupdate((prev) => prev + 1);
+      } else {
+        // setMessage(`Error: ${response.data.message}`);
+        console.log("err =>",response.data.message)
+      }
+    } catch (err) {
+      // setMessage(`Error: ${err.response ? err.response.data.message : err.message}`);
+      console.log("error  ==>",err)
+    }
+  };
 
   const columns = [
     { name: "Name" },
@@ -209,7 +230,7 @@ export const Vendors = () => {
     address: collector.Address,
     city: collector.city,
     status: collector.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={collector.active} />,
+    active: <Switch checked={collector.status} onChange={(e)=>handleStatusChange(e,collector._id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(collector._id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(collector._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(collector._id)}/>
@@ -222,7 +243,7 @@ export const Vendors = () => {
     address: wholesaler.Address,
     city: wholesaler.city,
     status: wholesaler.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={wholesaler.active} />,
+    active: <Switch checked={wholesaler.status} onChange={(e)=>handleStatusChange(e,wholesaler._id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(wholesaler._id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(wholesaler._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(wholesaler._id)}/>
@@ -235,7 +256,7 @@ export const Vendors = () => {
     address: mediator.Address,
     city: mediator.city,
     status: mediator.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={mediator.active} />,
+    active: <Switch checked={mediator.status} onChange={(e)=>handleStatusChange(e,mediator._id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(mediator._id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(mediator._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(mediator._id)}/>
@@ -248,7 +269,7 @@ export const Vendors = () => {
     address: factory.Address,
     city: factory.city,
     status: factory.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={factory.active} />,
+    active: <Switch checked={factory.status} onChange={(e)=>handleStatusChange(e,factory._id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(factory._id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(factory._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(factory._id)}/>
