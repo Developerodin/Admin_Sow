@@ -41,6 +41,8 @@ import { MarketRates } from '../pages/MarketRates/MarketRates'
 import { CreateRate } from '../pages/MarketRates/CreateRate'
 import { DailyRate } from '../pages/MarketRates/DailyRate'
 import { UpdateDailyRates } from '../pages/MarketRates/UpdateDailyRates'
+import { ExcelMarketRates } from '../pages/MarketRates/ExcelMarketRates'
+import { CreateExcelRates } from '../pages/MarketRates/CreateExcelRates'
 
 
 
@@ -315,6 +317,15 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
+<Route
+          path='excel-market-rates/*'
+          element={
+            <SuspensedView>
+              <ExcelMarketRates />
+            </SuspensedView>
+          }
+        />
+
         <Route
           path='daily-rates/*'
           element={
@@ -340,7 +351,16 @@ const PrivateRoutes = () => {
             <CreateRate />  
           </SuspensedView>
         }
-        />   
+        /> 
+
+<Route
+          path='excel-market-rates/create-excel-rates/*'
+          element={
+            <SuspensedView>
+              <CreateExcelRates />
+            </SuspensedView>
+          }
+        />          
 
 
 

@@ -115,6 +115,16 @@ const SidebarMenuMain = () => {
         title="Daily Rates"
         fontIcon="bi-layers"
       />
+<SidebarMenuItem
+        to="/excel-market-rates"
+        icon={
+          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Excel Rates"
+        fontIcon="bi-layers"
+      />
+
+
     </>
   );
 };

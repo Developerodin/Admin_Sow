@@ -385,27 +385,7 @@ export const EditVendors = () => {
                     />
                   </Grid>
   
-                  <Grid item xs={4}>
-                    <TextField
-                      label="Password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      fullWidth
-                      required
-                    />
-                  </Grid>
-  
-                  <Grid item xs={4}>
-                    <TextField
-                      label="Confirm Password"
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      fullWidth
-                      required
-                    />
-                  </Grid>
+                  
   
                   
   
