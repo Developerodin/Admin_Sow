@@ -132,9 +132,9 @@ export const MarketRates = () => {
     const date = new Date(dateString);
     const day = date.getDate();
     const month = date.getMonth() + 1;
-    const year = date.getFullYear() % 100; // Get last two digits of the year
+    const year = date.getFullYear() % 100; 
   
-    // Add leading zeros if needed
+    
     const formattedDay = day < 10 ? `0${day}` : day;
     const formattedMonth = month < 10 ? `0${month}` : month;
     const formattedYear = year < 10 ? `0${year}` : year;
@@ -152,7 +152,7 @@ export const MarketRates = () => {
           <Box >
           <Box style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <Box>
-            <Typography style={{fontSize:"40px",fontWeight:600,fontFamily:"sans-serif"}} >
+            <Typography style={{fontSize:"40px",fontWeight:600,fontFamily:"sans-serif"}}>
              Market Rates
             </Typography>
             </Box>
