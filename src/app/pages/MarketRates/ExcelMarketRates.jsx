@@ -42,6 +42,16 @@ export const ExcelMarketRates = () => {
     setSelectedItems(items);
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${Base_url}api/excel_data/${id}`);
+      console.log('Data deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting data:', error);
+    }
+  };
+
+
   const latestData = getLatestData();
 
   return (
@@ -66,10 +76,18 @@ export const ExcelMarketRates = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <div style={{ border: "1px solid #e0e0e0", padding: "20px", borderRadius: "20px", position: "relative", cursor: "pointer" }} onClick={() => handleCardClick(latestData.items)}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: "bold", fontSize: "21px" }}>Created Date: {new Date(latestData.createdAt).toLocaleString()}</span>
-                      <span style={{ fontSize: "21px" }}>Total Items: {latestData.items.length}</span>
-                    </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <span style={{ fontWeight: "bold", fontSize: "21px" }}>
+    Created Date: {new Date(latestData.createdAt).toLocaleString()}
+  </span>
+  <span style={{ fontSize: "21px" }}>
+    Total Items: {latestData.items.length}
+  </span>
+  <div>
+    <CancelOutlinedIcon onClick={() => handleDelete(latestData._id)} style={{ fontSize: "24px", color: "crimson", marginRight: "20px", cursor: "pointer" }} />
+    <EditRoundedIcon style={{ fontSize: "24px", color: "crimson", cursor: "pointer" }} />
+  </div>
+</div>
                   </div>
                 </Grid>
               </Grid>
@@ -86,7 +104,7 @@ export const ExcelMarketRates = () => {
                     <TableCell>City</TableCell>
                     <TableCell>Pincode</TableCell>
                     <TableCell>Price</TableCell>
-                    <TableCell>Actions</TableCell>
+                    
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -96,10 +114,7 @@ export const ExcelMarketRates = () => {
                       <TableCell>{item.City}</TableCell>
                       <TableCell>{item.Pincode}</TableCell>
                       <TableCell>{`Rs.${item.Price}`}</TableCell>
-                      <TableCell>
-                        <CancelOutlinedIcon style={{ fontSize: "24px", color: "crimson", marginRight: "20px" }} />
-                        <EditRoundedIcon style={{ fontSize: "24px", color: "crimson" }} />
-                      </TableCell>
+                      
                     </TableRow>
                   ))}
                 </TableBody>

@@ -43,6 +43,7 @@ import { DailyRate } from '../pages/MarketRates/DailyRate'
 import { UpdateDailyRates } from '../pages/MarketRates/UpdateDailyRates'
 import { ExcelMarketRates } from '../pages/MarketRates/ExcelMarketRates'
 import { CreateExcelRates } from '../pages/MarketRates/CreateExcelRates'
+import { MandiRates } from '../pages/MarketRates/MandiRates'
 
 
 
@@ -325,6 +326,15 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
+
+<Route
+          path='mandi-rates/*'
+          element={
+            <SuspensedView>
+              <MandiRates />
+            </SuspensedView>
+          } 
+        />        
 
         <Route
           path='daily-rates/*'

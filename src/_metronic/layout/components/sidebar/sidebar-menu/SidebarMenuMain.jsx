@@ -56,6 +56,14 @@ const SidebarMenuMain = () => {
         title="Vendors Orders"
         fontIcon="bi-layers"
       />
+      <SidebarMenuItem
+        to="/mandi-rates"
+        icon={
+          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Mandi Rates"
+        fontIcon="bi-layers"
+      />
 
       <SidebarMenuItem
         to="/categories"
