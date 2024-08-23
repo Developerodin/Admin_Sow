@@ -78,20 +78,37 @@ export const MarketRates = () => {
   const [Data, setData] = useState([]);
 
 
-  useEffect(() => {
+  // useEffect(() => {
     
-    const fetchPlans = async () => {
-      try {
-        const response = await axios.get(`${Base_url}api/market_rates`); 
-        console.log('Fetched plans:', response.data);
-        setData(response.data);
-      } catch (error) {
-        console.error('Error fetching plans:', error);
-      }
-    };
+  //   const fetchPlans = async () => {
+  //     try {
+  //       const response = await axios.get(`${Base_url}api/market_rates`); 
+  //       console.log('Fetched plans:', response.data);
+  //       setData(response.data);
+  //     } catch (error) {
+  //       console.error('Error fetching plans:', error);
+  //     }
+  //   };
 
-    fetchPlans(); // Call the fetchPlans function when the component mounts
-  }, [update]);
+  //   fetchPlans(); // Call the fetchPlans function when the component mounts
+  // }, [update]);
+
+  const getMandi = async () => {
+    try {
+      const response = await axios.get(`${Base_url}api/mandi`);
+      setData(response.data);
+      console.log("Mandis all", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch mandis:", error);
+    }
+  };
+
+
+  useEffect(() => {
+    getMandi();
+  }, []);
+
 
 
   const handleDelete = async (id) => {
@@ -127,6 +144,11 @@ export const MarketRates = () => {
   const handelAddClick = ()=>{
     navigate("create-rates")
   }
+
+  const handleView = (id) => {
+    navigate(`/market-rates-view/${id}`)
+  }
+
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -195,18 +217,18 @@ export const MarketRates = () => {
             {
                 Data.map((el,index)=>{
                     return    <Grid key={index} item xs={4}>
-                            <div style={{border:"1px solid #e0e0e0",padding:"20px",borderRadius:"20px",position:"relative"}}>
+                            <div onClick={() => handleView(el._id)} style={{border:"1px solid #e0e0e0",padding:"20px",borderRadius:"20px",position:"relative"}}>
                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                    <span style={{fontWeight:"bold",fontSize:"21px"}}>{el.name.toUpperCase()}</span>
-                                    <span style={{fontSize:"21px"}}>Rs.{el.price}</span>
+                                    <span style={{fontWeight:"bold",fontSize:"21px"}}>{el.mandiname}</span>
+                                    <span style={{fontSize:"21px"}}>{el.city}</span>
                                 </div>
                                 <div>
                                     <span style={{fontSize:"16px"}}>{el.category}</span>
                                 </div>
 
                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                    <span style={{fontSize:"14px"}}>Date :{formatDate(el.date)}</span>
-                                    <span style={{fontSize:"14px"}}>Time :{el.time}</span>
+                                    <span style={{fontSize:"14px"}}>Date :{formatDate(el.createdAt)}</span>
+                                    <span style={{fontSize:"14px"}}>{el.state}</span>
                                 </div>
 
                                 <div style={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"20px"}}>

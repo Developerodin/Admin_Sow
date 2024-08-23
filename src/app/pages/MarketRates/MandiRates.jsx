@@ -1,6 +1,6 @@
 import {
   Box, Button, Card, CardContent, Typography,
-  Modal, TextField, MenuItem
+  Modal, TextField, MenuItem ,InputLabel,Select
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
@@ -207,7 +207,7 @@ export const MandiRates = () => {
   const rows = Data.map((el) => {
     return {
       title: el.mandiname || 'N/A',
-      category: el.categories[0] || 'N/A',
+      category: el.categories.length > 0 ? el.categories.join(', ') : 'N/A',
       city: el.city || 'N/A',
       state: el.state || 'N/A',
       delete: <DeleteIcon onClick={() => handleDelete(el._id)} />,
@@ -277,10 +277,14 @@ export const MandiRates = () => {
             fullWidth
             select
             label="Category"
-            name="category"
-            value={mandiData.categories[0] || ''}
+            name="categories"
+            value={mandiData.categories}
             onChange={handleChange}
             sx={{ marginTop: "30px" }}
+            SelectProps={{
+              multiple: true,
+              renderValue: (selected) => selected.join(', '),
+            }}
           >
             {CategoriesData.map((category) => (
               <MenuItem key={category._id} value={category.name}>

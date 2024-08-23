@@ -146,7 +146,7 @@ export const CreateExcelRates = () => {
           alignItems: "center",
           borderRadius: "10px",
           cursor: "pointer",
-          marginRight: "10px" // Add some margin to separate the icon from the text
+          marginRight: "10px" 
         }}
       >
         <ArrowBackIcon sx={{ fontSize: "16px", color: "#fff" }} />
