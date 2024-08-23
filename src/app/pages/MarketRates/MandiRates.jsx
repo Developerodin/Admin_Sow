@@ -17,6 +17,7 @@ export const MandiRates = () => {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
   const [mandiData, setMandiData] = useState({
     mandiname: '',
     city: '',
@@ -282,7 +283,7 @@ export const MandiRates = () => {
             sx={{ marginTop: "30px" }}
           >
             {CategoriesData.map((category) => (
-              <MenuItem key={category._id} value={category._id}>
+              <MenuItem key={category._id} value={category.name}>
                 {category.name}
               </MenuItem>
             ))}
