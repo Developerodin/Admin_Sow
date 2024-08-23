@@ -61,7 +61,7 @@ const SidebarMenuMain = () => {
         icon={
           <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
         }
-        title="Mandi Rates"
+        title="Master Mandi "
         fontIcon="bi-layers"
       />
 

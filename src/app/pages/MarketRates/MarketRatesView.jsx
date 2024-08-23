@@ -8,6 +8,7 @@ import {
   import { Base_url } from '../../Config/BaseUrl';
   import { useParams } from 'react-router-dom';
   import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+  import * as XLSX from 'xlsx';
   
   export const MarketRatesView = () => {
     const { id } = useParams();
@@ -81,29 +82,41 @@ import {
         window.history.back();
       };
   
-    const handleSaveAll = async () => {
-      const categoryPrices = Object.entries(prices).map(([category, price]) => ({
-        category,
-        price,
-      }));
-  
-      try {
-        const result = await axios.post(`${Base_url}api/mandi_rates/category-prices`, {
-          mandi: id,
-          categoryPrices,
-        });
-  
-        if (result.status === 200) {
-          alert('All category prices saved successfully.');
-          handleGetMandiHistory(); // Fetch history again after saving all
-        } else {
-          alert('All category prices saved successfully.');
+      const handleSaveAll = async () => {
+        const categoryPrices = Object.entries(prices).map(([category, price]) => ({
+          category,
+          price,
+        }));
+    
+        try {
+          const result = await axios.post(`${Base_url}api/mandi_rates/category-prices`, {
+            mandi: id,
+            categoryPrices,
+          });
+    
+          if (result.status === 200) {
+            alert('Category price saved successfully.');
+            handleGetMandiHistory();
+          } else {
+            alert('Category price saved successfully.');
+          }
+        } catch (error) {
+          console.error('Error saving category prices:', error);
+          alert(`Error saving category prices: ${error.response ? error.response.data.error : error.message}`);
         }
-      } catch (error) {
-        console.error('Error saving category prices:', error);
-        alert(`Error saving category prices: ${error.response ? error.response.data.error : error.message}`);
-      }
-    };
+      };
+    
+      const handleExport = () => {
+        const categoryPrices = Object.entries(prices).map(([category, price]) => ({
+          category,
+          price,
+        }));
+    
+        const worksheet = XLSX.utils.json_to_sheet(categoryPrices);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Category Prices');
+        XLSX.writeFile(workbook, 'CategoryPrices.xlsx');
+      };
   
     return (
       <Box>
@@ -132,6 +145,7 @@ import {
                   View Market Rates
                 </Typography>
                 </Box>
+                <Box style={{ display: "flex", gap: "20px" }}>
                 <Button 
                   variant="contained" 
                   style={{ marginLeft: "20px", background: "#FF8604" }} 
@@ -140,6 +154,25 @@ import {
                 >
                   Save All
                 </Button>
+                <Button
+        variant="contained"
+        color="secondary"
+        onClick={handleExport}
+        startIcon={<AddIcon />}
+        style={{ marginLeft: '10px' }}
+      >
+        Export
+      </Button>
+      <Button
+        variant="contained"
+        color="secondary"
+        
+        startIcon={<AddIcon />}
+        style={{ marginLeft: '10px' }}
+      >
+        Import
+      </Button>
+      </Box>
               </Box>
             </Box>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', marginTop: "20px" }} />
@@ -166,7 +199,7 @@ import {
                       value={prices[category] || ''}
                       onChange={(e) => handlePriceChange(category, e.target.value)}
                     />
-                    <Button variant="contained" sx={{ background: "#FF8604" }} onClick={() => handleSave(category)}>
+                    <Button variant="contained" sx={{ background: "#FF8604" }} onClick={handleSaveAll}>
                       Save
                     </Button>
                   </Box>
