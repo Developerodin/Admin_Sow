@@ -1,20 +1,20 @@
+import React, { useEffect, useState } from 'react';
 import {
-    Box, Button, Card, CardContent, Typography,
-    TextField
-  } from '@mui/material';
-  import React, { useEffect, useState } from 'react';
-  import AddIcon from '@mui/icons-material/Add';
-  import axios from 'axios';
-  import { Base_url } from '../../Config/BaseUrl';
-  import { useParams } from 'react-router-dom';
-  import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-  import * as XLSX from 'xlsx';
+  Box, Button, Typography, Modal, TextField, Card, CardContent
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import axios from 'axios';
+import { Base_url } from '../../Config/BaseUrl';
+import { useParams } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import * as XLSX from 'xlsx';
   
   export const MarketRatesView = () => {
     const { id } = useParams();
     const [data, setData] = useState({});
     const [prices, setPrices] = useState({});
     const [history, setHistory] = useState([]);
+    const [open, setOpen] = useState(false);
     
     
     const getMandiById = async (id) => {
@@ -117,6 +117,25 @@ import {
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Category Prices');
         XLSX.writeFile(workbook, 'CategoryPrices.xlsx');
       };
+    
+      const handleImport = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
+          const newPrices = {};
+          json.forEach((row) => {
+            newPrices[row.category] = row.price;
+          });
+          setPrices(newPrices);
+          setOpen(false);
+        };
+        reader.readAsArrayBuffer(file);
+      };
   
     return (
       <Box>
@@ -166,12 +185,42 @@ import {
       <Button
         variant="contained"
         color="secondary"
-        
+        onClick={() => setOpen(true)}
         startIcon={<AddIcon />}
         style={{ marginLeft: '10px' }}
       >
         Import
       </Button>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            border: '2px solid #000',
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <Typography id="modal-title" variant="h6" component="h2">
+            Import Excel File
+          </Typography>
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleImport}
+            style={{ marginTop: '20px' }}
+          />
+        </Box>
+      </Modal>
       </Box>
               </Box>
             </Box>
