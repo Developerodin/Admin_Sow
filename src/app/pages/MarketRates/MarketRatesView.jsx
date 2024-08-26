@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Button, Typography, Modal, TextField, Card, CardContent
+  Box, Button, Typography, Modal, TextField, Card, CardContent,
+  Grid
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
@@ -146,19 +147,19 @@ import * as XLSX from 'xlsx';
             <Box sx={{ display: "flex", alignItems: "center" }}> 
               <Box
         onClick={handleBackButton}
-        sx={{
-          backgroundColor: "#7265bd",
-          width: "35px",
-          height: "35px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: "10px",
-          cursor: "pointer",
-          marginRight: "10px" 
-        }}
+        // sx={{
+        //   backgroundColor: "#7265bd",
+        //   width: "35px",
+        //   height: "35px",
+        //   display: "flex",
+        //   justifyContent: "center",
+        //   alignItems: "center",
+        //   borderRadius: "10px",
+        //   cursor: "pointer",
+        //   marginRight: "10px" 
+        // }}
       >
-        <ArrowBackIcon sx={{ fontSize: "16px", color: "#fff" }} />
+        <ArrowBackIcon sx={{ fontSize: "26px", color: "black",marginRight: "10px" }} />
       </Box>
                 <Typography style={{ fontSize: "36px", fontWeight: 600, fontFamily: "sans-serif" }}>
                   View Market Rates
@@ -175,19 +176,19 @@ import * as XLSX from 'xlsx';
                 </Button>
                 <Button
         variant="contained"
-        color="secondary"
+        
         onClick={handleExport}
         startIcon={<AddIcon />}
-        style={{ marginLeft: '10px' }}
+        style={{ marginLeft: '10px', background: "#FF8604" }}
       >
         Export
       </Button>
       <Button
         variant="contained"
-        color="secondary"
+      
         onClick={() => setOpen(true)}
         startIcon={<AddIcon />}
-        style={{ marginLeft: '10px' }}
+        style={{ marginLeft: '10px', background: "#FF8604" }}
       >
         Import
       </Button>
@@ -232,6 +233,7 @@ import * as XLSX from 'xlsx';
                   <Box style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
                     <TextField
                       required
+                      variant="standard"
                       sx={{ flex: 0.5 }}
                       id={`category-${index}`}
                       label="Category Name"
@@ -242,26 +244,39 @@ import * as XLSX from 'xlsx';
                     />
                     <TextField
                       required
+                      variant="standard"
                       sx={{ flex: 0.5 }}
                       id={`price-${index}`}
                       label="Price"
                       value={prices[category] || ''}
                       onChange={(e) => handlePriceChange(category, e.target.value)}
                     />
-                    <Button variant="contained" sx={{ background: "#FF8604" }} onClick={handleSaveAll}>
+                    <Button variant="contained" size='small' sx={{ background: "#FF8604",height:"30px" }} onClick={handleSaveAll}>
                       Save
                     </Button>
                   </Box>
                 </Box>
               ))}
   
+  <div style={{border:"1px solid #e0e0e0",marginTop:"20px"}}>
+
+  </div>
               
   <div>
       {history.length > 0 && (
-        <Box style={{ marginTop: "40px" }}>
-          <Typography variant="h6">Full Mandi Price History</Typography>
+        <Box >
+          <Box sx={{textAlign:"center"}}>
+          <Typography style={{fontSize:"25px"}}>Mandi Price History</Typography>
+          </Box>
+
+          <div style={{border:"1px solid #e0e0e0",marginTop:"20px"}}>
+
+</div>
+          <Box sx={{marginTop:"50px"}}>
+          <Grid container spacing={2} >
           {history.map((entry, idx) => (
-            <Box key={idx} style={{ marginBottom: "20px" }}>
+            <Grid key={idx} item xs={4}> 
+            <Box  style={{border:"1px solid grey",borderRadius:"10px",padding:"10px"}}>
               <Typography variant="subtitle1">
                 {new Date(entry.createdAt).toLocaleString()}
               </Typography>
@@ -271,16 +286,19 @@ import * as XLSX from 'xlsx';
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    padding: "5px 0",
-                    borderBottom: "1px solid #ddd",
                   }}
                 >
+                  
                   <Typography>{categoryPrice.category}</Typography>
                   <Typography>{categoryPrice.price}</Typography>
                 </Box>
               ))}
             </Box>
+            </Grid>
           ))}
+          </Grid>
+          </Box>
+          
         </Box>
       )}
     </div>

@@ -182,8 +182,9 @@ export const MarketRates = () => {
 
             <Box>
               
-              <Button variant="contained" style={{marginLeft:"20px",background:"#FF8604"}} startIcon={<AddIcon />} onClick={handelAddClick}>Add</Button>
-            </Box>
+              {/*<Button variant="contained" style={{marginLeft:"20px",background:"#FF8604"}} startIcon={<AddIcon />} onClick={handelAddClick}>Add</Button>
+           */}
+           </Box>
           </Box>
              
 
