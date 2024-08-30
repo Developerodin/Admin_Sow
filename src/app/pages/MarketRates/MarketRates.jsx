@@ -233,7 +233,7 @@ export const MarketRates = () => {
                                 </div>
 
                                 <div style={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"20px"}}>
-                                <CancelOutlinedIcon onClick={()=>handleDelete(el._id)} style={{fontSize:"24px",color:"crimson",marginRight:"20px"}} />
+                                
                                 <EditRoundedIcon style={{fontSize:"24px",color:"crimson"}} />
                                 
                                 </div>

@@ -26,6 +26,9 @@ import { CreateInvoice } from '../pages/Sales/CreateInvoice'
 import { AddVendors } from '../pages/Vendors/AddVendors'
 import { VendorsView } from '../pages/Vendors/VendorsView'
 import { EditVendors } from '../pages/Vendors/EditVendors'
+import { RequestVendors } from '../pages/Vendors/RequestVendors'
+import { RequestVendorsView } from '../pages/Vendors/RequestVendosView'
+import { EditRequestVendors } from '../pages/Vendors/EditRequestVendors'
 import { B2BOrders } from '../pages/Orders/B2BOrders'
 import { AddB2BOrder } from '../pages/Orders/AddB2BOrder'
 import { AddUsers } from '../pages/Users/AddUsers'
@@ -90,6 +93,33 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <Vendors />
+            </SuspensedView>
+          }
+        />
+
+        <Route
+          path='vendors/request-vendors/*'
+          element={
+            <SuspensedView>
+              <RequestVendors />
+            </SuspensedView>
+          }
+        />
+
+        <Route
+          path='vendors/request-vendors/view/:id'
+          element={
+            <SuspensedView>
+              <RequestVendorsView />
+            </SuspensedView>
+          }
+        />
+
+        <Route
+          path='vendors/request-vendors/edit/:id'
+          element={
+            <SuspensedView>
+              <EditRequestVendors />
             </SuspensedView>
           }
         />

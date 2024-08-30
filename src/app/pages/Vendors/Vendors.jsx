@@ -111,6 +111,8 @@ export const Vendors = () => {
 
   const handelAddVendors = () => [navigate("add")];
 
+  const handelRequest = () => [navigate("request-vendors")];
+
   const fetchB2BUser = async () => {
     try {
       const response = await axios.get(`${Base_url}api/b2b`);
@@ -304,10 +306,12 @@ export const Vendors = () => {
               <Box>
                 <Button
                   variant="outlined"
+                  onClick={handelRequest}
                   style={{
                     backgroundColor: "#FF86041A",
                     color: "#FF8604",
                     borderColor: "#FF8604",
+                    
                   }}
                 >
                   Requests

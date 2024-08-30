@@ -10,6 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { Base_url } from '../../Config/BaseUrl';
 import { GenralTabel } from '../../TabelComponents/GenralTable';
+import { SelectStateModel } from '../../../_metronic/layout/components/Model/SelectStateModel';
 
 export const MandiRates = () => {
   const [Data, setData] = useState([]);
@@ -17,6 +18,7 @@ export const MandiRates = () => {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
   
   const [mandiData, setMandiData] = useState({
     mandiname: '',
@@ -259,20 +261,21 @@ export const MandiRates = () => {
           />
           <TextField
             fullWidth
-            label="City"
-            name="city"
-            value={mandiData.city}
-            onChange={handleChange}
-            sx={{ marginTop: "30px" }}
-          />
-          <TextField
-            fullWidth
             label="State"
             name="state"
             value={mandiData.state}
             onChange={handleChange}
             sx={{ marginTop: "30px" }}
           />
+          <TextField
+            fullWidth
+            label="City"
+            name="city"
+            value={mandiData.city}
+            onChange={handleChange}
+            sx={{ marginTop: "30px" }}
+          />
+          
           <TextField
             fullWidth
             select

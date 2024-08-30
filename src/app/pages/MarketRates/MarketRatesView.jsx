@@ -277,9 +277,7 @@ import * as XLSX from 'xlsx';
           {history.map((entry, idx) => (
             <Grid key={idx} item xs={4}> 
             <Box  style={{border:"1px solid grey",borderRadius:"10px",padding:"10px"}}>
-              <Typography variant="subtitle1">
-                {new Date(entry.createdAt).toLocaleString()}
-              </Typography>
+             
               {entry.categoryPrices.map((categoryPrice) => (
                 <Box
                   key={categoryPrice._id}
@@ -291,8 +289,13 @@ import * as XLSX from 'xlsx';
                   
                   <Typography>{categoryPrice.category}</Typography>
                   <Typography>{categoryPrice.price}</Typography>
-                </Box>
+                  </Box>
               ))}
+                  <Typography variant="subtitle1">
+                {new Date(entry.createdAt).toLocaleString()}
+              </Typography>
+
+               
             </Box>
             </Grid>
           ))}
