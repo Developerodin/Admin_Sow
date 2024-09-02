@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   Grid,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
@@ -17,6 +18,13 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import * as XLSX from "xlsx";
 import icon from "./trend.png";
 import logo from "./scrap-img.jpeg";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import CachedIcon from '@mui/icons-material/Cached';
+
 
 export const MarketRatesView = () => {
   const { id } = useParams();
@@ -24,6 +32,9 @@ export const MarketRatesView = () => {
   const [prices, setPrices] = useState({});
   const [history, setHistory] = useState([]);
   const [open, setOpen] = useState(false);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [filteredHistory, setFilteredHistory] = useState([]);
 
   const getMandiById = async (id) => {
     try {
@@ -46,6 +57,9 @@ export const MarketRatesView = () => {
         `${Base_url}api/mandi_rates/history/mandi/${id}`
       );
       setHistory(response.data);
+      setFilteredHistory(response.data);
+      setStartDate(null);
+      setEndDate(null);
     } catch (error) {
       console.error("Error fetching Mandi history:", error);
     }
@@ -80,7 +94,7 @@ export const MarketRatesView = () => {
 
       if (response.status === 200) {
         alert(`Price for ${category} updated successfully.`);
-        handleGetMandiHistory(); // Fetch history again after saving
+        handleGetMandiHistory(); 
       } else {
         alert(`Failed to update price for ${category}.`);
       }
@@ -94,6 +108,26 @@ export const MarketRatesView = () => {
     }
   };
 
+
+
+  const handleFilter = () => {
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates.");
+      return;
+    }
+
+    const filtered = history.filter((entry) => {
+      
+      const entryDate = new Date(entry.createdAt);
+      
+      return entryDate >= startDate && entryDate <= endDate;
+    });
+    console.log('filter data',filtered);
+
+    setFilteredHistory(filtered);
+  };
+ 
+
   function formatDate(dateString) {
     const date = new Date(dateString);
     const day = date.getDate();
@@ -103,7 +137,7 @@ export const MarketRatesView = () => {
     const minutes = date.getMinutes();
     const formattedDay = day < 10 ? `0${day}` : day;
     const formattedMonth = month < 10 ? `0${month}` : month;
-    const formattedHours = hours % 12 || 12; // Convert to 12-hour format
+    const formattedHours = hours % 12 || 12; 
     const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
     const ampm = hours >= 12 ? 'PM' : 'AM';
   
@@ -175,6 +209,8 @@ export const MarketRatesView = () => {
     };
     reader.readAsArrayBuffer(file);
   };
+
+  const dataToRender = filteredHistory.length > 0 ? filteredHistory : history;
 
   return (
     <Box>
@@ -341,9 +377,46 @@ export const MarketRatesView = () => {
                 <div
                   style={{ border: "1px solid #e0e0e0", marginTop: "20px" }}
                 ></div>
+                <Box
+                  style={{
+                    display: "flex",  
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginTop: "20px",
+                  }}
+                >
+                  <Box style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Start Date"
+                    value={startDate}
+                    onChange={(newValue) => setStartDate(newValue)}
+                    renderInput={(params) => <TextField {...params} />}
+                  />
+                  <DatePicker
+                    label="End Date"
+                    value={endDate}
+                    onChange={(newValue) => setEndDate(newValue)}
+                    renderInput={(params) => <TextField {...params} />}
+                  />
+                </LocalizationProvider>
+                <Button variant="contained"
+                    size="small"
+                    sx={{ background: "#FF8604", height: "30px" }} onClick={handleFilter}>
+                  Filter
+                </Button>
+                <IconButton onClick={handleGetMandiHistory}>
+                  <RefreshIcon />
+                </IconButton>
+
+              </Box>
+                  </Box>
+                  
+
                 <Box sx={{ marginTop: "50px" }}>
                   <Grid container spacing={2}>
-                    {history.map((entry, idx) =>
+                    {dataToRender.map((entry, idx) =>
                       entry.categoryPrices.map((categoryPrice) => (
                         <Grid key={categoryPrice._id} item xs={12} sm={6} md={4}>
                           <Box
@@ -372,7 +445,7 @@ export const MarketRatesView = () => {
                               <Typography variant="subtitle1">
                                 {formatDate(entry.createdAt)}
                               </Typography>
-                              <Box style={{ display: 'flex' }}>
+                              {/* <Box style={{ display: 'flex' }}>
                                 <Typography
                                   variant="subtitle1"
                                   style={{ marginRight: '10px', color: '#e41010' }}
@@ -390,7 +463,7 @@ export const MarketRatesView = () => {
                                     alt="icon"
                                   />
                                 </Box>
-                              </Box>
+                              </Box> */}
                             </Box>
                           </Box>
                         </Grid>
