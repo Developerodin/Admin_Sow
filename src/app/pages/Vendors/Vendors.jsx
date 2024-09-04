@@ -37,7 +37,7 @@ import Checkbox from "@mui/material/Checkbox";
 const orangeTheme = createTheme({
   palette: {
     primary: {
-      main: "#EE731B", // Set the main color to your desired shade of orange
+      main: "#EE731B", 
     },
   },
 });
@@ -200,14 +200,14 @@ export const Vendors = () => {
       const response = await axios.patch(`${Base_url}api/b2b/updateStatus/${userId}`, { status:status1 });
 
       if (response.status === 200) {
-        // setMessage('User status updated successfully.');
+        
         setupdate((prev) => prev + 1);
       } else {
-        // setMessage(`Error: ${response.data.message}`);
+        
         console.log("err =>",response.data.message)
       }
     } catch (err) {
-      // setMessage(`Error: ${err.response ? err.response.data.message : err.message}`);
+      
       console.log("error  ==>",err)
     }
   };

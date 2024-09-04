@@ -9,6 +9,7 @@ import {
   CardContent,
   Grid,
   IconButton,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
@@ -24,6 +25,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CachedIcon from '@mui/icons-material/Cached';
+import SearchIcon from "@mui/icons-material/Search";
 
 
 export const MarketRatesView = () => {
@@ -386,6 +388,19 @@ export const MarketRatesView = () => {
                     marginTop: "20px",
                   }}
                 >
+                  {/* <TextField
+                label="Search"
+                id="outlined-start-adornment"
+                size="small"
+                sx={{ m: 1, width: "250px" }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              /> */}
                   <Box style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker

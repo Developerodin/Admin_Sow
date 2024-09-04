@@ -48,6 +48,7 @@ import { ExcelMarketRates } from '../pages/MarketRates/ExcelMarketRates'
 import { CreateExcelRates } from '../pages/MarketRates/CreateExcelRates'
 import { MandiRates } from '../pages/MarketRates/MandiRates'
 import { MarketRatesView } from '../pages/MarketRates/MarketRatesView'
+import { CreateNotification } from '../pages/Notification/CreateNotification'
 
 
 
@@ -410,7 +411,16 @@ const PrivateRoutes = () => {
               <CreateExcelRates />
             </SuspensedView>
           }
-        />          
+        />  
+
+<Route
+          path='notification/*'
+          element={
+            <SuspensedView>
+              <CreateNotification />
+            </SuspensedView>
+          }
+        />                
 
 
 

@@ -9,6 +9,7 @@ import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import NotificationsOutlined from '@mui/icons-material/NotificationsOutlined';
 import { AnalyticsOutlined } from "@mui/icons-material";
 
 const SidebarMenuMain = () => {
@@ -64,6 +65,17 @@ const SidebarMenuMain = () => {
         title="Master Mandi "
         fontIcon="bi-layers"
       />
+
+     <SidebarMenuItem
+        to="/notification"
+        icon={
+          <NotificationsOutlined style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Notification "
+        fontIcon="bi-layers"
+      />
+
+      
 
       <SidebarMenuItem
         to="/categories"
