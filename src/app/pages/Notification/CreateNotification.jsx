@@ -116,11 +116,11 @@ export const CreateNotification = () => {
               select
             >
               <MenuItem value="all">All</MenuItem>
-              {b2bVendors.map((option) => (
+              {/* {b2bVendors.map((option) => (
                 <MenuItem key={option._id} value={option._id}>
                   {option.name} {option.registerAs}
                 </MenuItem>
-              ))}
+              ))} */}
             </TextField>
               
             <TextField

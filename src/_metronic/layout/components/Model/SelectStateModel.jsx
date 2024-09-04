@@ -5,11 +5,9 @@ import CloseIcon from '@mui/icons-material/Close';
 export const SelectStateModel = ({
   modalVisible,
   setModalVisible,
-  handleComplete,
-  mandiData,
-  handleChange,
-  states,
-  cities
+  handleSelect,
+  options,
+  label,
 }) => {
   return (
     <Modal
@@ -22,20 +20,20 @@ export const SelectStateModel = ({
           <IconButton onClick={() => setModalVisible(false)} sx={{ alignSelf: "flex-end", color: "#65be34" }}>
             <CloseIcon />
           </IconButton>
-          <TextField fullWidth label="State" name="state" value={mandiData.state} onChange={handleChange} select sx={{ marginTop: "20px" }}>
+          <TextField
+            fullWidth
+            label={label}
+            onChange={handleSelect}
+            select
+            sx={{ marginTop: "20px" }}
+          >
             <MenuItem value=""><em>None</em></MenuItem>
-            {states.map((state, index) => (
-              <MenuItem key={index} value={state}>{state}</MenuItem>
-            ))}
-          </TextField>
-          <TextField fullWidth label="City" name="city" value={mandiData.city} onChange={handleChange} select sx={{ marginTop: "20px" }}>
-            <MenuItem value=""><em>None</em></MenuItem>
-            {cities.map((city, index) => (
-              <MenuItem key={index} value={city}>{city}</MenuItem>
+            {options.map((option, index) => (
+              <MenuItem key={index} value={option}>{option}</MenuItem>
             ))}
           </TextField>
           <Box sx={{ display: "flex", justifyContent: "right", alignItems: "center", marginTop: "15px" }}>
-            <Button variant='contained' size='small' sx={{ backgroundColor: "black" }} onClick={handleComplete}>Submit</Button>
+            <Button variant='contained' size='small' sx={{ backgroundColor: "black" }} onClick={() => setModalVisible(false)}>Submit</Button>
           </Box>
         </Box>
       </Fade>

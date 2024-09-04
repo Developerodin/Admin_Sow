@@ -1,6 +1,6 @@
 import {
   Box, Button, Card, CardContent, Typography,
-  Modal, TextField, MenuItem ,InputLabel,Select
+  Modal, TextField, MenuItem ,InputLabel,Select,FormControl
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,6 +26,56 @@ export const MandiRates = () => {
     state: '',
     categories: []
   });
+
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [apiData, setApiData] = useState([]); 
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${Base_url}api/unifiedPinCode`);
+        setApiData(response.data.data); 
+        const uniqueStates = [...new Set(response.data.data.map(item => item.state_name))];
+        setStates(uniqueStates);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const getUniqueCitiesByName = (addresses) => {
+    const uniqueCities = {};
+    addresses.forEach(address => {
+      if (!uniqueCities[address.city_name]) {
+        uniqueCities[address.city_name] = address.city_name;
+      }
+    });
+    return Object.values(uniqueCities);
+  };
+
+  const handleStateChange = (e) => {
+    const selectedState = e.target.value;
+    setMandiData(prev => ({ ...prev, state: selectedState, city: '' }));
+
+    
+    const filteredCities = getUniqueCitiesByName(
+      apiData.filter(item => item.state_name === selectedState)
+    );
+    
+    setCities(filteredCities);
+  };
+
+  const handleCityChange = (e) => {
+    const selectedCity = e.target.value;
+    setMandiData(prev => ({ ...prev, city: selectedCity }));
+  };
+
+  const handleComplete = () => {
+    console.log("Selected State and City:", mandiData);
+  };
 
   
   const handleAddClick = () => {
@@ -259,22 +309,29 @@ export const MandiRates = () => {
             onChange={handleChange}
             sx={{ marginTop: "30px" }}
           />
-          <TextField
-            fullWidth
-            label="State"
-            name="state"
-            value={mandiData.state}
-            onChange={handleChange}
-            sx={{ marginTop: "30px" }}
-          />
-          <TextField
-            fullWidth
-            label="City"
-            name="city"
-            value={mandiData.city}
-            onChange={handleChange}
-            sx={{ marginTop: "30px" }}
-          />
+      <FormControl fullWidth sx={{ marginTop: "30px" }}>
+        <InputLabel>State</InputLabel>
+        <Select
+          value={mandiData.state}
+          onChange={handleStateChange} // Trigger state change
+        >
+          {states.map((state, index) => (
+            <MenuItem key={index} value={state}>{state}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <FormControl fullWidth sx={{ marginTop: "30px" }} disabled={!mandiData.state}>
+        <InputLabel>City</InputLabel>
+        <Select
+          value={mandiData.city}
+          onChange={handleCityChange} // Trigger city change
+        >
+          {cities.map((city, index) => (
+            <MenuItem key={index} value={city}>{city}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
           
           <TextField
             fullWidth
@@ -302,6 +359,11 @@ export const MandiRates = () => {
           </Box>
         </Box>
       </Modal>
+
+     
+
+    
+    
     </Box>
   );
 };
