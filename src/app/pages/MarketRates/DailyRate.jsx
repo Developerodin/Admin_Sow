@@ -21,6 +21,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Base_url } from '../../Config/BaseUrl';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export const DailyRate = () => {
   const navigate = useNavigate();
@@ -232,19 +233,29 @@ export const DailyRate = () => {
                           style={{
                             position: 'absolute',
                             bottom: '20px',
-                            left: '50%',
+                            right: '0%',
                             transform: 'translateX(-50%)',
                             background: 'white',
-                            padding: '5px 10px',
+                            
                           }}
                         >
-                          <Button
+                          <div style={{display:'flex',flexDirection:'row',alignItems:'center',justifyContent:'center'}}>
+
+                          <DeleteIcon
+                            style={{ marginRight: '30px', color: '#c62828',fontSize:'24px' }}
+                            onClick={() => handleDelete(el._id)}
+                          />
+                          <div
                             onClick={() => handleReadMore(el.text)}
                             variant="contained"
                             color="primary"
+                            style={{ cursor: 'pointer', color: 'white',backgroundColor:'#1976d2',padding:'5px 10px',borderRadius:'5px' }}
                           >
-                            Read More
-                          </Button>
+                            Read More...
+                          </div>
+                          </div>
+                          
+                          
                         </div>
                       )}
                     </div>
