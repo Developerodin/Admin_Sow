@@ -26,6 +26,8 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CachedIcon from '@mui/icons-material/Cached';
 import SearchIcon from "@mui/icons-material/Search";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 
 export const MarketRatesView = () => {
@@ -37,7 +39,10 @@ export const MarketRatesView = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [filteredHistory, setFilteredHistory] = useState([]);
-
+  const [open2, setOpen2] = useState(false);
+const [selectedCategory, setSelectedCategory] = useState(null);
+const [selectedPrice, setSelectedPrice] = useState('');
+const [update, setupdate] = useState(0);
   const getMandiById = async (id) => {
     try {
       const response = await axios.get(`${Base_url}api/mandi/${id}`);
@@ -70,7 +75,7 @@ export const MarketRatesView = () => {
   useEffect(() => {
     getMandiById(id);
     handleGetMandiHistory();
-  }, [id]);
+  }, [id,update]);
 
   const handlePriceChange = (category, value) => {
     setPrices((prevPrices) => ({
@@ -79,37 +84,61 @@ export const MarketRatesView = () => {
     }));
   };
 
-  const handleSave = async (category) => {
-    const newPrice = prices[category];
+    const handleUpdatePrice = async () => {
+    const newPrice = selectedPrice.trim(); // Trim the price to remove any leading/trailing spaces
     if (!newPrice) {
       alert("Price cannot be empty.");
       return;
     }
-
+  
     try {
       const response = await axios.put(
-        `${Base_url}api/mandi_rates/category-prices/${id}/${category}`,
+        `${Base_url}api/mandi_rates/category-prices/${id}/${selectedCategory}`,
         {
           newPrice,
         }
       );
-
+  
       if (response.status === 200) {
-        alert(`Price for ${category} updated successfully.`);
-        handleGetMandiHistory(); 
+        alert(`Price for ${selectedCategory} updated successfully.`);
+        handleGetMandiHistory();
+        handleClose(); // Close the modal after successful update
       } else {
-        alert(`Failed to update price for ${category}.`);
+        alert(`Failed to update price for ${selectedCategory}.`);
       }
     } catch (error) {
       console.error("Failed to save price:", error);
       alert(
-        `Error updating price for ${category}: ${
+        `Error updating price for ${selectedCategory}: ${
           error.response ? error.response.data.error : error.message
         }`
       );
     }
   };
 
+
+  const handleOpen = (category, price) => {
+    setSelectedCategory(category);
+    setSelectedPrice(price);
+    setOpen2(true);
+  };
+  
+  const handleClose = () => {
+    setOpen2(false);
+    setSelectedCategory(null);
+    setSelectedPrice('');
+  };
+
+const handleDelete = async (category) => {
+
+  try {
+    await axios.delete(`${Base_url}api/mandi_rates/category-prices/${id}/${category}`);
+    handleGetMandiHistory();
+    setupdate((prev)=>prev+1)
+  } catch (error) {
+    console.error('Error submitting plan details:', error);
+  }
+};
 
 
   const handleFilter = () => {
@@ -150,12 +179,20 @@ export const MarketRatesView = () => {
     window.history.back();
   };
 
-  const handleSaveAll = async () => {
-    const categoryPrices = Object.entries(prices).map(([category, price]) => ({
-      category,
-      price,
-    }));
-
+   const handleSaveAll = async () => {
+    
+    const categoryPrices = Object.entries(prices)
+      .filter(([category, price]) => price.trim() !== "")
+      .map(([category, price]) => ({
+        category,
+        price,
+      }));
+  
+    if (categoryPrices.length === 0) {
+      alert("No category prices to save.");
+      return;
+    }
+  
     try {
       const result = await axios.post(
         `${Base_url}api/mandi_rates/category-prices`,
@@ -164,12 +201,16 @@ export const MarketRatesView = () => {
           categoryPrices,
         }
       );
-
+  
       if (result.status === 200) {
         alert("Category price saved successfully.");
         handleGetMandiHistory();
+        setupdate((prev)=>prev+1)
       } else {
         alert("Category price saved successfully.");
+        handleGetMandiHistory();
+        setupdate((prev)=>prev+1)
+        
       }
     } catch (error) {
       console.error("Error saving category prices:", error);
@@ -243,7 +284,7 @@ export const MarketRatesView = () => {
                   fontFamily: "sans-serif",
                 }}
               >
-                View Market Rates
+                {data.mandiname}
               </Typography>
             </Box>
             <Box style={{ display: "flex", gap: "20px" }}>
@@ -460,6 +501,13 @@ export const MarketRatesView = () => {
                               <Typography variant="subtitle1">
                                 {formatDate(entry.createdAt)}
                               </Typography>
+                                <Box style={{gap:20}}>
+                                {/* <DeleteIcon onClick={() => handleDelete(categoryPrice.category)}/> */}
+                                <EditRoundedIcon
+                  style={{ color: "#000" }}
+                  onClick={() => handleOpen(categoryPrice.category, categoryPrice.price)}
+                />
+                                  </Box>
                               {/* <Box style={{ display: 'flex' }}>
                                 <Typography
                                   variant="subtitle1"
@@ -492,6 +540,40 @@ export const MarketRatesView = () => {
         </Box>
       </CardContent>
     </Card>
+       <Modal
+      open={open2}
+      onClose={handleClose}
+      aria-labelledby="modal-title"
+      aria-describedby="modal-description"
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          border: '1px solid #000',
+          borderRadius: '10px',
+          p: 4,
+        }}
+      >
+        <Typography id="modal-title" variant="h6" component="h2">
+          {selectedCategory}
+        </Typography>
+        <TextField
+          fullWidth
+          margin="normal"
+          label="Price"
+          value={selectedPrice}
+          onChange={(e) => setSelectedPrice(e.target.value)}
+        />
+        <Button variant="contained" color="primary" onClick={handleUpdatePrice}>
+          Update
+        </Button>
+      </Box>
+    </Modal>
   </Box>
 );
 };

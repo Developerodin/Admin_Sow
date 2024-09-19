@@ -1,6 +1,11 @@
 import {
   Box, Button, Card, CardContent, Typography,
-  Modal, TextField, MenuItem ,InputLabel,Select,FormControl
+  Modal, TextField, MenuItem ,InputLabel,Select,FormControl,Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Checkbox, ListItemText,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
@@ -18,7 +23,9 @@ export const MandiRates = () => {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  
+  const [open2, setOpen2] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [update, setupdate] = useState(0);
   
   const [mandiData, setMandiData] = useState({
     mandiname: '',
@@ -143,7 +150,7 @@ export const MandiRates = () => {
       
       setMandiData((prevData) => ({
         ...prevData,
-        categories: [value] 
+        categories: typeof value === 'string' ? value.split(',') : value,
       }));
     } else {
       setMandiData((prevData) => ({
@@ -186,11 +193,30 @@ export const MandiRates = () => {
     try {
       const response = await axios.delete(`${Base_url}api/mandi/${id}`);
       console.log("Mandi deleted", response.data);
+      setupdate((prev) => prev + 1);
       return response.data;
     } catch (error) {
       console.error('Failed to delete Mandi:', error);
     }
   };
+
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setOpen2(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteMandi(deleteId);
+    }
+    handleClose2();
+  };
+
+  const handleClose2 = () => {
+    setOpen2(false);
+    setDeleteId(null);
+  };
+
 
   const createMandi = async (mandiData) => {
     try {
@@ -262,7 +288,7 @@ export const MandiRates = () => {
       category: el.categories.length > 0 ? el.categories.join(', ') : 'N/A',
       city: el.city || 'N/A',
       state: el.state || 'N/A',
-      delete: <DeleteIcon onClick={() => handleDelete(el._id)} />,
+      delete: <DeleteIcon onClick={() => handleDeleteClick(el._id)} />,
       update: <BorderColor onClick={() => handleEditClick(el._id)} />
     };
   });
@@ -333,25 +359,26 @@ export const MandiRates = () => {
         </Select>
       </FormControl>
           
-          <TextField
-            fullWidth
-            select
-            label="Category"
-            name="categories"
-            value={mandiData.categories}
-            onChange={handleChange}
-            sx={{ marginTop: "30px" }}
-            SelectProps={{
-              multiple: true,
-              renderValue: (selected) => selected.join(', '),
-            }}
-          >
-            {CategoriesData.map((category) => (
-              <MenuItem key={category._id} value={category.name}>
-                {category.name}
-              </MenuItem>
-            ))}
-          </TextField>
+      <TextField
+      fullWidth
+      select
+      label="Category"
+      name="categories"
+      value={mandiData.categories}
+      onChange={handleChange}
+      sx={{ marginTop: "30px" }}
+      SelectProps={{
+        multiple: true,
+        renderValue: (selected) => selected.join(', '),
+      }}
+    >
+      {CategoriesData.map((category) => (
+        <MenuItem key={category._id} value={category.name}>
+          <ListItemText primary={category.name} />
+          <Checkbox checked={mandiData.categories.indexOf(category.name) > -1} />
+        </MenuItem>
+      ))}
+    </TextField>
           <Box sx={{ marginTop: "30px", display: "flex", justifyContent: "flex-end" }}>
             <Button variant="contained" color="primary" onClick={handleSubmit}>
               {isEditing ? 'Update' : 'Submit'}
@@ -359,6 +386,27 @@ export const MandiRates = () => {
           </Box>
         </Box>
       </Modal>
+      <Dialog
+          open={open2}
+          onClose={handleClose2}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this Mandi?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose2} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
 
      
 
