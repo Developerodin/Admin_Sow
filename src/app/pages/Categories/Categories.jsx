@@ -100,7 +100,7 @@ export const Categories = () => {
   } 
   const [value, setValue] = useState(0);
   const [searchInput, setSearchInput] = useState('');
-  const [update, setUpdate] = useState([]);
+  const [update, setUpdate] = useState(0);
   const [CategoriesData, setCategoriesData] = useState([]);
   const [categoryAddData, setCategoryAddData] = useState({
     name: '',
@@ -232,6 +232,24 @@ export const Categories = () => {
     setDeleteId(null);
   };
 
+  const updateTradableStatus = async (categoryId, tradable) => {
+    try {
+      const response = await axios.patch(`${Base_url}api/category/update-tradable/${categoryId}`, {
+        tradable: tradable, // pass true or false
+      });
+  
+      if (response.status === 200) {
+        // console.log('Tradable status updated:', response.data);
+        setUpdate((prev) =>prev+1)
+        // You can handle further actions here, like showing a success message
+      } else {
+        console.error('Error updating tradable status:', response.data);
+      }
+    } catch (error) {
+      console.error('Error making API request:', error);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (deleteId) {
       await deleteCategory(deleteId);
@@ -242,7 +260,7 @@ export const Categories = () => {
   const columns = [
     { name: 'Category' },
     { name: 'Sub Categories' },
-    
+    {name: 'Tradable'},
     { name: "View Sub Categories" },
     { name: "Update" },
     { name: "Delete" },
@@ -252,6 +270,7 @@ export const Categories = () => {
     return {
       Category: el.name,
       "Sub Categories": el.sub_category.length,
+      Tradable: el.tradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,
       View: <RemoveRedEyeIcon onClick={()=>handelView(el._id)} />,
       Update: <BorderColor onClick={()=>handelEditCategoryOpen(el)} />,
       Delete: <DeleteIcon onClick={()=>handleDeleteClick(el._id)} />,
