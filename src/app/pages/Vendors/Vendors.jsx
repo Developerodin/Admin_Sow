@@ -29,10 +29,11 @@ import { InfoCard } from "../../../Components/InfoCard";
 import Grid from "@mui/material/Grid";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Base_url } from "../../Config/BaseUrl";
+import { Base_url, Base_url2 } from "../../Config/BaseUrl";
 import { toAbsoluteUrl } from "../../../_metronic/helpers";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import Checkbox from "@mui/material/Checkbox";
+
 
 const orangeTheme = createTheme({
   palette: {
@@ -113,40 +114,24 @@ export const Vendors = () => {
 
   const handelRequest = () => [navigate("request-vendors")];
 
-  const fetchB2BUser = async () => {
+   const fetchB2BUser = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/b2b`);
-
-      if (response.status === 200) {
-        const fetchedB2BUsers = response.data;
-        // setCategories(fetchedCategories);
-
-        console.log("Fetch users == >", fetchedB2BUsers);
-
-        setVendorsData(fetchedB2BUsers);
-        const MediatorsData = fetchedB2BUsers.filter((el) => {
-          return el.registerAs === "Mediators";
-        });
-
-        const WholesalersData = fetchedB2BUsers.filter((el) => {
-          return el.registerAs === "Wholesalers";
-        });
-
-        const FactoryData = fetchedB2BUsers.filter((el) => {
-          return el.registerAs === "Factory";
-        });
-
-        const CollectorsData = fetchedB2BUsers.filter((el) => {
-          return el.registerAs === "Collectors";
-        });
-
-        setMediatorsData(MediatorsData);
-        setWholesalersData(WholesalersData);
-        setFactoryData(FactoryData);
-        setCollectorsData(CollectorsData);
-      } else {
-        console.error("Error fetching categories:", response.statusText);
-      }
+      const response = await axios.get(`${Base_url2}b2bUser`);
+      const fetchedB2BUsers = response.data.results;
+  
+      console.log("Fetch users == 125>", fetchedB2BUsers);
+  
+      setVendorsData(fetchedB2BUsers);
+  
+      const MediatorsData = fetchedB2BUsers.filter((el) => el.registerAs === "Mediator");
+      const WholesalersData = fetchedB2BUsers.filter((el) => el.registerAs === "Wholesaler");
+      const FactoryData = fetchedB2BUsers.filter((el) => el.registerAs === "Factory");
+      const CollectorsData = fetchedB2BUsers.filter((el) => el.registerAs === "Retailer");
+  
+      setMediatorsData(MediatorsData);
+      setWholesalersData(WholesalersData);
+      setFactoryData(FactoryData);
+      setCollectorsData(CollectorsData);
     } catch (error) {
       console.error("Error:", error.message);
     }
@@ -180,6 +165,7 @@ export const Vendors = () => {
   };
 
   useEffect(() => {
+    console.log("useEffect called");
     fetchB2BUser();
   }, [update]);
 
@@ -216,8 +202,8 @@ export const Vendors = () => {
     { name: "Name" },
     { name: "Email" },
     { name: "Phone" },
-    { name: "Address" },
-    { name: "City" },
+    // { name: "Address" },
+    // { name: "City" },
     { name: "Status" },
     { name: "Active" },
     { name: "View" },
@@ -228,12 +214,12 @@ export const Vendors = () => {
   const rows = CollectorsData.map((collector, index) => ({
     name: collector.name,
     email: collector.email,
-    phone: collector.mobile,
-    address: collector.Address,
-    city: collector.city,
+    phone: collector.phoneNumber,
+    // address: collector.Address,
+    // city: collector.city,
     status: collector.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={collector.status} onChange={(e)=>handleStatusChange(e,collector._id)} />,
-    view: <RemoveRedEyeIcon onClick={()=>handelView(collector._id)}/>,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(collector.id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(collector._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(collector._id)}/>
   }));
@@ -241,12 +227,12 @@ export const Vendors = () => {
   const rows2 = WholesalersData.map((wholesaler, index) => ({
     name: wholesaler.name,
     email: wholesaler.email,
-    phone: wholesaler.mobile,
-    address: wholesaler.Address,
-    city: wholesaler.city,
+    phone: wholesaler.phoneNumber,
+    // address: wholesaler.Address,
+    // city: wholesaler.city,
     status: wholesaler.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={wholesaler.status} onChange={(e)=>handleStatusChange(e,wholesaler._id)} />,
-    view: <RemoveRedEyeIcon onClick={()=>handelView(wholesaler._id)}/>,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(wholesaler.id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(wholesaler._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(wholesaler._id)}/>
   }));
@@ -254,12 +240,12 @@ export const Vendors = () => {
   const rows3 = MediatorsData.map((mediator, index) => ({
     name: mediator.name,
     email: mediator.email,
-    phone: mediator.mobile,
-    address: mediator.Address,
-    city: mediator.city,
+    phone: mediator.phoneNumber,
+    // address: mediator.Address,
+    // city: mediator.city,
     status: mediator.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={mediator.status} onChange={(e)=>handleStatusChange(e,mediator._id)} />,
-    view: <RemoveRedEyeIcon onClick={()=>handelView(mediator._id)}/>,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(mediator.id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(mediator._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(mediator._id)}/>
   }));
@@ -267,12 +253,12 @@ export const Vendors = () => {
   const rows4 = FactoryData.map((factory, index) => ({
     name: factory.name,
     email: factory.email,
-    phone: factory.mobile,
-    address: factory.Address,
-    city: factory.city,
+    phone: factory.phoneNumber,
+    // address: factory.Address,
+    // city: factory.city,
     status: factory.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
     active: <Switch checked={factory.status} onChange={(e)=>handleStatusChange(e,factory._id)} />,
-    view: <RemoveRedEyeIcon onClick={()=>handelView(factory._id)}/>,
+    view: <RemoveRedEyeIcon onClick={()=>handelView(factory.id)}/>,
     update: <BorderColorIcon onClick={() => handelUpdate(factory._id)}/>,
     delete: <DeleteIcon onClick={() => handleDeleteClick(factory._id)}/>
   }));

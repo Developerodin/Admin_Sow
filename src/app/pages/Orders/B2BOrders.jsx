@@ -24,7 +24,7 @@ import { InfoCard } from "../../../Components/InfoCard";
 import Grid from "@mui/material/Grid";
 import { OrdersCard } from "../../../Components/OrdersCard";
 import { useNavigate } from "react-router-dom";
-import { Base_url } from "../../Config/BaseUrl";
+import { Base_url, Base_url2 } from "../../Config/BaseUrl";
 import axios from "axios";
 import { B2BOrdersCard } from "../../../Components/B2BOrderCard";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
@@ -146,7 +146,7 @@ export const B2BOrders = () => {
   // Function to get all B2B orders
   const getOrders = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/b2b_orders`);
+      const response = await axios.get(`${Base_url2}b2bOrder`);
       console.log("data",response.data);
       setOrderData(response.data);
       return response.data;
@@ -243,13 +243,13 @@ export const B2BOrders = () => {
 
   const rows = OrdersData.map((el, index) => {
     return {
-      'Order From': el.from ? el.from.name : 'Default Name',
-      'Order To': el.to && el.to.name ? el.to.name : 'Unknown',
-      Category: el.details && el.details.category ? el.details.category : 'Unknown',
-      Quantity: el.details && el.details.quantity ? el.details.quantity : 'Unknown',
-      Amount: el.totalAmount,
-      Status: el.status,
-      'Order Date': new Date(el.orderDate).toLocaleDateString(),
+      'Order From': el.orderBy ? el.orderBy.name : 'Default Name',
+      'Order To': el.orderTo && el.orderTo.name ? el.orderTo.name : 'Unknown',
+      Category: el.category && el.category ? el.category : 'Unknown',
+      Quantity: el.weight && el.weight ? el.weight : 'Unknown',
+      Amount: el.totalPrice,
+      Status: el.orderStatus,
+      'Order Date': new Date(el.createdAt).toLocaleDateString(),
       View: <RemoveRedEyeIcon onClick={() => handleViewOrderClick(el._id)} />,
       Update: <BorderColorIcon onClick={() => handleUpdateOrderClick(el._id)}  />,
       Delete: <DeleteIcon onClick={() => handleDeleteClick(el._id)} />,

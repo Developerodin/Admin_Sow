@@ -10,7 +10,7 @@ import { Link, useParams } from "react-router-dom";
 import { Dropdown1 } from "../../../_metronic/partials";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Base_url } from "../../Config/BaseUrl";
+import { Base_url, Base_url2 } from "../../Config/BaseUrl";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -49,28 +49,25 @@ export const VendorsView = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(`${Base_url}api/b2b/${id}`);
-        const responseData = response.data;
-
-        if (
-          responseData &&
-          responseData.categories &&
-          Array.isArray(responseData.categories)
-        ) {
-          setCategories(responseData.categories);
-        } else {
-          console.error("Unexpected response data structure:", responseData);
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const response = await axios.get(`${Base_url2}b2bUser/${id}`);
+          const responseData = response.data;
+          console.log("Response Data ========>", responseData.category);
+  
+          if (responseData && Array.isArray(responseData.category)) {
+            setCategories(responseData.category);
+          } else {
+            console.error("Unexpected response data structure:", responseData);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    fetchData();
-  }, [id]);
+      };
+  
+      fetchData();
+    }, [id]);
 
   const handleCategoryChange = (event) => {
     const categoryName = event.target.value;
@@ -572,7 +569,7 @@ export const VendorsView = () => {
             </MenuItem>
             {categories.map((category) => (
               <MenuItem
-                key={category.name}
+                key={category.id }
                 value={category.name}
                 sx={{
                   color: "black",
@@ -665,7 +662,7 @@ export const VendorsView = () => {
                 </tr>
               </thead>
               <tbody>
-                {selectedCategory.sub_category.length > 0 ? (
+                {selectedCategory?.sub_category?.length > 0 ? (
                   selectedCategory.sub_category.map((subCategory, index) => (
                     <tr key={index}>
                       <td style={thTdStyle}>{subCategory.name}</td>
@@ -813,7 +810,7 @@ export const VendorsView = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/b2b/${id}`);
+      const response = await axios.get(`${Base_url2}b2bUser/${id}`);
 
       if (response.status === 200) {
         console.log("DAta =====>", response.data);
@@ -1030,7 +1027,7 @@ export const VendorsView = () => {
 
             <div className="col-lg-8">
               <span className="fw-bolder fs-6 text-dark">
-                {userData && userData.mobile}
+                {userData && userData.phoneNumber}
               </span>
             </div>
           </div>
@@ -1050,7 +1047,7 @@ export const VendorsView = () => {
 
             <div className="col-lg-8">
               <span className="fw-bolder fs-6 text-dark">
-                {userData && userData.Address},{userData && userData.pincode}
+                {userData && userData.Address}{userData && userData.pincode}
               </span>
             </div>
           </div>

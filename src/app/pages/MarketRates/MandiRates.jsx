@@ -13,7 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import BorderColor from '@mui/icons-material/BorderColor';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
-import { Base_url } from '../../Config/BaseUrl';
+import { Base_url, Base_url2 } from '../../Config/BaseUrl';
 import { GenralTabel } from '../../TabelComponents/GenralTable';
 import { SelectStateModel } from '../../../_metronic/layout/components/Model/SelectStateModel';
 
@@ -122,7 +122,7 @@ export const MandiRates = () => {
   
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/category`);
+      const response = await axios.get(`${Base_url2}categories`);
       setCategoriesData(response.data);
       console.log("Categories all", response.data);
       return response.data;
@@ -134,7 +134,7 @@ export const MandiRates = () => {
   
   const getMandi = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/mandi`);
+      const response = await axios.get(`${Base_url2}mandi`);
       setData(response.data);
       console.log("Mandis all", response.data);
       return response.data;
@@ -191,7 +191,7 @@ export const MandiRates = () => {
   
   const deleteMandi = async (id) => {
     try {
-      const response = await axios.delete(`${Base_url}api/mandi/${id}`);
+      const response = await axios.delete(`${Base_url2}mandi/${id}`);
       console.log("Mandi deleted", response.data);
       setupdate((prev) => prev + 1);
       return response.data;
@@ -220,7 +220,7 @@ export const MandiRates = () => {
 
   const createMandi = async (mandiData) => {
     try {
-      const response = await axios.post(`${Base_url}api/mandi`, mandiData);
+      const response = await axios.post(`${Base_url2}mandi`, mandiData);
       console.log("Mandi created", response.data);
       return response.data;
     } catch (error) {
@@ -238,7 +238,7 @@ export const MandiRates = () => {
 
   const updateMandi = async (id, mandiData) => {
     try {
-      const response = await axios.put(`${Base_url}api/mandi/${id}`, mandiData);
+      const response = await axios.put(`${Base_url2}mandi/${id}`, mandiData);
       console.log("Mandi updated", response.data);
       return response.data;
     } catch (error) {
@@ -248,7 +248,7 @@ export const MandiRates = () => {
 
   const getMandiById = async (id) => {
     try {
-      const response = await axios.get(`${Base_url}api/mandi/${id}`);
+      const response = await axios.get(`${Base_url2}mandi/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Failed to retrieve Mandi with ID ${id}:`, error);
