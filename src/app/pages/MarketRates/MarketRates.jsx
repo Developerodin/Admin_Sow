@@ -40,6 +40,7 @@ export const MarketRates = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [value, setValue] = useState(0);
+  const [mandiRatesData, setMandiRatesData] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -123,6 +124,22 @@ export const MarketRates = () => {
       setError(true); // Set error to true if there is an error
     }
   };
+
+
+  const getMandiRates = async () => {
+    try {
+      const response = await axios.get(`${Base_url2}mandiRates`);
+      console.log("Mandi Rates", response.data);
+      setMandiRatesData(response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch mandi rates:", error);
+    }
+  };
+
+  useEffect(() => {
+    getMandiRates();
+  }, []);
 
   useEffect(() => {
     mandiData.forEach(mandi => {
