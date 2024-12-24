@@ -327,54 +327,62 @@ export const MarketRates = () => {
 
             {/* Display the filtered mandi data in a table format */}
             <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Sr No</TableCell>
-                    <TableCell>State</TableCell>
-                    <TableCell>City</TableCell>
-                    <TableCell>Mandi Name</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Sub Category</TableCell>
-                    <TableCell>Price</TableCell>
-                    <TableCell>Price Difference</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(() => {
-                    let serialNumber = 1;
-                    return filteredMandiData.map((mandi) => (
-                      mandi.categories.map((category, catIndex) => (
-                        <React.Fragment key={`${mandi._id}-${catIndex}`}>
-                          <TableRow>
-                            <TableCell>{serialNumber++}</TableCell>
-                            <TableCell>{mandi.state || "N/A"}</TableCell>
-                            <TableCell>{mandi.city || "N/A"}</TableCell>
-                            <TableCell>{mandi.mandiname || "N/A"}</TableCell>
-                            <TableCell>{category || "N/A"}</TableCell>
-                            <TableCell>{"N/A"}</TableCell>
-                            <TableCell>{"N/A"}</TableCell>
-                            <TableCell>{"N/A"}</TableCell>
-                          </TableRow>
-                          {subCategoryData[category] && subCategoryData[category].map((subCategory, subCatIndex) => (
-                            <TableRow key={`${mandi._id}-${catIndex}-${subCatIndex}`}>
-                              <TableCell>{serialNumber++}</TableCell>
-                              <TableCell>{mandi.state || "N/A"}</TableCell>
-                              <TableCell>{mandi.city || "N/A"}</TableCell>
-                              <TableCell>{mandi.mandiname || "N/A"}</TableCell>
-                              <TableCell>{category || "N/A"}</TableCell>
-                              <TableCell>{subCategory.name || "N/A"}</TableCell>
-                              <TableCell>{subCategory.price || "N/A"}</TableCell>
-                              <TableCell>{subCategory.priceDifference || "N/A"}</TableCell>
-                            </TableRow>
-                          ))}
-                        </React.Fragment>
-                      ))
-                    ));
-                  })()}
-                </TableBody>
-              </Table>
-            </TableContainer>
+  <Table sx={{ minWidth: 650 }} aria-label="simple table">
+    <TableHead>
+      <TableRow>
+        <TableCell>Sr No</TableCell>
+        <TableCell>State</TableCell>
+        <TableCell>City</TableCell>
+        <TableCell>Mandi Name</TableCell>
+        <TableCell>Category</TableCell>
+        <TableCell>Sub Category</TableCell>
+        <TableCell>Price</TableCell>
+        <TableCell>Price Difference</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {(() => {
+        let serialNumber = 1; // Initialize serial number
+        return filteredMandiData.flatMap((mandi) =>
+          mandi.categories.flatMap((category, catIndex) => {
+            const subcategories = subCategoryData[category]; // Fetch subcategories for the category
+
+            // If subcategories exist, render each subcategory row
+            if (subcategories && subcategories.length > 0) {
+              return subcategories.map((subCategory, subCatIndex) => (
+                <TableRow key={`${mandi._id}-${catIndex}-${subCatIndex}`}>
+                  <TableCell>{serialNumber++}</TableCell>
+                  <TableCell>{mandi.state || "N/A"}</TableCell>
+                  <TableCell>{mandi.city || "N/A"}</TableCell>
+                  <TableCell>{mandi.mandiname || "N/A"}</TableCell>
+                  <TableCell>{category || "N/A"}</TableCell>
+                  <TableCell>{subCategory.name || "N/A"}</TableCell>
+                  <TableCell>{subCategory.price || "N/A"}</TableCell>
+                  <TableCell>{subCategory.priceDifference || "N/A"}</TableCell>
+                </TableRow>
+              ));
+            }
+
+            // If no subcategories, render a single row for the category
+            return (
+              <TableRow key={`${mandi._id}-${catIndex}`}>
+                <TableCell>{serialNumber++}</TableCell>
+                <TableCell>{mandi.state || "N/A"}</TableCell>
+                <TableCell>{mandi.city || "N/A"}</TableCell>
+                <TableCell>{mandi.mandiname || "N/A"}</TableCell>
+                <TableCell>{category || "N/A"}</TableCell>
+                <TableCell>{"N/A"}</TableCell>
+                <TableCell>{"N/A"}</TableCell>
+                <TableCell>{"N/A"}</TableCell>
+              </TableRow>
+            );
+          })
+        );
+      })()}
+    </TableBody>
+  </Table>
+</TableContainer>
+
           </Box>
         </CardContent>
       </Card>
