@@ -134,21 +134,15 @@ export const MarketRates = () => {
 
   const handleExport = () => {
     const dataToExport = [];
-    let serialNumber = 1;
+    let serialNumber = 1; // Initialize serial number
+  
     filteredMandiData.forEach((mandi) => {
-      mandi.categories.forEach((category) => {
-        dataToExport.push({
-          "Sr No": serialNumber++,
-          State: mandi.state || "N/A",
-          City: mandi.city || "N/A",
-          "Mandi Name": mandi.mandiname || "N/A",
-          Category: category || "N/A",
-          "Sub Category": "N/A",
-          Price: "N/A",
-          "Price Difference": "N/A",
-        });
-        if (subCategoryData[category]) {
-          subCategoryData[category].forEach((subCategory) => {
+      mandi.categories.forEach((category, catIndex) => {
+        const subcategories = subCategoryData[category]; // Fetch subcategories for the category
+  
+        // If subcategories exist, add each subcategory row to the export data
+        if (subcategories && subcategories.length > 0) {
+          subcategories.forEach((subCategory, subCatIndex) => {
             dataToExport.push({
               "Sr No": serialNumber++,
               State: mandi.state || "N/A",
@@ -156,39 +150,119 @@ export const MarketRates = () => {
               "Mandi Name": mandi.mandiname || "N/A",
               Category: category || "N/A",
               "Sub Category": subCategory.name || "N/A",
-              Price: subCategory.price || "N/A",
+              Price: subCategory.newPrice || "N/A", // Use newPrice if available
               "Price Difference": subCategory.priceDifference || "N/A",
             });
+          });
+        } else {
+          // If no subcategories, add a single row for the category
+          dataToExport.push({
+            "Sr No": serialNumber++,
+            State: mandi.state || "N/A",
+            City: mandi.city || "N/A",
+            "Mandi Name": mandi.mandiname || "N/A",
+            Category: category || "N/A",
+            "Sub Category": "N/A",
+            Price: "N/A",
+            "Price Difference": "N/A",
           });
         }
       });
     });
-
+  
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Market Rates");
     XLSX.writeFile(workbook, "MarketRates.xlsx");
   };
 
-  const handleImport = (event) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet);
-      const newMandiData = json.map((row) => ({
-        state: row.State,
-        city: row.City,
-        mandiname: row["Mandi Name"],
-        categories: [row.Category],
-      }));
-      setMandiData(newMandiData);
-    };
-    reader.readAsArrayBuffer(file);
-  };
+          const handleImport = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
+          const newPrices = {};
+          json.forEach((row) => {
+            const category = row.Category;
+            const subCategory = row["Sub Category"];
+            const price = row.Price;
+            const priceDifference = row["Price Difference"];
+            if (!newPrices[category]) {
+              newPrices[category] = {};
+            }
+            newPrices[category][subCategory] = { price, priceDifference };
+          });
+      
+          // Update the prices in the subCategoryData state and log the changes
+          const changes = [];
+          setSubCategoryData((prevData) => {
+            const updatedData = { ...prevData };
+            Object.keys(newPrices).forEach((category) => {
+              if (updatedData[category]) {
+                updatedData[category] = updatedData[category].map((subCategory) => {
+                  if (newPrices[category][subCategory.name]) {
+                    const newPrice = newPrices[category][subCategory.name].price;
+                    const newPriceDifference = newPrices[category][subCategory.name].priceDifference;
+                    const mandi = mandiData.find(mandi => mandi.categories.includes(category));
+                    changes.push({
+                      mandiId: mandi ? mandi._id : "N/A",
+                      category,
+                      subCategory: subCategory.name,
+                      price: newPrice,
+                      priceDifference: newPriceDifference,
+                    });
+                    return {
+                      ...subCategory,
+                      newPrice,
+                      priceDifference: newPriceDifference,
+                    };
+                  }
+                  return subCategory;
+                });
+              }
+            });
+            return updatedData;
+          });
+      
+          // Log the changes
+          console.log("Updated Prices:", changes);
+      
+          // Call handleSaveAll to update the backend
+          handleSaveAll(changes);
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      
+      const handleSaveAll = async (changes) => {
+        
+      
+        if (changes.length === 0) {
+          alert("No category prices to save.");
+          return;
+        }
+      
+        try {
+          const result = await axios.post(
+            `${Base_url2}mandiRates/mandi-prices`,
+            {
+              mandiPrices: changes,
+            }
+          );
+
+          console.log("Category prices saved successfully:", result);
+      
+          if (result.status === 200) {
+            alert("Category prices saved successfully.");
+          }
+        } catch (error) {
+          console.error("Error saving category prices:", error);
+          alert("Failed to save category prices.");
+        }
+      };
 
   function formatDate(dateString) {
     const date = new Date(dateString);
@@ -327,62 +401,61 @@ export const MarketRates = () => {
 
             {/* Display the filtered mandi data in a table format */}
             <TableContainer component={Paper}>
-  <Table sx={{ minWidth: 650 }} aria-label="simple table">
-    <TableHead>
-      <TableRow>
-        <TableCell>Sr No</TableCell>
-        <TableCell>State</TableCell>
-        <TableCell>City</TableCell>
-        <TableCell>Mandi Name</TableCell>
-        <TableCell>Category</TableCell>
-        <TableCell>Sub Category</TableCell>
-        <TableCell>Price</TableCell>
-        <TableCell>Price Difference</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {(() => {
-        let serialNumber = 1; // Initialize serial number
-        return filteredMandiData.flatMap((mandi) =>
-          mandi.categories.flatMap((category, catIndex) => {
-            const subcategories = subCategoryData[category]; // Fetch subcategories for the category
+              <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Sr No</TableCell>
+                    <TableCell>State</TableCell>
+                    <TableCell>City</TableCell>
+                    <TableCell>Mandi Name</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Sub Category</TableCell>
+                    <TableCell>Price</TableCell>
+                    <TableCell>Price Difference</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(() => {
+                    let serialNumber = 1; // Initialize serial number
+                    return filteredMandiData.flatMap((mandi) =>
+                      mandi.categories.flatMap((category, catIndex) => {
+                        const subcategories = subCategoryData[category]; // Fetch subcategories for the category
 
-            // If subcategories exist, render each subcategory row
-            if (subcategories && subcategories.length > 0) {
-              return subcategories.map((subCategory, subCatIndex) => (
-                <TableRow key={`${mandi._id}-${catIndex}-${subCatIndex}`}>
-                  <TableCell>{serialNumber++}</TableCell>
-                  <TableCell>{mandi.state || "N/A"}</TableCell>
-                  <TableCell>{mandi.city || "N/A"}</TableCell>
-                  <TableCell>{mandi.mandiname || "N/A"}</TableCell>
-                  <TableCell>{category || "N/A"}</TableCell>
-                  <TableCell>{subCategory.name || "N/A"}</TableCell>
-                  <TableCell>{subCategory.price || "N/A"}</TableCell>
-                  <TableCell>{subCategory.priceDifference || "N/A"}</TableCell>
-                </TableRow>
-              ));
-            }
+                        // If subcategories exist, render each subcategory row
+                        if (subcategories && subcategories.length > 0) {
+                          return subcategories.map((subCategory, subCatIndex) => (
+                            <TableRow key={`${mandi._id}-${catIndex}-${subCatIndex}`}>
+                              <TableCell>{serialNumber++}</TableCell>
+                              <TableCell>{mandi.state || "N/A"}</TableCell>
+                              <TableCell>{mandi.city || "N/A"}</TableCell>
+                              <TableCell>{mandi.mandiname || "N/A"}</TableCell>
+                              <TableCell>{category || "N/A"}</TableCell>
+                              <TableCell>{subCategory.name || "N/A"}</TableCell>
+                              <TableCell>{ "N/A"}</TableCell>
+                              <TableCell>{"N/A"}</TableCell>
+                            </TableRow>
+                          ));
+                        }
 
-            // If no subcategories, render a single row for the category
-            return (
-              <TableRow key={`${mandi._id}-${catIndex}`}>
-                <TableCell>{serialNumber++}</TableCell>
-                <TableCell>{mandi.state || "N/A"}</TableCell>
-                <TableCell>{mandi.city || "N/A"}</TableCell>
-                <TableCell>{mandi.mandiname || "N/A"}</TableCell>
-                <TableCell>{category || "N/A"}</TableCell>
-                <TableCell>{"N/A"}</TableCell>
-                <TableCell>{"N/A"}</TableCell>
-                <TableCell>{"N/A"}</TableCell>
-              </TableRow>
-            );
-          })
-        );
-      })()}
-    </TableBody>
-  </Table>
-</TableContainer>
-
+                        // If no subcategories, render a single row for the category
+                        return (
+                          <TableRow key={`${mandi._id}-${catIndex}`}>
+                            <TableCell>{serialNumber++}</TableCell>
+                            <TableCell>{mandi.state || "N/A"}</TableCell>
+                            <TableCell>{mandi.city || "N/A"}</TableCell>
+                            <TableCell>{mandi.mandiname || "N/A"}</TableCell>
+                            <TableCell>{category || "N/A"}</TableCell>
+                            <TableCell>{"N/A"}</TableCell>
+                            <TableCell>{"N/A"}</TableCell>
+                            <TableCell>{"N/A"}</TableCell>
+                          </TableRow>
+                        );
+                      })
+                    );
+                  })()}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Box>
         </CardContent>
       </Card>
