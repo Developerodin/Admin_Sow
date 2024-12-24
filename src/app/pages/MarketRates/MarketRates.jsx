@@ -176,66 +176,52 @@ export const MarketRates = () => {
     XLSX.writeFile(workbook, "MarketRates.xlsx");
   };
 
-          const handleImport = (event) => {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet);
-          const newPrices = {};
-          json.forEach((row) => {
-            const category = row.Category;
-            const subCategory = row["Sub Category"];
-            const price = row.Price;
-            const priceDifference = row["Price Difference"];
-            if (!newPrices[category]) {
-              newPrices[category] = {};
-            }
-            newPrices[category][subCategory] = { price, priceDifference };
-          });
-      
-          // Update the prices in the subCategoryData state and log the changes
-          const changes = [];
-          setSubCategoryData((prevData) => {
-            const updatedData = { ...prevData };
-            Object.keys(newPrices).forEach((category) => {
-              if (updatedData[category]) {
-                updatedData[category] = updatedData[category].map((subCategory) => {
-                  if (newPrices[category][subCategory.name]) {
-                    const newPrice = newPrices[category][subCategory.name].price;
-                    const newPriceDifference = newPrices[category][subCategory.name].priceDifference;
-                    const mandi = mandiData.find(mandi => mandi.categories.includes(category));
-                    changes.push({
-                      mandiId: mandi ? mandi._id : "N/A",
-                      category,
-                      subCategory: subCategory.name,
-                      price: newPrice,
-                      priceDifference: newPriceDifference,
-                    });
-                    return {
-                      ...subCategory,
-                      newPrice,
-                      priceDifference: newPriceDifference,
-                    };
-                  }
-                  return subCategory;
-                });
-              }
-            });
-            return updatedData;
-          });
-      
-          // Log the changes
-          console.log("Updated Prices:", changes);
-      
-          // Call handleSaveAll to update the backend
-          handleSaveAll(changes);
+  const handleImport = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+  
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+  
+      // Get the first sheet's name and its content
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+  
+      // Convert the sheet into JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  
+      // Transform the data into the required format
+      const transformedData = jsonData.map((row) => {
+        const category = row.Category;
+        const subCategory = row["Sub Category"];
+        const price = row.Price || "N/A";
+        const priceDifference = row["Price Difference"] || "N/A";
+  
+        // Lookup mandiId based on the category
+        const mandi = mandiData.find((mandi) => mandi.categories.includes(category));
+        const mandiId = mandi ? mandi._id : "N/A";
+  
+        // Return the transformed object
+        return {
+          mandiId,
+          category,
+          subCategory,
+          price,
+          priceDifference,
         };
-        reader.readAsArrayBuffer(file);
-      };
+      });
+  
+      // Log the transformed data
+      // console.log("Transformed Data:", transformedData);
+      handleSaveAll(transformedData)
+      // Set the transformed data into your state or send to the backend
+      // setExcelData(transformedData); 
+      // Assuming `setExcelData` is your state setter
+    };
+  
+    reader.readAsArrayBuffer(file);
+  };
       
       const handleSaveAll = async (changes) => {
         
