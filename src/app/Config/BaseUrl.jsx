@@ -8,4 +8,4 @@ export const BASE_URL="https://chargesol-backend.onrender.com/api"
 export const Base_url = "https://sow-backend-dpjh.onrender.com/"
 
 // export const Base_url2 = "http://localhost:3000/v1/"
-export const Base_url2 = "https://sow-backend-v1.onrender.com/v1/"
+export const Base_url2 = "https://apis.scraponwheels.com/v1/"
