@@ -26,6 +26,7 @@ import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { GenralTabel } from "../../TabelComponents/GenralTable";
 
 export const MarketRates = () => {
   const navigate = useNavigate();
@@ -40,7 +41,18 @@ export const MarketRates = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [value, setValue] = useState(0);
-  const [mandiRatesData, setMandiRatesData] = useState([]);
+  const [row,setRows] = useState([]);
+
+
+  const column=[
+   {name:"Sno"},
+   {name:"State"},
+   {name:"City"},
+   {name:"Category"},
+   {name:"SubCategory"},
+   {name:"Price"},
+   {name:"Price Diffrence"},
+]
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -54,7 +66,7 @@ export const MarketRates = () => {
     try {
       const response = await axios.get(`${Base_url2}mandi`);
       setMandiData(response.data);
-      console.log("Mandis all", response.data);
+      // console.log("Mandis all", response.data);
       return response.data;
     } catch (error) {
       console.error("Failed to fetch mandis:", error);
@@ -79,6 +91,8 @@ export const MarketRates = () => {
       }
     };
 
+    getAllData();
+
     fetchData();
   }, []);
 
@@ -102,7 +116,7 @@ export const MarketRates = () => {
   };
 
   const getSubCategoriesByCategoryName = async (categoryName) => {
-    console.log('Getting SubCategories', categoryName);
+    // console.log('Getting SubCategories', categoryName);
     try {
       const response = await axios.post(`${Base_url2}subcategories/category`, {
         categoryName: categoryName
@@ -115,7 +129,7 @@ export const MarketRates = () => {
       }));
       setLoading(false); // Set loading to false after data is fetched
     } catch (error) {
-      console.log("Error getting subcategory ==>", error);
+      // console.log("Error getting subcategory ==>", error);
       setSubCategoryData((prevData) => ({
         ...prevData,
         [categoryName]: []
@@ -124,22 +138,6 @@ export const MarketRates = () => {
       setError(true); // Set error to true if there is an error
     }
   };
-
-
-  const getMandiRates = async () => {
-    try {
-      const response = await axios.get(`${Base_url2}mandiRates`);
-      console.log("Mandi Rates", response.data);
-      setMandiRatesData(response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Failed to fetch mandi rates:", error);
-    }
-  };
-
-  useEffect(() => {
-    getMandiRates();
-  }, []);
 
   useEffect(() => {
     mandiData.forEach(mandi => {
@@ -256,7 +254,7 @@ export const MarketRates = () => {
             }
           );
 
-          console.log("Category prices saved successfully:", result);
+          // console.log("Category prices saved successfully:", result);
       
           if (result.status === 200) {
             alert("Category prices saved successfully.");
@@ -279,6 +277,60 @@ export const MarketRates = () => {
 
     return `${formattedDay}:${formattedMonth}:${formattedYear}`;
   }
+
+  const getAllData = async () => {
+    try {
+      const response = await axios.get(`${Base_url2}mandiRates`);
+      const allData = response.data;
+      console.log("get DAta ===>",allData);
+      const latestData = Object.values(
+        allData.reduce((acc, curr) => {
+          const mandi = curr.mandi;
+          if (mandi && mandi._id) {
+            const mandiId = mandi._id;
+            if (
+              !acc[mandiId] ||
+              new Date(acc[mandiId].updatedAt) < new Date(curr.updatedAt)
+            ) {
+              acc[mandiId] = curr;
+            }
+          }
+          return acc;
+        }, {})
+      );
+      
+      const filteredData = latestData.filter(
+        (item) => item.mandi && item.mandi.mandiname
+      );
+      const tableRows = allData.flatMap((item, index) =>
+        item.categoryPrices.map((price, subIndex) => ({
+          Sno: index + 1, // Serial number for each row
+          State: item.mandi.state,
+          City: item.mandi.city,
+          Category: price.category,
+          SubCategory: price.subCategory,
+          Price: price.price,
+          "Price Difference": price.priceDifference.difference, // Include additional fields as needed
+        }))
+      );
+      
+      // Log the resulting rows for the table
+      console.log("Formatted Table Rows:", tableRows);
+      
+      setRows(tableRows);
+      // setLoading(false);
+
+      // for (const item of filteredData) {
+      //   for (const priceItem of item.categoryPrices) {
+      //     fetchPriceDifference(item.mandi._id, priceItem.category);
+      //   }
+      // }
+    } catch (error) {
+      console.error("Error fetching all data:", error);
+    }
+  };
+
+ 
 
   return (
     <Box>
@@ -370,6 +422,9 @@ export const MarketRates = () => {
               </Button>
             </Box>
           </Box>
+         <Box>
+          <h4>Select a State to downlode perticular Excel</h4>
+         </Box>
           <Box>
             <InputLabel>State</InputLabel>
             <Select
@@ -401,64 +456,8 @@ export const MarketRates = () => {
                 Selected State: {selectedState}
               </Typography>
             )}
-
-            {/* Display the filtered mandi data in a table format */}
-            <TableContainer component={Paper}>
-              <Table sx={{ minWidth: 650 }} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Sr No</TableCell>
-                    <TableCell>State</TableCell>
-                    <TableCell>City</TableCell>
-                    <TableCell>Mandi Name</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Sub Category</TableCell>
-                    <TableCell>Price</TableCell>
-                    <TableCell>Price Difference</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(() => {
-                    let serialNumber = 1; // Initialize serial number
-                    return filteredMandiData.flatMap((mandi) =>
-                      mandi.categories.flatMap((category, catIndex) => {
-                        const subcategories = subCategoryData[category]; // Fetch subcategories for the category
-
-                        // If subcategories exist, render each subcategory row
-                        if (subcategories && subcategories.length > 0) {
-                          return subcategories.map((subCategory, subCatIndex) => (
-                            <TableRow key={`${mandi._id}-${catIndex}-${subCatIndex}`}>
-                              <TableCell>{serialNumber++}</TableCell>
-                              <TableCell>{mandi.state || "N/A"}</TableCell>
-                              <TableCell>{mandi.city || "N/A"}</TableCell>
-                              <TableCell>{mandi.mandiname || "N/A"}</TableCell>
-                              <TableCell>{category || "N/A"}</TableCell>
-                              <TableCell>{subCategory.name || "N/A"}</TableCell>
-                              <TableCell>{ "N/A"}</TableCell>
-                              <TableCell>{"N/A"}</TableCell>
-                            </TableRow>
-                          ));
-                        }
-
-                        // If no subcategories, render a single row for the category
-                        return (
-                          <TableRow key={`${mandi._id}-${catIndex}`}>
-                            <TableCell>{serialNumber++}</TableCell>
-                            <TableCell>{mandi.state || "N/A"}</TableCell>
-                            <TableCell>{mandi.city || "N/A"}</TableCell>
-                            <TableCell>{mandi.mandiname || "N/A"}</TableCell>
-                            <TableCell>{category || "N/A"}</TableCell>
-                            <TableCell>{"N/A"}</TableCell>
-                            <TableCell>{"N/A"}</TableCell>
-                            <TableCell>{"N/A"}</TableCell>
-                          </TableRow>
-                        );
-                      })
-                    );
-                  })()}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            
+              <GenralTabel rows={row} column={column} />
           </Box>
         </CardContent>
       </Card>
