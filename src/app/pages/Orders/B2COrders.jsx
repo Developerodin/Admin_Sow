@@ -7,11 +7,16 @@ import {
   InputAdornment,
   Tabs,
   Typography,
-  TextField,Dialog,
+  TextField,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
@@ -30,11 +35,7 @@ import { B2BOrdersCard } from "../../../Components/B2BOrderCard";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
 import DeleteIcon from "@mui/icons-material/Delete";
-import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";    
-  
-
-
-
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 
 const style = {
   position: "absolute",
@@ -42,7 +43,6 @@ const style = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   minWidth: "500px",
-
   bgcolor: "background.paper",
   borderRadius: "10px",
   boxShadow: 24,
@@ -88,7 +88,7 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
-export const B2BOrders = () => {
+export const B2COrders = () => {
   const navigate = useNavigate();
   const tableStyle = {
     width: "100%",
@@ -114,6 +114,8 @@ export const B2BOrders = () => {
     setSelectedOrderData(null);
   };
   const [SelectedOrderData, setSelectedOrderData] = useState(null);
+  const [users, setUsers] = useState([]); // Ensure initial state is an empty array
+  const [selectedUsers, setSelectedUsers] = useState({}); // State to store selected user for each order
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -146,14 +148,38 @@ export const B2BOrders = () => {
   // Function to get all B2B orders
   const getOrders = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2bOrder`);
-      console.log("data",response.data);
+      const response = await axios.get(`${Base_url2}b2cOrder`);
+      console.log("data", response.data);
       setOrderData(response.data);
       return response.data;
     } catch (error) {
       throw error.response.data;
     }
   };
+
+  const getB2bUsers = async () => {
+    try {
+      const response = await axios.get(`${Base_url2}b2bUser`);
+      console.log("data  =>", response.data);
+      setUsers(response.data.results); // Update state with fetched users
+      return response.data;
+    } catch (error) {
+      throw error.response.data;
+    }
+  };
+
+    const updateAssignTo = async (orderId, userId) => {
+    try {
+      const response = await axios.put(`${Base_url2}b2cOrder/assignOrderToUser`, {
+        orderId,
+        userId,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response.data;
+    }
+  };
+
 
   // Function to get a B2B order by ID
   const getOrderById = async (id) => {
@@ -192,10 +218,6 @@ export const B2BOrders = () => {
     }
   };
 
-  const handelB2BOrderClick = () => {
-    navigate("/orders/b2c-orders");
-  };
-  
   const handleDeleteClick = (ID) => {
     setDeleteId(ID);
     setOpen1(true);
@@ -217,7 +239,6 @@ export const B2BOrders = () => {
     handleCloseone();
   };
 
-
   const handelOrderClick = () => {
     navigate("add");
   };
@@ -226,42 +247,71 @@ export const B2BOrders = () => {
     navigate(`/b2b_orders/view/${orderId}`);
   };
 
+  const handleUserChange = (orderId) => async (event) => {
+    const userId = event.target.value;
+    try {
+      await updateAssignTo(orderId, userId);
+      setSelectedUsers({
+        ...selectedUsers,
+        [orderId]: userId,
+      });
+      console.log(`Order ${orderId} assigned to user ${userId}`);
+    } catch (error) {
+      console.error("Failed to assign order to user:", error);
+    }
+  };
+
   useEffect(() => {
     getOrders();
+    getB2bUsers();
   }, []);
 
-  
-
   const columns = [
-    { name: 'Order From' },
-    { name: 'Order To' },
-    { name: 'Category' },
-    { name: 'Quantity' },
-    { name: 'Amount' },
-    { name: 'Status' },
-    { name: 'Order Date' },
-    { name: 'View' },
-    { name: 'Update' },
-    { name: 'Delete' },
+    { name: "Order From" },
+    { name: "Order To" },
+    { name: "Assign To" },
+    { name: "Category" },
+    { name: "Quantity" },
+    { name: "Amount" },
+    { name: "Status" },
+    { name: "Order Date" },
+    { name: "View" },
+    { name: "Update" },
+    { name: "Delete" },
   ];
 
   const rows = OrdersData.map((el, index) => {
     return {
-      'Order From': el.orderBy ? el.orderBy.name : 'Default Name',
-      'Order To': el.orderTo && el.orderTo.name ? el.orderTo.name : 'Unknown',
-      Category: el.category && el.category ? el.category : 'Unknown',
-      Quantity: el.weight && el.weight ? el.weight : 'Unknown',
-      Amount: el.totalPrice,
+      "Order From": el.orderBy ? el.orderBy.firstName : "Default Name",
+      "Order To": el.orderTo && el.orderTo.name ? el.orderTo.name : "Unknown",
+      "Assign To": (
+                <FormControl fullWidth>
+          <InputLabel id={`assign-to-label-${index}`}>Assign To</InputLabel>
+          <Select
+            labelId={`assign-to-label-${index}`}
+            id={`assign-to-select-${index}`}
+            value={selectedUsers[el._id] || ""}
+            label="Assign To"
+            onChange={handleUserChange(el._id)}
+          >
+            {Array.isArray(users) && users.map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      ),
+      Category: el.items.map((item) => item.category).join(", "),
+      Quantity: el.items.map((item) => item.weight).join(", "),
+      Amount: el.items.map((item) => item.totalPrice).join(", "),
       Status: el.orderStatus,
-      'Order Date': new Date(el.createdAt).toLocaleDateString(),
+      "Order Date": new Date(el.createdAt).toLocaleDateString(),
       View: <RemoveRedEyeIcon onClick={() => handleViewOrderClick(el._id)} />,
-      Update: <BorderColorIcon onClick={() => handleUpdateOrderClick(el._id)}  />,
+      Update: <BorderColorIcon onClick={() => handleUpdateOrderClick(el._id)} />,
       Delete: <DeleteIcon onClick={() => handleDeleteClick(el._id)} />,
     };
   });
-
-
-
 
   return (
     <Box>
@@ -283,7 +333,7 @@ export const B2BOrders = () => {
                     fontFamily: "sans-serif",
                   }}
                 >
-                  Vendors Orders
+                  B2C Orders
                 </Typography>
               </Box>
 
@@ -295,17 +345,6 @@ export const B2BOrders = () => {
                   onClick={handelOrderClick}
                 >
                   Add Order
-                </Button>
-              </Box>
-
-              <Box>
-                <Button
-                  variant="contained"
-                  style={{ marginLeft: "20px", background: "#FF8604" }}
-                  startIcon={<AddIcon />}
-                  onClick={handelB2BOrderClick}
-                >
-                  B2C Order
                 </Button>
               </Box>
             </Box>
@@ -361,8 +400,6 @@ export const B2BOrders = () => {
                 alignItems: "center",
               }}
             >
-              {/* <TextField fullWidth label="Search" /> */}
-
               <TextField
                 label="Search"
                 id="outlined-start-adornment"
@@ -393,57 +430,8 @@ export const B2BOrders = () => {
             </Box>
           </Box>
 
-          {/* <Box sx={{ borderBottom: 1, borderColor: 'divider',marginTop:"20px" }}>
-      <ThemeProvider theme={orangeTheme}>
-        <Tabs value={value} onChange={handleChangetabs} aria-label="basic tabs example" textColor="primary"
-        indicatorColor="primary"
-       
-        >
-          <Tab label="Orders" {...a11yProps(0)}  style={{fontSize:"16px",fontWeight:600,color:`${value === 0 ? "#EE731B" : "#555555"}`,marginRight:"10px",borderRadius:"10px",marginBottom:"10px"}}/>
-          <Tab label="Completed" {...a11yProps(1)} style={{fontSize:"16px",fontWeight:600,color:`${value === 1 ? "#EE731B" : "#555555"}`,marginRight:"10px",borderRadius:"10px",marginBottom:"10px"}} />
-         
-        </Tabs>
-        </ThemeProvider>
-      </Box>
-
-      <Box sx={{display:"flex",marginTop:"20px",justifyContent:"left",alignItems:"center"}}>
-       
-            
-            <TextField
-          label="Search"
-          id="outlined-start-adornment"
-          size='small'
-          sx={{ m: 1, width: '250px' }}
-          InputProps={{
-            startAdornment: <InputAdornment position="start"><SearchIcon/></InputAdornment>,
-          }}
-          value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-        />
-
-<Button variant="contained" style={{marginLeft:"20px",background:"black",height:"33px"}} startIcon={<FilterListIcon />} >A-Z</Button>
-            </Box> */}
-          
-
-         
-
-          <Box sx={{ width: '100%',marginTop:"20px",height:"70vh",overflow:"auto" }}>
-      
-
-      
-
-      <CustomTabPanel value={value} index={0}>
-       
-
-         {/* <Grid container spacing={2}>
-            {
-                OrdersData && OrdersData.map((el,index)=>{
-                   return <Grid item xs={12} sm={6} md={6} lg={3} key={index}>
-                    <B2BOrdersCard Fun={()=>handleViewOrderClick(el._id)} Data={el}/>
-                    </Grid>
-                
-                    })}
-              </Grid> */}
+          <Box sx={{ width: "100%", marginTop: "20px", height: "70vh", overflow: "auto" }}>
+            <CustomTabPanel value={value} index={0}>
               <GenralTabel rows={rows} column={columns} />
             </CustomTabPanel>
 
@@ -476,5 +464,4 @@ export const B2BOrders = () => {
   );
 };
 
-
-export default B2BOrders;
+export default B2COrders;
