@@ -49,6 +49,8 @@ import { CreateExcelRates } from '../pages/MarketRates/CreateExcelRates'
 import { MandiRates } from '../pages/MarketRates/MandiRates'
 import { MarketRatesView } from '../pages/MarketRates/MarketRatesView'
 import { CreateNotification } from '../pages/Notification/CreateNotification'
+import { B2CVendors } from '../pages/Vendors/B2CVendors'
+import { B2COrders } from '../pages/Orders/B2COrders'
 
 
 
@@ -103,6 +105,15 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <RequestVendors />
+            </SuspensedView>
+          }
+        />
+
+        <Route
+          path='vendors/b2c-vendors/*'
+          element={
+            <SuspensedView>
+              <B2CVendors />
             </SuspensedView>
           }
         />
@@ -167,6 +178,16 @@ const PrivateRoutes = () => {
             </SuspensedView>
           }
         />
+
+        <Route
+          path='orders/b2c-orders/*'
+          element={
+            <SuspensedView>
+              <B2COrders />
+            </SuspensedView>
+          }
+        />
+        
         <Route
           path='orders/add/*'
           element={
