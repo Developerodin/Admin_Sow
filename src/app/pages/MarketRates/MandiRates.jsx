@@ -238,7 +238,7 @@ export const MandiRates = () => {
 
   const updateMandi = async (id, mandiData) => {
     try {
-      const response = await axios.put(`${Base_url2}mandi/${id}`, mandiData);
+      const response = await axios.patch(`${Base_url2}mandi/${id}`, mandiData);
       console.log("Mandi updated", response.data);
       return response.data;
     } catch (error) {
@@ -259,7 +259,7 @@ export const MandiRates = () => {
   useEffect(() => {
     getCategories();
     getMandi();
-  }, []);
+  }, [update]);
 
   const style = {
     position: 'absolute',
