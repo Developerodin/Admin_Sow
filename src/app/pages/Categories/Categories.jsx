@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import { Base_url } from '../../Config/BaseUrl';
+import { Base_url , Base_url2 } from '../../Config/BaseUrl';
 import { GenralTabel } from '../../TabelComponents/GenralTable';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import BorderColor from '@mui/icons-material/BorderColor';
@@ -101,6 +101,9 @@ export const Categories = () => {
   const [value, setValue] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [update, setUpdate] = useState(0);
+    const [subCategoryData, setSubCategoryData] = useState({});
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
   const [CategoriesData, setCategoriesData] = useState([]);
   const [categoryAddData, setCategoryAddData] = useState({
     name: '',
@@ -141,9 +144,43 @@ export const Categories = () => {
      navigate(`view-categorie/${id}`)
   }
 
+  
+  const getSubCategoriesByCategoryName = async (categoryName) => {
+    // console.log('Getting SubCategories', categoryName);
+    try {
+      const response = await axios.post(`${Base_url2}subcategories/category`, {
+        categoryName: categoryName
+      });
+
+      console.log("sub category data of selected category ==>", response.data);
+      setSubCategoryData((prevData) => ({
+        ...prevData,
+        [categoryName]: response.data
+      }));
+      setLoading(false); // Set loading to false after data is fetched
+    } catch (error) {
+      // console.log("Error getting subcategory ==>", error);
+      setSubCategoryData((prevData) => ({
+        ...prevData,
+        [categoryName]: []
+      }));
+      setLoading(false); // Set loading to false if there is an error
+      setError(true); // Set error to true if there is an error
+    }
+  };
+
+  useEffect(() => {
+    CategoriesData.forEach((category) => {
+      getSubCategoriesByCategoryName(category.name);
+    });
+  }, [CategoriesData]);
+
+
+  
+
   const createCategory = async (name, description) => {
     try {
-      const response = await axios.post(`${Base_url}api/category`, { name, description });
+      const response = await axios.post(`${Base_url2}categories`, { name, description });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -154,7 +191,7 @@ export const Categories = () => {
   // Function to get all categories
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/category`);
+      const response = await axios.get(`${Base_url2}categories`);
       setCategoriesData(response.data);
       console.log("Categories all", response.data)
       return response.data;
@@ -166,7 +203,7 @@ export const Categories = () => {
   // Function to get a category by ID
   const getCategoryById = async (id) => {
     try {
-      const response = await axios.get(`${Base_url}api/category/${id}`);
+      const response = await axios.get(`${Base_url}categories/${id}`);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -177,7 +214,7 @@ export const Categories = () => {
   // Function to update a category
   const updateCategory = async (id, name, description) => {
     try {
-      const response = await axios.put(`${Base_url}api/category/${id}`, { name, description });
+      const response = await axios.patch(`${Base_url2}categories/${id}`, { name, description });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -188,7 +225,7 @@ export const Categories = () => {
   // Function to delete a category
    const deleteCategory = async (id) => {
     try {
-      const response = await axios.delete(`${Base_url}api/category/${id}`);
+      const response = await axios.delete(`${Base_url2}categories/${id}`);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -267,9 +304,10 @@ export const Categories = () => {
   ];
   
   const rows = CategoriesData.map((el) => {
+    const subCategories = subCategoryData[el.name] || [];
     return {
       Category: el.name,
-      "Sub Categories": el.sub_category.length,
+      "Sub Categories": subCategories.length,
       Tradable: el.tradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,
       View: <RemoveRedEyeIcon onClick={()=>handelView(el._id)} />,
       Update: <BorderColor onClick={()=>handelEditCategoryOpen(el)} />,
