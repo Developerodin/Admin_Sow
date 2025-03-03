@@ -31,7 +31,7 @@ import { GenralTabel } from "../../TabelComponents/GenralTable";
 export const MarketRates = () => {
   const navigate = useNavigate();
   const [states, setStates] = useState([]);
-  const [selectedState, setSelectedState] = useState(""); // State to store the selected state
+  const [selectedState, setSelectedState] = useState("All"); // State to store the selected state
   const [apiData, setApiData] = useState([]);
   const [searchInput, setSearchInput] = useState("");
   const [update, setUpdate] = useState(0);
@@ -42,10 +42,11 @@ export const MarketRates = () => {
   const [error, setError] = useState(false);
   const [value, setValue] = useState(0);
   const [row,setRows] = useState([]);
-
+  const [MarketData, setMarketData] = useState([]);
 
   const column=[
    {name:"Sno"},
+   {name:"Date"},
    {name:"State"},
    {name:"City"},
    {name:"Category"},
@@ -75,7 +76,8 @@ export const MarketRates = () => {
 
   useEffect(() => {
     getMandi();
-  }, []);
+    getAllData();
+  }, [update]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,7 +93,7 @@ export const MarketRates = () => {
       }
     };
 
-    getAllData();
+    
 
     fetchData();
   }, []);
@@ -166,7 +168,7 @@ export const MarketRates = () => {
               Category: category || "N/A",
               "Sub Category": subCategory.name || "N/A",
               Price: subCategory.newPrice || "N/A", // Use newPrice if available
-              "Price Difference": subCategory.priceDifference || "N/A",
+              // "Price Difference": subCategory.priceDifference || "N/A",
             });
           });
         } else {
@@ -178,8 +180,8 @@ export const MarketRates = () => {
             "Mandi Name": mandi.mandiname || "N/A",
             Category: category || "N/A",
             "Sub Category": "N/A",
-            Price: "N/A",
-            "Price Difference": "N/A",
+            Price: "0",
+            // "Price Difference": "N/A",
           });
         }
       });
@@ -210,11 +212,12 @@ export const MarketRates = () => {
       const transformedData = jsonData.map((row) => {
         const category = row.Category;
         const subCategory = row["Sub Category"];
-        const price = row.Price || "N/A";
-        const priceDifference = row["Price Difference"] || "N/A";
+        const price = row.Price || "0";
+        // const priceDifference = row.priceDifference || "0";
   
         // Lookup mandiId based on the category
-        const mandi = mandiData.find((mandi) => mandi.categories.includes(category));
+        const mandi = mandiData.find((mandi) => mandi.categories.includes(category) && mandi.state === selectedState);
+        console.log("MAndi while uplode excel ========>",mandi);
         const mandiId = mandi ? mandi._id : "N/A";
   
         // Return the transformed object
@@ -223,7 +226,6 @@ export const MarketRates = () => {
           category,
           subCategory,
           price,
-          priceDifference,
         };
       });
   
@@ -239,7 +241,7 @@ export const MarketRates = () => {
   };
       
       const handleSaveAll = async (changes) => {
-        
+        console.log("Saving changes", changes);
       
         if (changes.length === 0) {
           alert("No category prices to save.");
@@ -255,28 +257,32 @@ export const MarketRates = () => {
           );
 
           // console.log("Category prices saved successfully:", result);
-      
+          setUpdate((prev)=>prev+1)
           if (result.status === 200) {
             alert("Category prices saved successfully.");
           }
+
         } catch (error) {
           console.error("Error saving category prices:", error);
           alert("Failed to save category prices.");
         }
       };
 
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear() % 100;
-
-    const formattedDay = day < 10 ? `0${day}` : day;
-    const formattedMonth = month < 10 ? `0${month}` : month;
-    const formattedYear = year < 10 ? `0${year}` : year;
-
-    return `${formattedDay}:${formattedMonth}:${formattedYear}`;
-  }
+      const formatDateTime = (isoString) => {
+        const date = new Date(isoString);
+        
+        let day = date.getDate().toString().padStart(2, '0');
+        let month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-based
+        let year = date.getFullYear();
+        
+        let hours = date.getHours();
+        let minutes = date.getMinutes().toString().padStart(2, '0');
+        
+        let amPm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12; // Convert 24-hour time to 12-hour
+        
+        return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
+      };
 
   const getAllData = async () => {
     try {
@@ -304,19 +310,20 @@ export const MarketRates = () => {
       );
       const tableRows = allData.flatMap((item, index) =>
         item.categoryPrices.map((price, subIndex) => ({
-          Sno: index + 1, // Serial number for each row
+          Sno: subIndex + 1,
+          date:formatDateTime(price.createdAt), 
           State: item.mandi.state,
           City: item.mandi.city,
           Category: price.category,
           SubCategory: price.subCategory,
           Price: price.price,
-          "Price Difference": price.priceDifference.difference, // Include additional fields as needed
+          "Price Difference": price.priceDifference.difference || 0, // Include additional fields as needed
         }))
       );
       
       // Log the resulting rows for the table
       console.log("Formatted Table Rows:", tableRows);
-      
+      setMarketData(tableRows);
       setRows(tableRows);
       // setLoading(false);
 
@@ -330,6 +337,17 @@ export const MarketRates = () => {
     }
   };
 
+
+  useEffect(() => {
+    if (selectedState && selectedState!== "All") {
+      const filteredData = MarketData.filter(
+        (mandi) => mandi.State === selectedState
+      );
+      setRows(filteredData);
+    } else {
+      setRows(MarketData);
+    }
+  }, [selectedState, MarketData]);
  
 
   return (
@@ -352,10 +370,11 @@ export const MarketRates = () => {
                     fontFamily: "sans-serif",
                   }}
                 >
-                  Market Rates
+                  Market Rates 
                 </Typography>
               </Box>
-              <Box>
+              {
+                selectedState !== "All" && <Box>
                 <Button
                   variant="contained"
                   style={{ marginRight: "10px" }}
@@ -375,6 +394,8 @@ export const MarketRates = () => {
                   />
                 </Button>
               </Box>
+              }
+              
             </Box>
 
             <Box
@@ -422,18 +443,20 @@ export const MarketRates = () => {
               </Button>
             </Box>
           </Box>
-         <Box>
-          <h4>Select a State to downlode perticular Excel</h4>
-         </Box>
-          <Box>
-            <InputLabel>State</InputLabel>
+      
+          <Box style={{marginTop:20}}>
+            <InputLabel>Select a State to downlode perticular Excel</InputLabel>
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
               value={selectedState} // Use the selected state
               label="State"
-              onChange={handleStateChange} // Handle state change
+              onChange={handleStateChange}
+              style={{width:"260px"}} // Handle state change
             >
+              <MenuItem  value={"All"}>
+                  All
+                </MenuItem>
               {states.map((state, index) => (
                 <MenuItem key={index} value={state}>
                   {state}

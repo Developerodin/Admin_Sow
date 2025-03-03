@@ -297,7 +297,7 @@ export const Categories = () => {
   const columns = [
     { name: 'Category' },
     { name: 'Sub Categories' },
-    {name: 'Tradable'},
+    // {name: 'Tradable'},
     { name: "View Sub Categories" },
     { name: "Update" },
     { name: "Delete" },
@@ -308,7 +308,7 @@ export const Categories = () => {
     return {
       Category: el.name,
       "Sub Categories": subCategories.length,
-      Tradable: el.tradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,
+      // Tradable: el.tradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,
       View: <RemoveRedEyeIcon onClick={()=>handelView(el._id)} />,
       Update: <BorderColor onClick={()=>handelEditCategoryOpen(el)} />,
       Delete: <DeleteIcon onClick={()=>handleDeleteClick(el._id)} />,

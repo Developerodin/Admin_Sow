@@ -243,10 +243,28 @@ export const ViewCategories = () => {
     handleCloseone();
   };
 
+  const updateTradableStatus = async (id, tradable) => {
+    try {
+      const response = await axios.patch(`${Base_url2}subcategories/${id}`, {
+        isTradable: tradable, // pass true or false
+      });
+  
+      if (response.status === 200) {
+        // console.log('Tradable status updated:', response.data);
+        setUpdate((prev) =>prev+1)
+        // You can handle further actions here, like showing a success message
+      } else {
+        console.error('Error updating tradable status:', response.data);
+      }
+    } catch (error) {
+      console.error('Error making API request:', error);
+    }
+  };
+
   const columns = [
     { name: 'Name' },
     { name: 'Price' },
-    // { name: 'Unit' },
+    { name: 'Tradable' },
     { name: 'Update' },
     { name: 'Delete' },
 
@@ -257,7 +275,7 @@ export const ViewCategories = () => {
     return {
       Name:el.name,
       Price:`₹${el.price}`,
-      // Unit:el.unit,
+      Tradable:el.isTradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,// Unit:el.unit,
       Update:<BorderColorIcon  onClick={()=>handelSubCategoryEditOpen(index)}/>,
       Delete:<DeleteIcon onClick={()=>handelDeleteSubCategroy(el._id)}/>
     }
