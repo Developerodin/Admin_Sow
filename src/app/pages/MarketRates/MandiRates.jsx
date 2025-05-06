@@ -41,7 +41,7 @@ export const MandiRates = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${Base_url}api/unifiedPinCode`);
+        const response = await axios.get(`${Base_url2}unifiedPinCode`);
         setApiData(response.data.data); 
         const uniqueStates = [...new Set(response.data.data.map(item => item.state_name))];
         setStates(uniqueStates);
@@ -106,6 +106,11 @@ export const MandiRates = () => {
         state: mandi.state,
         categories: mandi.categories || []
       });
+      const filteredCities = getUniqueCitiesByName(
+        apiData.filter(item => item.state_name === mandi.state)
+      );
+      
+      setCities(filteredCities);
       setEditingId(id);
       setIsEditing(true);
       setOpen(true);

@@ -5,7 +5,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Base_url } from '../../Config/BaseUrl';
+import {  Base_url2 } from '../../Config/BaseUrl';
 import { PlansCard } from '../../../Components/PlansCard';
 
 export const Plans = () => {
@@ -17,7 +17,7 @@ export const Plans = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await axios.get(`${Base_url}api/plans`);
+        const response = await axios.get(`${Base_url2}plans`);
         console.log('Fetched plans:', response.data);
         setPlans(response.data);
       } catch (error) {

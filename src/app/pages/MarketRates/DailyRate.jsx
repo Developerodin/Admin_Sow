@@ -20,7 +20,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Base_url } from '../../Config/BaseUrl';
+import {Base_url2 } from '../../Config/BaseUrl';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 export const DailyRate = () => {
@@ -36,7 +36,7 @@ export const DailyRate = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await axios.get(`${Base_url}api/daily_rates`);
+        const response = await axios.get(`${Base_url2}daily_rates`);
         setData(response.data);
       } catch (error) {
         console.error('Error fetching plans:', error);
@@ -48,7 +48,7 @@ export const DailyRate = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${Base_url}api/daily_rates/${id}`);
+      await axios.delete(`${Base_url2}daily_rates/${id}`);
       setUpdate((prev) => prev + 1);
     } catch (error) {
       console.error('Error submitting plan details:', error);

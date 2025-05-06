@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
+
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import * as XLSX from "xlsx";
@@ -43,6 +44,9 @@ export const MarketRates = () => {
   const [value, setValue] = useState(0);
   const [row,setRows] = useState([]);
   const [MarketData, setMarketData] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const column=[
    {name:"Sno"},
@@ -82,7 +86,7 @@ export const MarketRates = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${Base_url}api/unifiedPinCode`);
+        const response = await axios.get(`${Base_url2}unifiedPinCode`);
         setApiData(response.data.data);
         const uniqueStates = [
           ...new Set(response.data.data.map((item) => item.state_name)),
@@ -167,8 +171,8 @@ export const MarketRates = () => {
               "Mandi Name": mandi.mandiname || "N/A",
               Category: category || "N/A",
               "Sub Category": subCategory.name || "N/A",
-              Price: subCategory.newPrice || "N/A", // Use newPrice if available
-              // "Price Difference": subCategory.priceDifference || "N/A",
+              Price: subCategory.newPrice || 0,
+              Date: selectedDate,
             });
           });
         } else {
@@ -181,7 +185,7 @@ export const MarketRates = () => {
             Category: category || "N/A",
             "Sub Category": "N/A",
             Price: "0",
-            // "Price Difference": "N/A",
+            Date: selectedDate,
           });
         }
       });
@@ -213,11 +217,10 @@ export const MarketRates = () => {
         const category = row.Category;
         const subCategory = row["Sub Category"];
         const price = row.Price || "0";
-        // const priceDifference = row.priceDifference || "0";
+        const date = row.Date || selectedDate;
   
         // Lookup mandiId based on the category
         const mandi = mandiData.find((mandi) => mandi.categories.includes(category) && mandi.state === selectedState);
-        console.log("MAndi while uplode excel ========>",mandi);
         const mandiId = mandi ? mandi._id : "N/A";
   
         // Return the transformed object
@@ -226,15 +229,11 @@ export const MarketRates = () => {
           category,
           subCategory,
           price,
+          date,
         };
       });
   
-      // Log the transformed data
-      // console.log("Transformed Data:", transformedData);
-      handleSaveAll(transformedData)
-      // Set the transformed data into your state or send to the backend
-      // setExcelData(transformedData); 
-      // Assuming `setExcelData` is your state setter
+      handleSaveAll(transformedData);
     };
   
     reader.readAsArrayBuffer(file);
@@ -309,29 +308,27 @@ export const MarketRates = () => {
         (item) => item.mandi && item.mandi.mandiname
       );
       const tableRows = allData.flatMap((item, index) =>
-        item.categoryPrices.map((price, subIndex) => ({
-          Sno: subIndex + 1,
-          date:formatDateTime(price.createdAt), 
-          State: item.mandi.state,
-          City: item.mandi.city,
-          Category: price.category,
-          SubCategory: price.subCategory,
-          Price: price.price,
-          "Price Difference": price.priceDifference.difference || 0, // Include additional fields as needed
-        }))
+        item.categoryPrices.map((price, subIndex) => {
+          // Format the date properly
+          const date = new Date(price.date);
+          const formattedDate = date.toISOString().split('T')[0]; // This will give YYYY-MM-DD format
+          
+          return {
+            Sno: subIndex + 1,
+            date: formattedDate, // Use the formatted date
+            State: item.mandi.state,
+            City: item.mandi.city,
+            Category: price.category,
+            SubCategory: price.subCategory,
+            Price: price.price,
+            "Price Difference": price.priceDifference.difference || 0,
+          };
+        })
       );
       
-      // Log the resulting rows for the table
       console.log("Formatted Table Rows:", tableRows);
       setMarketData(tableRows);
       setRows(tableRows);
-      // setLoading(false);
-
-      // for (const item of filteredData) {
-      //   for (const priceItem of item.categoryPrices) {
-      //     fetchPriceDifference(item.mandi._id, priceItem.category);
-      //   }
-      // }
     } catch (error) {
       console.error("Error fetching all data:", error);
     }
@@ -339,15 +336,59 @@ export const MarketRates = () => {
 
 
   useEffect(() => {
-    if (selectedState && selectedState!== "All") {
+    if (selectedState && selectedState !== "All") {
       const filteredData = MarketData.filter(
         (mandi) => mandi.State === selectedState
       );
-      setRows(filteredData);
+      console.log("filteredData ===>",filteredData);
+      // Apply date range filter only if both dates are selected
+      if (fromDate && toDate) {
+      console.log("filteredData ===>",filteredData);
+        const dateFilteredData = filteredData.filter(item => {
+          // Convert the item's date to start of day in UTC
+          const itemDate = new Date(item.date);
+          const itemDateStart = new Date(Date.UTC(
+            itemDate.getUTCFullYear(),
+            itemDate.getUTCMonth(),
+            itemDate.getUTCDate()
+          ));
+
+          // Convert from and to dates to start of day in UTC
+          const from = new Date(fromDate + 'T00:00:00.000Z');
+          const to = new Date(toDate + 'T23:59:59.999Z');
+
+          return itemDateStart >= from && itemDateStart <= to;
+        });
+
+        
+        setRows(dateFilteredData);
+      } else {
+        setRows(filteredData);
+      }
     } else {
-      setRows(MarketData);
+      // Apply only date range filter when no state is selected
+      if (fromDate && toDate) {
+        const dateFilteredData = MarketData.filter(item => {
+          // Convert the item's date to start of day in UTC
+          const itemDate = new Date(item.date);
+          const itemDateStart = new Date(Date.UTC(
+            itemDate.getUTCFullYear(),
+            itemDate.getUTCMonth(),
+            itemDate.getUTCDate()
+          ));
+
+          // Convert from and to dates to start of day in UTC
+          const from = new Date(fromDate + 'T00:00:00.000Z');
+          const to = new Date(toDate + 'T23:59:59.999Z');
+
+          return itemDateStart >= from && itemDateStart <= to;
+        });
+        setRows(dateFilteredData);
+      } else {
+        setRows(MarketData);
+      }
     }
-  }, [selectedState, MarketData]);
+  }, [selectedState, MarketData, fromDate, toDate]);
  
 
   return (
@@ -375,6 +416,13 @@ export const MarketRates = () => {
               </Box>
               {
                 selectedState !== "All" && <Box>
+                <TextField
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  style={{ marginRight: "10px" }}
+                  size="small"
+                />
                 <Button
                   variant="contained"
                   style={{ marginRight: "10px" }}
@@ -395,7 +443,6 @@ export const MarketRates = () => {
                 </Button>
               </Box>
               }
-              
             </Box>
 
             <Box
@@ -445,18 +492,18 @@ export const MarketRates = () => {
           </Box>
       
           <Box style={{marginTop:20}}>
-            <InputLabel>Select a State to downlode perticular Excel</InputLabel>
+            <InputLabel>Select a State to download particular Excel</InputLabel>
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
-              value={selectedState} // Use the selected state
+              value={selectedState}
               label="State"
               onChange={handleStateChange}
-              style={{width:"260px"}} // Handle state change
+              style={{width:"260px"}}
             >
-              <MenuItem  value={"All"}>
-                  All
-                </MenuItem>
+              <MenuItem value={"All"}>
+                All
+              </MenuItem>
               {states.map((state, index) => (
                 <MenuItem key={index} value={state}>
                   {state}
@@ -465,6 +512,31 @@ export const MarketRates = () => {
             </Select>
           </Box>
 
+{
+selectedState && selectedState !== "All" &&
+          <Box style={{marginTop:20}}>
+            <InputLabel>Filter by Date Range</InputLabel>
+            <Box style={{display: 'flex', gap: '10px', alignItems: 'center',marginTop:20}}>
+              <TextField
+                type="date"
+                label="From Date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                size="small"
+                style={{width: "200px"}}
+              />
+              <Typography>to</Typography>
+              <TextField
+                type="date"
+                label="To Date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                size="small"
+                style={{width: "200px"}}
+              />
+            </Box>
+          </Box>
+}
           <Box
             sx={{
               width: "100%",
@@ -480,7 +552,7 @@ export const MarketRates = () => {
               </Typography>
             )}
             
-              <GenralTabel rows={row} column={column} />
+            <GenralTabel rows={row} column={column} />
           </Box>
         </CardContent>
       </Card>
