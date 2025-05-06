@@ -139,7 +139,7 @@ export const Vendors = () => {
 
   const deleteUser = async (ID) => {
     try {
-      const res = await axios.delete(`${Base_url}api/b2b/${ID}`);
+      const res = await axios.delete(`${Base_url}b2bUser/${ID}`);
       console.log(res);
       setupdate((prev) => prev + 1);
     } catch (err) {
@@ -174,6 +174,7 @@ export const Vendors = () => {
   }
 
   const handelUpdate = (id)=>{
+    console.log("id ==>",id)
     navigate(`edit/${id}`)
   }
   const handleStatusChange = (event,userId) => {
@@ -183,7 +184,7 @@ export const Vendors = () => {
 
   const updateUserStatus = async (userId,status1) => {
     try {
-      const response = await axios.patch(`${Base_url}api/b2b/updateStatus/${userId}`, { status:status1 });
+      const response = await axios.patch(`${Base_url}b2bUser/updateStatus/${userId}`, { status:status1 });
 
       if (response.status === 200) {
         
@@ -218,10 +219,10 @@ export const Vendors = () => {
     // address: collector.Address,
     // city: collector.city,
     status: collector.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={collector.status} onChange={(e)=>handleStatusChange(e,collector._id)} />,
+    active: <Switch checked={collector.status} onChange={(e)=>handleStatusChange(e,collector.id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(collector.id)}/>,
-    update: <BorderColorIcon onClick={() => handelUpdate(collector._id)}/>,
-    delete: <DeleteIcon onClick={() => handleDeleteClick(collector._id)}/>
+    update: <BorderColorIcon onClick={() => handelUpdate(collector.id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(collector.id)}/>
   }));
 
   const rows2 = WholesalersData.map((wholesaler, index) => ({
@@ -231,10 +232,10 @@ export const Vendors = () => {
     // address: wholesaler.Address,
     // city: wholesaler.city,
     status: wholesaler.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={wholesaler.status} onChange={(e)=>handleStatusChange(e,wholesaler._id)} />,
+    active: <Switch checked={wholesaler.status} onChange={(e)=>handleStatusChange(e,wholesaler.id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(wholesaler.id)}/>,
-    update: <BorderColorIcon onClick={() => handelUpdate(wholesaler._id)}/>,
-    delete: <DeleteIcon onClick={() => handleDeleteClick(wholesaler._id)}/>
+    update: <BorderColorIcon onClick={() => handelUpdate(wholesaler.id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(wholesaler.id)}/>
   }));
 
   const rows3 = MediatorsData.map((mediator, index) => ({
@@ -244,10 +245,10 @@ export const Vendors = () => {
     // address: mediator.Address,
     // city: mediator.city,
     status: mediator.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={mediator.status} onChange={(e)=>handleStatusChange(e,mediator._id)} />,
+    active: <Switch checked={mediator.status} onChange={(e)=>handleStatusChange(e,mediator.id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(mediator.id)}/>,
-    update: <BorderColorIcon onClick={() => handelUpdate(mediator._id)}/>,
-    delete: <DeleteIcon onClick={() => handleDeleteClick(mediator._id)}/>
+    update: <BorderColorIcon onClick={() => handelUpdate(mediator.id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(mediator.id)}/>
   }));
 
   const rows4 = FactoryData.map((factory, index) => ({
@@ -257,10 +258,10 @@ export const Vendors = () => {
     // address: factory.Address,
     // city: factory.city,
     status: factory.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-    active: <Switch checked={factory.status} onChange={(e)=>handleStatusChange(e,factory._id)} />,
+    active: <Switch checked={factory.status} onChange={(e)=>handleStatusChange(e,factory.id)} />,
     view: <RemoveRedEyeIcon onClick={()=>handelView(factory.id)}/>,
-    update: <BorderColorIcon onClick={() => handelUpdate(factory._id)}/>,
-    delete: <DeleteIcon onClick={() => handleDeleteClick(factory._id)}/>
+    update: <BorderColorIcon onClick={() => handelUpdate(factory.id)}/>,
+    delete: <DeleteIcon onClick={() => handleDeleteClick(factory.id)}/>
   }));
 
 

@@ -199,7 +199,7 @@ const navigate = useNavigate()
         <Button color='error' variant="contained" size="small">Inactive</Button>,
       'Referral Code': el.referralCode,
       View: <RemoveRedEyeIcon onClick={() => handelViewUserClick(el.id)} />,
-      Update: <BorderColorIcon onClick={() => navigate(`/users/update/${el.id}`)} />,
+      Update: <BorderColorIcon onClick={() => navigate(`/users/edit/${el.id}`)} />,
       Delete: <DeleteIcon onClick={() => handleDeleteClick(el.id)} />,
     }
   }) || [];

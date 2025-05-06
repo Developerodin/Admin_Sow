@@ -52,7 +52,7 @@ import { CreateNotification } from '../pages/Notification/CreateNotification'
 import { B2CVendors } from '../pages/Vendors/B2CVendors'
 import { B2COrders } from '../pages/Orders/B2COrders'
 import { ViewB2cOrder } from '../pages/Orders/ViewB2cOrder'
-
+import { EditUsers } from '../pages/Users/EditUsers'
 
 
 
@@ -350,9 +350,15 @@ const PrivateRoutes = () => {
             </SuspensedView>
            }
            />
+           <Route
+          path='users/edit/:id'
+          element={
+            <SuspensedView>
+              <EditUsers />
+            </SuspensedView>
+          }
+        />
  
-
-  
 
 <Route
           path='b2b_users/*'

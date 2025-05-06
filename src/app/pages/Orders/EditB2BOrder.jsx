@@ -13,24 +13,38 @@ import { useParams } from 'react-router-dom';
 export const EditB2BOrder = () => {
     const { id } = useParams();
     const [formData, setFormData] = useState({
-        from: '',
-        to: '',
+        orderBy: {
+            id: '',
+            name: '',
+            phoneNumber: '',
+            registerAs: ''
+        },
+        orderTo: {
+            id: '',
+            name: '',
+            phoneNumber: '',
+            registerAs: ''
+        },
         category: '',
-        sub_category: '',
-        quantity: 0,
-        totalAmount: 0,
+        subCategory: '',
+        weight: '',
+        unit: '',
+        notes: '',
+        value: 0,
+        totalPrice: 0,
+        orderStatus: 'New'
     });
+
     const [b2bVendors, setB2BVendors] = useState([]);
     const [toData, setToData] = useState([]);
     const [categoriesData, setCategoriesData] = useState([]);
     const [subCategoryData, setSubCategoryData] = useState([]);
     const [selectedSubcategoryData, setSelectedSubcategoryData] = useState({});
 
-    
     useEffect(() => {
         const getCategories = async () => {
             try {
-                const response = await axios.get(`${Base_url}api/category`);
+                const response = await axios.get(`${Base_url}categories`);
                 setCategoriesData(response.data);
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -40,28 +54,40 @@ export const EditB2BOrder = () => {
         getCategories();
     }, []);
 
-    
     useEffect(() => {
         const fetchB2BOrder = async () => {
             try {
-                const response = await axios.get(`${Base_url}api/b2b_orders/${id}`);
+                const response = await axios.get(`${Base_url}b2bOrder/${id}`);
                 const orderData = response.data;
 
                 setFormData({
-                    from: orderData.from._id,
-                    to: orderData.to._id,
-                    category: orderData.details.category,
-                    sub_category: orderData.details.sub_category,
-                    quantity: orderData.details.quantity,
-                    totalAmount: orderData.totalAmount,
+                    orderBy: {
+                        id: orderData.orderBy.id,
+                        name: orderData.orderBy.name,
+                        phoneNumber: orderData.orderBy.phoneNumber,
+                        registerAs: orderData.orderBy.registerAs
+                    },
+                    orderTo: {
+                        id: orderData.orderTo.id,
+                        name: orderData.orderTo.name,
+                        phoneNumber: orderData.orderTo.phoneNumber,
+                        registerAs: orderData.orderTo.registerAs
+                    },
+                    category: orderData.category,
+                    subCategory: orderData.subCategory,
+                    weight: orderData.weight,
+                    unit: orderData.unit,
+                    notes: orderData.notes || '',
+                    value: orderData.value,
+                    totalPrice: orderData.totalPrice,
+                    orderStatus: orderData.orderStatus
                 });
 
-                const fromVendor = orderData.from;
-                const subCategories = fromVendor.categories.find(cat => cat.name === orderData.details.category)?.sub_category || [];
-                setSubCategoryData(subCategories);
-
-                const selectedSubcategory = subCategories.find(sc => sc.name === orderData.details.sub_category) || {};
-                setSelectedSubcategoryData(selectedSubcategory);
+                // Set subcategories based on the selected category
+                const selectedCategory = categoriesData.find(cat => cat.name === orderData.category);
+                if (selectedCategory) {
+                    setSubCategoryData(selectedCategory.sub_category || []);
+                }
 
             } catch (error) {
                 console.error('Error fetching order:', error);
@@ -70,17 +96,19 @@ export const EditB2BOrder = () => {
 
         const fetchB2BUser = async () => {
             try {
-                const response = await axios.get(`${Base_url}api/b2b`);
+                const response = await axios.get(`${Base_url}b2bUser`);
                 if (response.status === 200) {
-                    const fetchedB2BUsers = response.data;
+                    const fetchedB2BUsers = response.data.results;
                     setB2BVendors(fetchedB2BUsers);
-                    const fromVendor = fetchedB2BUsers.find(v => v._id === formData.from);
+                    
+                    // Filter vendors based on registerAs
+                    const fromVendor = fetchedB2BUsers.find(v => v.id === formData.orderBy.id);
                     if (fromVendor) {
-                        if (fromVendor.registerAs === 'Collectors') {
-                            setToData(fetchedB2BUsers.filter(v => v.registerAs === 'Wholesalers'));
-                        } else if (fromVendor.registerAs === 'Wholesalers') {
-                            setToData(fetchedB2BUsers.filter(v => v.registerAs === 'Mediators'));
-                        } else if (fromVendor.registerAs === 'Mediators') {
+                        if (fromVendor.registerAs === 'Retailer') {
+                            setToData(fetchedB2BUsers.filter(v => v.registerAs === 'Wholesaler'));
+                        } else if (fromVendor.registerAs === 'Wholesaler') {
+                            setToData(fetchedB2BUsers.filter(v => v.registerAs === 'Mediator'));
+                        } else if (fromVendor.registerAs === 'Mediator') {
                             setToData(fetchedB2BUsers.filter(v => v.registerAs === 'Factory'));
                         }
                     }
@@ -92,39 +120,31 @@ export const EditB2BOrder = () => {
 
         fetchB2BOrder();
         fetchB2BUser();
-    }, [id, formData.from]);
+    }, [id]);
 
-    
     useEffect(() => {
-        if (formData.from) {
-            const selectedVendor = b2bVendors.find(vendor => vendor._id === formData.from);
+        if (formData.orderBy.id) {
+            const selectedVendor = b2bVendors.find(vendor => vendor.id === formData.orderBy.id);
             if (selectedVendor) {
-                if (selectedVendor.registerAs === 'Collectors') {
-                    setToData(b2bVendors.filter(v => v.registerAs === 'Wholesalers'));
-                } else if (selectedVendor.registerAs === 'Wholesalers') {
-                    setToData(b2bVendors.filter(v => v.registerAs === 'Mediators'));
-                } else if (selectedVendor.registerAs === 'Mediators') {
+                if (selectedVendor.registerAs === 'Retailer') {
+                    setToData(b2bVendors.filter(v => v.registerAs === 'Wholesaler'));
+                } else if (selectedVendor.registerAs === 'Wholesaler') {
+                    setToData(b2bVendors.filter(v => v.registerAs === 'Mediator'));
+                } else if (selectedVendor.registerAs === 'Mediator') {
                     setToData(b2bVendors.filter(v => v.registerAs === 'Factory'));
                 }
             }
         }
-    }, [formData.from, b2bVendors]);
+    }, [formData.orderBy.id, b2bVendors]);
 
-    
     useEffect(() => {
-        if (formData.to) {
-            const selectedVendor = b2bVendors.find(vendor => vendor._id === formData.to);
-            if (selectedVendor) {
-                const selectedCategory = categoriesData.find(cat => cat.name === formData.category);
-                const subCategories = selectedCategory?.sub_category || [];
-                setSubCategoryData(subCategories);
-
-                
-                const selectedSubcategory = subCategories.find(sc => sc.name === formData.sub_category) || {};
-                setSelectedSubcategoryData(selectedSubcategory);
+        if (formData.category) {
+            const selectedCategory = categoriesData.find(cat => cat.name === formData.category);
+            if (selectedCategory) {
+                setSubCategoryData(selectedCategory.sub_category || []);
             }
         }
-    }, [formData.to, formData.category, b2bVendors, categoriesData]);
+    }, [formData.category, categoriesData]);
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -134,16 +154,11 @@ export const EditB2BOrder = () => {
                 [name]: value,
             };
 
-            if (name === 'sub_category') {
-                const selectedSubcategory = subCategoryData.find(el => el.name === value);
-                setSelectedSubcategoryData(selectedSubcategory || {});
-            }
-
-            if (name === 'quantity') {
-                const total = parseInt(selectedSubcategoryData.price || 0) * value;
+            if (name === 'weight') {
+                const total = parseInt(value) * prevState.value;
                 return {
                     ...updatedFormData,
-                    totalAmount: total,
+                    totalPrice: total,
                 };
             }
 
@@ -151,9 +166,26 @@ export const EditB2BOrder = () => {
         });
     };
 
+    const handleVendorChange = (event, type) => {
+        const { value } = event.target;
+        const selectedVendor = b2bVendors.find(v => v.id === value);
+        
+        if (selectedVendor) {
+            setFormData(prevState => ({
+                ...prevState,
+                [type]: {
+                    id: selectedVendor.id,
+                    name: selectedVendor.name,
+                    phoneNumber: selectedVendor.phoneNumber,
+                    registerAs: selectedVendor.registerAs
+                }
+            }));
+        }
+    };
+
     const handleSubmit = async () => {
         try {
-            await axios.put(`${Base_url}api/b2b_orders/${id}`, formData);
+            await axios.put(`${Base_url}b2bOrder/${id}`, formData);
             window.history.back();
         } catch (error) {
             console.error('Error updating order:', error);
@@ -183,7 +215,7 @@ export const EditB2BOrder = () => {
                         <Box style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <Box>
                                 <Typography style={{ fontSize: "30px", fontWeight: 600, fontFamily: "sans-serif" }}>
-                                    Vendors Orders
+                                    Edit Order
                                 </Typography>
                             </Box>
                         </Box>
@@ -195,13 +227,12 @@ export const EditB2BOrder = () => {
                                         fullWidth
                                         labelId="from-select-label"
                                         label="From"
-                                        name="from"
-                                        value={formData.from || ''}
-                                        onChange={handleInputChange}
+                                        value={formData.orderBy.id || ''}
+                                        onChange={(e) => handleVendorChange(e, 'orderBy')}
                                     >
                                         {b2bVendors.map(vendor => (
-                                            <MenuItem key={vendor._id} value={vendor._id}>
-                                                {vendor.name} {vendor.registerAs}
+                                            <MenuItem key={vendor.id} value={vendor.id}>
+                                                {vendor.name} ({vendor.registerAs})
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -214,13 +245,12 @@ export const EditB2BOrder = () => {
                                         fullWidth
                                         labelId="to-select-label"
                                         label="To"
-                                        name="to"
-                                        value={formData.to || ''}
-                                        onChange={handleInputChange}
+                                        value={formData.orderTo.id || ''}
+                                        onChange={(e) => handleVendorChange(e, 'orderTo')}
                                     >
                                         {toData.map(vendor => (
-                                            <MenuItem key={vendor._id} value={vendor._id}>
-                                                {vendor.name} {vendor.registerAs}
+                                            <MenuItem key={vendor.id} value={vendor.id}>
+                                                {vendor.name} ({vendor.registerAs})
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -252,13 +282,13 @@ export const EditB2BOrder = () => {
                                         fullWidth
                                         labelId="sub-category-select-label"
                                         label="Sub Category"
-                                        name="sub_category"
-                                        value={formData.sub_category || ''}
+                                        name="subCategory"
+                                        value={formData.subCategory || ''}
                                         onChange={handleInputChange}
                                     >
                                         {subCategoryData.map(sub => (
                                             <MenuItem key={sub._id} value={sub.name}>
-                                                {sub.name} (Price: {sub.price} / {sub.unit})
+                                                {sub.name}
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -267,28 +297,58 @@ export const EditB2BOrder = () => {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Quantity"
-                                    name="quantity"
+                                    label="Weight"
+                                    name="weight"
                                     type="number"
-                                    value={formData.quantity}
+                                    value={formData.weight}
                                     onChange={handleInputChange}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Total Amount"
-                                    name="totalAmount"
-                                    value={formData.totalAmount}
+                                    label="Unit"
+                                    name="unit"
+                                    value={formData.unit}
+                                    onChange={handleInputChange}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Value per Unit"
+                                    name="value"
+                                    type="number"
+                                    value={formData.value}
+                                    onChange={handleInputChange}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Total Price"
+                                    name="totalPrice"
+                                    value={formData.totalPrice}
                                     InputProps={{
                                         readOnly: true,
                                     }}
                                 />
                             </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Notes"
+                                    name="notes"
+                                    multiline
+                                    rows={4}
+                                    value={formData.notes}
+                                    onChange={handleInputChange}
+                                />
+                            </Grid>
                         </Grid>
                         <Box sx={{ marginTop: '20px', textAlign:'right' }}>
                             <Button variant="contained" onClick={handleSubmit}>
-                                Submit  
+                                Update
                             </Button>
                         </Box>
                     </Box>
