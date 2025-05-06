@@ -21,22 +21,26 @@ type Props = {
   chartHeight: string
   
 }
+
+interface ApiResponse<T> {
+  limit: number;
+  page: number;
+  results: T[];
+  totalPages: number;
+  totalResults: number;
+}
+
 interface B2BUser {
-  
   id: number;
   name: string;
   registerAs: string;
-  
 }
 
 interface User {
-  
-
   id: number;
   status: string;
-  
-  
 }
+
 interface Category {
   id: number;
   
@@ -91,34 +95,39 @@ const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, stro
   useEffect(() => {
     const fetchB2BUser = async () => {
       try {
-        const response: AxiosResponse<B2BUser[]> = await axios.get(`${Base_url}api/b2b`, {
+        const response: AxiosResponse<ApiResponse<B2BUser>> = await axios.get(`${Base_url}b2bUser`, {
           headers: { Authorization: `${token}` }
         });
         
-        console.log("Response:", response);
+        console.log("Full Response:", response);
+        console.log("Response Data:", response.data);
+        console.log("Results:", response.data.results);
 
         if (response.status === 200) {
-          const fetchedB2BUsers: B2BUser[] = response.data;
-
-          // Set all B2B users
+          const fetchedB2BUsers: B2BUser[] = response.data.results;
+          console.log("Fetched Users:", fetchedB2BUsers);
           setVendorsData(fetchedB2BUsers);
-
-         
+          console.log("Vendors Data after set:", vendorsData);
         } else {
           console.error('Error fetching B2B users:', response.statusText);
         }
       } catch (error) {
-        console.error('Error:');
+        console.error('Error:', error);
       }
     };
 
     fetchB2BUser();
   }, []);
+
+  // Add a useEffect to monitor vendorsData changes
+  useEffect(() => {
+    console.log("Vendors Data updated:", vendorsData);
+  }, [vendorsData]);
  
  useEffect(() => {
   const fetchUser = async () => {
     try {
-      const response: AxiosResponse<User[]> = await axios.get(`${Base_url}api/users`, {
+      const response: AxiosResponse<ApiResponse<User>> = await axios.get(`${Base_url}b2cUser`, {
         headers: { Authorization: `${token}` }
       });
 
@@ -126,14 +135,9 @@ const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, stro
 
 
       if (response.status === 200) {
-        const fetchedUsers: User[] = response.data;
-
-        // Set all users
+        const fetchedUsers: User[] = response.data.results;
         setUsersData(fetchedUsers);
-
-        // Categorize users
         const activeUser: User[] = fetchedUsers.filter((el) => el.status === "active");
-
         setActiveUser(activeUser);
       } else {
         console.error('Error fetching users:', response.statusText);
@@ -150,7 +154,7 @@ const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, stro
   useEffect(( ) => {
     const fetchCategory = async () => { 
       try {
-        const response: AxiosResponse<Category[]> = await axios.get(`${Base_url}api/category`, {
+        const response: AxiosResponse<Category[]> = await axios.get(`${Base_url}categories`, {
           headers: { Authorization: `${token}` }
         });
         console.log("category data:", response);
@@ -378,22 +382,21 @@ const MixedWidget2: React.FC<Props> = ({className, chartColor, chartHeight, stro
                 <div className="d-flex justify-content-between">
                 <div >
                   <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                  {usersData !== null && usersData.length}
+                  {usersData?.length || 0}
                 </span>
                 <span className="text-gray-500 fw-semibold fs-6">Total Users</span>
                   </div>
 
                   <div >
                   <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                  {activeUser !== null && (usersData.length - activeUser.length)}
-                  
+                  {activeUser?.length || 0}
                 </span>
                 <span className="text-gray-500 fw-semibold fs-6">Active Users</span>
                   </div>
 
                   <div>
                     <span className="text-gray-700 fw-bolder d-block fs-2qx lh-1 ls-n1 mb-1">
-                    {activeUser !== null && activeUser.length}
+                    {(usersData?.length || 0) - (activeUser?.length || 0)}
                     </span>
                     <span className="text-gray-500 fw-semibold fs-6">In Active Users</span>
                   </div>
