@@ -29,7 +29,7 @@ import { InfoCard } from "../../../Components/InfoCard";
 import Grid from "@mui/material/Grid";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import { toAbsoluteUrl } from "../../../_metronic/helpers";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import Checkbox from "@mui/material/Checkbox";
@@ -116,7 +116,7 @@ export const Vendors = () => {
 
    const fetchB2BUser = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2bUser`);
+      const response = await axios.get(`${Base_url}b2bUser`);
       const fetchedB2BUsers = response.data.results;
   
       console.log("Fetch users == 125>", fetchedB2BUsers);

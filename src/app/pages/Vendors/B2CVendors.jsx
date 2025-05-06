@@ -24,7 +24,7 @@ import {
   import Grid from "@mui/material/Grid";
   import { OrdersCard } from "../../../Components/OrdersCard";
   import { useNavigate } from "react-router-dom";
-  import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+  import { Base_url } from "../../Config/BaseUrl";
   import axios from "axios";
   import { B2BOrdersCard } from "../../../Components/B2BOrderCard";
   import { GenralTabel } from "../../TabelComponents/GenralTable";
@@ -146,7 +146,7 @@ import {
     // Function to get all B2B orders
     const getOrders = async () => {
       try {
-        const response = await axios.get(`${Base_url2}b2cOrder`);
+        const response = await axios.get(`${Base_url}b2cOrder`);
         console.log("data",response.data);
         setOrderData(response.data);
         return response.data;

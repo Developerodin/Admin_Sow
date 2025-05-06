@@ -29,7 +29,7 @@ import { InfoCard } from "../../../Components/InfoCard";
 import Grid from "@mui/material/Grid";
 import { OrdersCard } from "../../../Components/OrdersCard";
 import { useNavigate } from "react-router-dom";
-import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import axios from "axios";
 import { B2BOrdersCard } from "../../../Components/B2BOrderCard";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
@@ -148,7 +148,7 @@ export const B2COrders = () => {
   // Function to get all B2B orders
   const getOrders = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2cOrder`);
+      const response = await axios.get(`${Base_url}b2cOrder`);
       console.log("data", response.data);
       setOrderData(response.data);
       return response.data;
@@ -159,7 +159,7 @@ export const B2COrders = () => {
 
   const getB2bUsers = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2bUser`);
+      const response = await axios.get(`${Base_url}b2bUser`);
       console.log("data  =>", response.data);
       setUsers(response.data.results); // Update state with fetched users
       return response.data;
@@ -170,7 +170,7 @@ export const B2COrders = () => {
 
     const updateAssignTo = async (orderId, userId) => {
     try {
-      const response = await axios.put(`${Base_url2}b2cOrder/assignOrderToUser`, {
+      const response = await axios.put(`${Base_url}b2cOrder/assignOrderToUser`, {
         orderId,
         userId,
       });

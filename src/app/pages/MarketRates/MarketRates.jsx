@@ -26,7 +26,7 @@ import * as XLSX from "xlsx";
 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 
 export const MarketRates = () => {
@@ -69,7 +69,7 @@ export const MarketRates = () => {
 
   const getMandi = async () => {
     try {
-      const response = await axios.get(`${Base_url2}mandi`);
+      const response = await axios.get(`${Base_url}mandi`);
       setMandiData(response.data);
       // console.log("Mandis all", response.data);
       return response.data;
@@ -86,7 +86,7 @@ export const MarketRates = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${Base_url2}unifiedPinCode`);
+        const response = await axios.get(`${Base_url}unifiedPinCode`);
         setApiData(response.data.data);
         const uniqueStates = [
           ...new Set(response.data.data.map((item) => item.state_name)),
@@ -124,7 +124,7 @@ export const MarketRates = () => {
   const getSubCategoriesByCategoryName = async (categoryName) => {
     // console.log('Getting SubCategories', categoryName);
     try {
-      const response = await axios.post(`${Base_url2}subcategories/category`, {
+      const response = await axios.post(`${Base_url}subcategories/category`, {
         categoryName: categoryName
       });
 
@@ -249,7 +249,7 @@ export const MarketRates = () => {
       
         try {
           const result = await axios.post(
-            `${Base_url2}mandiRates/mandi-prices`,
+            `${Base_url}mandiRates/mandi-prices`,
             {
               mandiPrices: changes,
             }
@@ -285,7 +285,7 @@ export const MarketRates = () => {
 
   const getAllData = async () => {
     try {
-      const response = await axios.get(`${Base_url2}mandiRates`);
+      const response = await axios.get(`${Base_url}mandiRates`);
       const allData = response.data;
       console.log("get DAta ===>",allData);
       const latestData = Object.values(

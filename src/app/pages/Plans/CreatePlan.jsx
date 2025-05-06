@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios'; // Import axios for making HTTP requests
 import { Button, TextField, FormControl, RadioGroup, Card,CardContent,FormControlLabel, Radio, Box } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Base_url2 } from '../../Config/BaseUrl'; 
+import { Base_url } from '../../Config/BaseUrl'; 
 
 
 export const CreatePlan = () => {
@@ -25,7 +25,7 @@ export const CreatePlan = () => {
     e.preventDefault();
     try {
       // Send a POST request to the backend API endpoint
-      const response = await axios.post(`${Base_url2}plans`, planDetails);
+      const response = await axios.post(`${Base_url}plans`, planDetails);
       console.log('Response:', response.data);
       handleBackButton()
       // Optionally, you can redirect the user or show a success message here

@@ -6,7 +6,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
 import { Box, Card, CardContent, FormControl, InputLabel, Typography } from '@mui/material';
-import { Base_url , Base_url2 } from '../../Config/BaseUrl';
+import { Base_url } from '../../Config/BaseUrl';
 import axios from 'axios';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
@@ -110,7 +110,7 @@ export const EditOrder = () => {
 
   const updateOrder = async (Data) => {
     try {
-      await axios.put(`${Base_url2}b2cOrder/${orderId}`, Data);
+      await axios.put(`${Base_url}b2cOrder/${orderId}`, Data);
     } catch (error) {
       console.error('Error updating order:', error);
     }
@@ -119,7 +119,7 @@ export const EditOrder = () => {
   const fetchOrderDetails = async () => {
     try {
       if (orderId) {
-        const response = await axios.get(`${Base_url2}b2cOrder/${orderId}`);
+        const response = await axios.get(`${Base_url}b2cOrder/${orderId}`);
         const data = response.data;
 
         if (data.items && data.items.length > 0) {
@@ -146,7 +146,7 @@ export const EditOrder = () => {
 
   const fetchB2CUsers = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2cUser`);
+      const response = await axios.get(`${Base_url}b2cUser`);
       if (response.status === 200) {
         const users = response.data.results.map(user => ({
           _id: user.id,
@@ -165,7 +165,7 @@ export const EditOrder = () => {
 
   const fetchB2BUsers = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2bUser`);
+      const response = await axios.get(`${Base_url}b2bUser`);
       if (response.status === 200) {
         const users = response.data.results.map(user => ({
           _id: user.id,
@@ -184,7 +184,7 @@ export const EditOrder = () => {
 
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url2}categories`);
+      const response = await axios.get(`${Base_url}categories`);
       setCategoriesData(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -193,7 +193,7 @@ export const EditOrder = () => {
 
   const getSubCategoriesByCategoryName = async (categoryName) => {
     try {
-      const response = await axios.post(`${Base_url2}subcategories/category`, {
+      const response = await axios.post(`${Base_url}subcategories/category`, {
         categoryName: categoryName
       });
       console.log('Subcategories response:', response.data);

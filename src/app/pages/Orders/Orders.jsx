@@ -27,7 +27,7 @@ import { OrdersCard } from "../../../Components/OrdersCard";
 import Modal from "@mui/material/Modal";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
-import { Base_url , Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import axios from "axios";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
@@ -147,7 +147,7 @@ export const Orders = () => {
   // Function to get all B2B orders
   const fetchOrders = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2cOrder`); // Adjust the endpoint accordingly
+      const response = await axios.get(`${Base_url}b2cOrder`); // Adjust the endpoint accordingly
       console.log("Orders data =>", response.data);
       setOrders(response.data);
     } catch (error) {
@@ -184,7 +184,7 @@ export const Orders = () => {
   // Function to delete a B2B order
   const deleteOrder = async (id) => {
     try {
-      const response = await axios.delete(`${Base_url2}b2cOrder/${id}`);
+      const response = await axios.delete(`${Base_url}b2cOrder/${id}`);
       setupdate((prev) => prev + 1);
       return response.data;
     } catch (error) {

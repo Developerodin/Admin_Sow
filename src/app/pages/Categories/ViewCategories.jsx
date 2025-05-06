@@ -17,7 +17,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Base_url, Base_url2 } from '../../Config/BaseUrl';
+import { Base_url } from '../../Config/BaseUrl';
 import { GenralTabel } from '../../TabelComponents/GenralTable';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
@@ -175,7 +175,7 @@ export const ViewCategories = () => {
 
    const addSubcategory = async (categoryId, name, price, unit) => {
     try {
-      const response = await axios.post(`${Base_url2}subcategories`, { categoryId, name, description: unit  , price: price });
+      const response = await axios.post(`${Base_url}subcategories`, { categoryId, name, description: unit  , price: price });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -186,7 +186,7 @@ export const ViewCategories = () => {
   // Function to update a subcategory
    const updateSubcategory = async (categoryId, subcategoryId, name, price, unit) => {
     try {
-      const response = await axios.patch(`${Base_url2}subcategories/${subcategoryId}`, { categoryId, name, description: unit,price });
+      const response = await axios.patch(`${Base_url}subcategories/${subcategoryId}`, { categoryId, name, description: unit,price });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -197,7 +197,7 @@ export const ViewCategories = () => {
   // Function to delete a subcategory
    const deleteSubcategory = async (categoryId, subcategoryId) => {
     try {
-      const response = await axios.delete(`${Base_url2}subcategories/${subcategoryId}`);
+      const response = await axios.delete(`${Base_url}subcategories/${subcategoryId}`);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -211,7 +211,7 @@ export const ViewCategories = () => {
 
   const getCategoryById = async (id) => {
     try {
-      const response = await axios.get(`${Base_url2}subcategories/category/${id}`);
+      const response = await axios.get(`${Base_url}subcategories/category/${id}`);
       setCategoriesData(response.data[0])
       setsubCategoriesData(response.data)
       
@@ -245,7 +245,7 @@ export const ViewCategories = () => {
 
   const updateTradableStatus = async (id, tradable) => {
     try {
-      const response = await axios.patch(`${Base_url2}subcategories/${id}`, {
+      const response = await axios.patch(`${Base_url}subcategories/${id}`, {
         isTradable: tradable, // pass true or false
       });
   

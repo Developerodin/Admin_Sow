@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
-import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import { useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import * as XLSX from "xlsx";
@@ -42,7 +42,7 @@ const [selectedPrice, setSelectedPrice] = useState('');
 const [update, setupdate] = useState(0);
   const getMandiById = async (id) => {
     try {
-      const response = await axios.get(`${Base_url2}mandi/${id}`);
+      const response = await axios.get(`${Base_url}mandi/${id}`);
       setData(response.data);
 
       const initialPrices = response.data.categories.reduce((acc, category) => {
@@ -58,7 +58,7 @@ const [update, setupdate] = useState(0);
   const handleGetMandiHistory = async () => {
     try {
       const response = await axios.get(
-        `${Base_url2}mandiRates/history/mandi/${id}`
+        `${Base_url}mandiRates/history/mandi/${id}`
       );
       setHistory(response.data);
       setFilteredHistory(response.data);
@@ -90,7 +90,7 @@ const [update, setupdate] = useState(0);
   
     try {
       const response = await axios.patch(
-        `${Base_url2}mandiRates/${id}/${selectedCategory}`,
+        `${Base_url}mandiRates/${id}/${selectedCategory}`,
         {
           newPrice,
         }
@@ -129,7 +129,7 @@ const [update, setupdate] = useState(0);
 const handleDelete = async (category) => {
 
   try {
-    await axios.delete(`${Base_url2}mandiRates/${id}/${category}`);
+    await axios.delete(`${Base_url}mandiRates/${id}/${category}`);
     handleGetMandiHistory();
     setupdate((prev)=>prev+1)
   } catch (error) {
@@ -192,7 +192,7 @@ const handleDelete = async (category) => {
   
     try {
       const result = await axios.post(
-        `${Base_url2}mandiRates`,
+        `${Base_url}mandiRates`,
         {
           mandi: id,
           categoryPrices,

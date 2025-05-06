@@ -15,7 +15,7 @@ import Grid from "@mui/material/Grid";
 import { OrdersCard } from '../../../Components/OrdersCard';
 import { UserCard } from '../../../Components/UserCard';
 import { useNavigate } from 'react-router-dom';
-import { Base_url , Base_url2 } from '../../Config/BaseUrl';
+import { Base_url } from '../../Config/BaseUrl';
 import Modal from '@mui/material/Modal';
 import axios from 'axios';
 import CloseIcon from '@mui/icons-material/Close';
@@ -121,7 +121,7 @@ const navigate = useNavigate()
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2cUser`);
+      const response = await axios.get(`${Base_url}b2cUser`);
 
       if (response.status === 200) {
         const fetchedUsers = response.data;
@@ -141,7 +141,7 @@ const navigate = useNavigate()
 
   const deleteUser = async(ID) => {
     try{
-      const res = await axios.delete(`${Base_url2}b2cUser/${ID}`);
+      const res = await axios.delete(`${Base_url}b2cUser/${ID}`);
       console.log(res)
       setupdate((prev)=>prev+1)
     }

@@ -10,7 +10,7 @@ import { Link, useParams } from "react-router-dom";
 import { Dropdown1 } from "../../../_metronic/partials";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -52,7 +52,7 @@ export const VendorsView = () => {
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get(`${Base_url2}b2bUser/${id}`);
+          const response = await axios.get(`${Base_url}b2bUser/${id}`);
           const responseData = response.data;
           console.log("Response Data ========>", responseData.category);
   
@@ -810,7 +810,7 @@ export const VendorsView = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2bUser/${id}`);
+      const response = await axios.get(`${Base_url}b2bUser/${id}`);
 
       if (response.status === 200) {
         console.log("DAta =====>", response.data);

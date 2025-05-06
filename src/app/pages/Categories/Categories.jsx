@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import { Base_url , Base_url2 } from '../../Config/BaseUrl';
+import { Base_url  } from '../../Config/BaseUrl';
 import { GenralTabel } from '../../TabelComponents/GenralTable';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import BorderColor from '@mui/icons-material/BorderColor';
@@ -148,7 +148,7 @@ export const Categories = () => {
   const getSubCategoriesByCategoryName = async (categoryName) => {
     // console.log('Getting SubCategories', categoryName);
     try {
-      const response = await axios.post(`${Base_url2}subcategories/category`, {
+      const response = await axios.post(`${Base_url}subcategories/category`, {
         categoryName: categoryName
       });
 
@@ -180,7 +180,7 @@ export const Categories = () => {
 
   const createCategory = async (name, description) => {
     try {
-      const response = await axios.post(`${Base_url2}categories`, { name, description });
+      const response = await axios.post(`${Base_url}categories`, { name, description });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -191,7 +191,7 @@ export const Categories = () => {
   // Function to get all categories
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url2}categories`);
+      const response = await axios.get(`${Base_url}categories`);
       setCategoriesData(response.data);
       console.log("Categories all", response.data)
       return response.data;
@@ -214,7 +214,7 @@ export const Categories = () => {
   // Function to update a category
   const updateCategory = async (id, name, description) => {
     try {
-      const response = await axios.patch(`${Base_url2}categories/${id}`, { name, description });
+      const response = await axios.patch(`${Base_url}categories/${id}`, { name, description });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -225,7 +225,7 @@ export const Categories = () => {
   // Function to delete a category
    const deleteCategory = async (id) => {
     try {
-      const response = await axios.delete(`${Base_url2}categories/${id}`);
+      const response = await axios.delete(`${Base_url}categories/${id}`);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {

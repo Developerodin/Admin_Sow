@@ -20,7 +20,7 @@ import { InfoCard } from "../../../Components/InfoCard";
 import Grid from "@mui/material/Grid";
 import { RatesCard } from "../../../Components/RatesCard";
 import axios from "axios";
-import { Base_url , Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 
 const orangeTheme = createTheme({
   palette: {
@@ -90,7 +90,7 @@ export const Rates = () => {
   };
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url2}categories`);
+      const response = await axios.get(`${Base_url}categories`);
       setCategoriesData(response.data);
       console.log("Categories all", response.data);
       return response.data;
@@ -101,7 +101,7 @@ export const Rates = () => {
 
   const getSubCategoriesByCategoryName = async (categoryName) => {
     try {
-      const response = await axios.post(`${Base_url2}subcategories/category`, {
+      const response = await axios.post(`${Base_url}subcategories/category`, {
         categoryName: categoryName
       });
 

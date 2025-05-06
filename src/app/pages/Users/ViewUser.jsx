@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Card, Typography, Button } from "@mui/material";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import { Base_url, Base_url2 } from "../../Config/BaseUrl";
+import { Base_url } from "../../Config/BaseUrl";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
 export const ViewUser = () => {
@@ -12,7 +12,7 @@ export const ViewUser = () => {
 
   const getUserById = async () => {
     try {
-      const response = await axios.get(`${Base_url2}b2cUser/${id}`);
+      const response = await axios.get(`${Base_url}b2cUser/${id}`);
       console.log("User data:", response.data);
       setUserData(response.data);
       setError(null);
