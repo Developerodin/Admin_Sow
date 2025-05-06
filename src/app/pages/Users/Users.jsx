@@ -15,7 +15,7 @@ import Grid from "@mui/material/Grid";
 import { OrdersCard } from '../../../Components/OrdersCard';
 import { UserCard } from '../../../Components/UserCard';
 import { useNavigate } from 'react-router-dom';
-import { Base_url } from '../../Config/BaseUrl';
+import { Base_url , Base_url2 } from '../../Config/BaseUrl';
 import Modal from '@mui/material/Modal';
 import axios from 'axios';
 import CloseIcon from '@mui/icons-material/Close';
@@ -121,7 +121,7 @@ const navigate = useNavigate()
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/users`);
+      const response = await axios.get(`${Base_url2}b2cUser`);
 
       if (response.status === 200) {
         const fetchedUsers = response.data;
@@ -141,7 +141,7 @@ const navigate = useNavigate()
 
   const deleteUser = async(ID) => {
     try{
-      const res = await axios.delete(`${Base_url}api/users/${ID}`);
+      const res = await axios.delete(`${Base_url2}b2cUser/${ID}`);
       console.log(res)
       setupdate((prev)=>prev+1)
     }
@@ -174,34 +174,35 @@ const navigate = useNavigate()
 
   const columns = [
     { name: 'Name' },
-    { name: 'Mobile' },
+    { name: 'Phone Number' },
     { name: 'Email' },
-    { name: 'Address' },
-    { name: 'City' },
-    { name:'Status'},
-    { name: "Active" },
+    { name: 'Profile Type' },
+    { name: 'KYC Status' },
+    { name: 'Status' },
+    { name: 'Referral Code' },
     { name: "View" },
     { name: "Update" },
     { name: "Delete" },
   ];
 
-  const rows = AllUsersData.map((el,index)=>{
+  const rows = AllUsersData.results?.map((el) => {
     return {
-      Name:el.name,
-      Mobile:el.mobile,
-      Email:el.email,
-      Address:el.Address,
-      City:el.city,
-      Status:el.status ? <Button color='success' variant="contained" >Active</Button> : <Button color='error' variant="contained">Inactive</Button>,
-      Active:<Switch checked={el.active} />,
-      View:<RemoveRedEyeIcon onClick={()=>handelViewUserClick(el._id)}/>,
-      Update:<BorderColorIcon onClick={()=>navigate(`/users/update/${el._id}`)}/>,
-      Delete:<DeleteIcon  onClick={()=>handleDeleteClick(el._id)}/>,
-
+      Name: `${el.firstName} ${el.lastName}`,
+      'Phone Number': el.phoneNumber,
+      Email: el.email,
+      'Profile Type': el.profileType,
+      'KYC Status': el.isKYCVerified ? 
+        <Button color='success' variant="contained" size="small">Verified</Button> : 
+        <Button color='error' variant="contained" size="small">Not Verified</Button>,
+      Status: el.status === 'active' ? 
+        <Button color='success' variant="contained" size="small">Active</Button> : 
+        <Button color='error' variant="contained" size="small">Inactive</Button>,
+      'Referral Code': el.referralCode,
+      View: <RemoveRedEyeIcon onClick={() => handelViewUserClick(el.id)} />,
+      Update: <BorderColorIcon onClick={() => navigate(`/users/update/${el.id}`)} />,
+      Delete: <DeleteIcon onClick={() => handleDeleteClick(el.id)} />,
     }
-  })
-
-
+  }) || [];
 
   useEffect(()=>{
     fetchUser()

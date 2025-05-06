@@ -27,7 +27,7 @@ import { OrdersCard } from "../../../Components/OrdersCard";
 import Modal from "@mui/material/Modal";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
-import { Base_url } from "../../Config/BaseUrl";
+import { Base_url , Base_url2 } from "../../Config/BaseUrl";
 import axios from "axios";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
@@ -147,7 +147,7 @@ export const Orders = () => {
   // Function to get all B2B orders
   const fetchOrders = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/orders`); // Adjust the endpoint accordingly
+      const response = await axios.get(`${Base_url2}b2cOrder`); // Adjust the endpoint accordingly
       console.log("Orders data =>", response.data);
       setOrders(response.data);
     } catch (error) {
@@ -184,7 +184,7 @@ export const Orders = () => {
   // Function to delete a B2B order
   const deleteOrder = async (id) => {
     try {
-      const response = await axios.delete(`${Base_url}api/b2b_orders/${id}`);
+      const response = await axios.delete(`${Base_url2}b2cOrder/${id}`);
       setupdate((prev) => prev + 1);
       return response.data;
     } catch (error) {
@@ -201,6 +201,10 @@ export const Orders = () => {
   const handleCloseone = () => {
     setOpen1(false);
     setDeleteId(null);
+  };
+
+  const handleViewClick = (ID) => {
+    navigate(`/orders/view/${ID}`);
   };
   
   const handleConfirmDelete = async () => {
@@ -223,36 +227,51 @@ export const Orders = () => {
   }, []);
 
   const columns = [
-    { name: 'Name' },
-    { name: 'Phone' },
-    { name: 'Address' },
-    {name:'City'},
+    { name: 'Order No' },
+    { name: 'Order From' },
+    { name: 'Order To' },
     { name: 'Category' },
     { name: 'Total Amount' },
     { name: 'Status' },
     { name: 'Order Date' },
+    { name: 'Location' },
     { name: 'View' },
     { name: 'Update' },
     { name: 'Delete' },
   ];
 
   const rows = orders.map((order) => {
+    // Calculate total amount from items
+    const totalAmount = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
+    
+    // Get categories from items
+    const categories = order.items.map(item => item.category).join(', ');
+    
+    // Get order from name
+    const orderFrom = order.orderBy ? `${order.orderBy.firstName} ${order.orderBy.lastName}` : 'N/A';
+    
+    // Get order to name
+    const orderTo = order.orderTo ? order.orderTo.name : 'N/A';
+    
+    // Get location
+    const location = order.location ? order.location.googleAddress : 'N/A';
+
     return {
-      Name: order.customer.name,
-      Phone: order.customer.mobile,
-      Address: order.customer.Address,
-      City: order.customer.city,
-      Category: order.details.category.name,
-      'Total Amount': order.totalAmount,
-      Status: order.status === 'assigned' ? (
-        <Button color='success' variant="contained">Assigned</Button>
+      'Order No': order.orderNo,
+      'Order From': orderFrom,
+      'Order To': orderTo,
+      'Category': categories,
+      'Total Amount': totalAmount,
+      'Status': order.orderStatus === 'Pending' ? (
+        <Button color='warning' variant="contained">Pending</Button>
       ) : (
-        <Button color='error' variant="contained">Not assigned</Button>
+        <Button color='success' variant="contained">New</Button>
       ),
-      'Order Date': new Date(order.orderDate).toLocaleDateString(),
-      View: <RemoveRedEyeIcon />,
-      Update: <BorderColorIcon onClick={() => handleUpdateOrder(order._id)} />,
-      Delete: <DeleteIcon onClick={() => handleDeleteClick(order._id)}/>,
+      'Order Date': new Date(order.createdAt).toLocaleDateString(),
+      'Location': location,
+      'View': <RemoveRedEyeIcon onClick={() => handleViewClick(order._id)} />,
+      'Update': <BorderColorIcon onClick={() => handleUpdateOrder(order._id)} />,
+      'Delete': <DeleteIcon onClick={() => handleDeleteClick(order._id)}/>,
     };
   });
 

@@ -20,7 +20,7 @@ import { InfoCard } from "../../../Components/InfoCard";
 import Grid from "@mui/material/Grid";
 import { RatesCard } from "../../../Components/RatesCard";
 import axios from "axios";
-import { Base_url } from "../../Config/BaseUrl";
+import { Base_url , Base_url2 } from "../../Config/BaseUrl";
 
 const orangeTheme = createTheme({
   palette: {
@@ -66,7 +66,7 @@ export const Rates = () => {
   const [value, setValue] = useState(0);
   const [searchInput, setSearchInput] = useState("");
   const [CategoriesData, setCategoriesData] = useState([]);
-  const [SubCatogryData, setSubCatogryData] = useState([]);
+  const [SubCatogryData, setSubCatogryData] = useState({});
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
@@ -90,11 +90,8 @@ export const Rates = () => {
   };
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/category`);
-      const allSubcategories = extractSubcategories(response.data);
-      console.log("Sub category data ====>", allSubcategories);
+      const response = await axios.get(`${Base_url2}categories`);
       setCategoriesData(response.data);
-      setSubCatogryData(allSubcategories);
       console.log("Categories all", response.data);
       return response.data;
     } catch (error) {
@@ -102,23 +99,34 @@ export const Rates = () => {
     }
   };
 
-  const extractSubcategories = (categories) => {
-    const allSubcategories = [];
+  const getSubCategoriesByCategoryName = async (categoryName) => {
+    try {
+      const response = await axios.post(`${Base_url2}subcategories/category`, {
+        categoryName: categoryName
+      });
 
-    categories.forEach((category) => {
-      const subCategory = category.sub_category; // Adjust this based on your actual subcategory field
-
-      if (subCategory && Array.isArray(subCategory)) {
-        allSubcategories.push(...subCategory);
-      }
-    });
-
-    return allSubcategories;
+      console.log("sub category data of selected category ==>", response.data);
+      setSubCatogryData((prevData) => ({
+        ...prevData,
+        [categoryName]: response.data
+      }));
+    } catch (error) {
+      setSubCatogryData((prevData) => ({
+        ...prevData,
+        [categoryName]: []
+      }));
+    }
   };
 
   useEffect(() => {
     getCategories();
   }, []);
+
+  useEffect(() => {
+    CategoriesData.forEach((category) => {
+      getSubCategoriesByCategoryName(category.name);
+    });
+  }, [CategoriesData]);
   return (
     <Box>
       <Card sx={{ minHeight: "100vh" }}>
@@ -234,11 +242,13 @@ export const Rates = () => {
 
        <Grid container spacing={3}>
         {
-          SubCatogryData && SubCatogryData.map((el,index)=>{
-            return  <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
-            <RatesCard  Data={el}/>
-            </Grid>
-          })
+          SubCatogryData && Object.entries(SubCatogryData).map(([category, subCategories]) => (
+            subCategories.map((el, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                <RatesCard Data={el} />
+              </Grid>
+            ))
+          ))
         }
              
 

@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, Card, Typography } from "@mui/material";
+import { Box, Card, Typography, Button } from "@mui/material";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import { Base_url } from "../../Config/BaseUrl";
-
+import { Base_url, Base_url2 } from "../../Config/BaseUrl";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import { ThemColor } from "../../Them/ThemColor";
 
 export const ViewUser = () => {
   const { id } = useParams();
@@ -14,20 +12,13 @@ export const ViewUser = () => {
 
   const getUserById = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/users`);
-      const filteredUser = response.data.find((user) => user._id === id);
-      if (filteredUser) {
-        console.log("User data:", filteredUser);
-        setUserData(filteredUser);
-        setError(null);
-      } else {
-        setError(`No order found with ID ${id}`);
-      }
+      const response = await axios.get(`${Base_url2}b2cUser/${id}`);
+      console.log("User data:", response.data);
+      setUserData(response.data);
+      setError(null);
     } catch (error) {
       console.error("Error fetching User details:", error);
-      setError(
-        error.message || "An error occurred while fetching user details."
-      );
+      setError(error.message || "An error occurred while fetching user details.");
     }
   };
 
@@ -44,35 +35,32 @@ export const ViewUser = () => {
       {userData && (
         <div className="card mb-5 mb-xl-10" id="kt_profile_details_view">
           <div className="card-header cursor-pointer">
-            <div className="card-title m-0" >
-           
-            <div onClick={handelGoBack} style={{backgroundColor:"#7265bd",width:"35px",height:"35px",display:"flex",justifyContent:"center",alignItems:"center",borderRadius:"10px"}}>
+            <div className="card-title m-0">
+              <div onClick={handelGoBack} style={{backgroundColor:"#7265bd",width:"35px",height:"35px",display:"flex",justifyContent:"center",alignItems:"center",borderRadius:"10px"}}>
                 <ArrowBackIosIcon style={{fontSize:"16px",color:"#fff"}}/>
-             </div>
-
-             <div style={{display:"flex",justifyContent:"center",alignItems:"center",marginLeft:"15px"}}>
-             <h1 className="fw-bolder " >User Details</h1>
-               </div>            
+              </div>
+              <div style={{display:"flex",justifyContent:"center",alignItems:"center",marginLeft:"15px"}}>
+                <h1 className="fw-bolder">User Details</h1>
+              </div>            
             </div>
-          
-            </div>
-          <div className="card-body p-9"> 
+          </div>
+          <div className="card-body p-9">
             <div className="row mb-6">
               <label className="col-lg-4 fw-bold text-muted">Status</label>
               <div className="col-lg-8">
-                <span
-                  className={`fw-bolder fs-6 ${
-                    userData.status ? "text-success" : "text-danger"
-                  }`}
+                <Button 
+                  variant="contained" 
+                  size="small"
+                  color={userData.status === 'active' ? 'success' : 'error'}
                 >
-                  {userData.status ? "Active" : "Inactive"}
-                </span>
+                  {userData.status === 'active' ? 'Active' : 'Inactive'}
+                </Button>
               </div>
             </div>
             <div className="row mb-6">
               <label className="col-lg-4 fw-bold text-muted">Name</label>
               <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.name}</span>
+                <span className="fw-bolder fs-6">{`${userData.firstName} ${userData.lastName}`}</span>
               </div>
             </div>
             <div className="row mb-6">
@@ -82,64 +70,44 @@ export const ViewUser = () => {
               </div>
             </div>
             <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Phone</label>
+              <label className="col-lg-4 fw-bold text-muted">Phone Number</label>
               <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.mobile}</span>
+                <span className="fw-bolder fs-6">{userData.phoneNumber}</span>
               </div>
             </div>
             <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Gender</label>
+              <label className="col-lg-4 fw-bold text-muted">Profile Type</label>
               <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.gender}</span>
+                <span className="fw-bolder fs-6">{userData.profileType}</span>
               </div>
             </div>
             <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">
-                Date of birth
-              </label>
+              <label className="col-lg-4 fw-bold text-muted">KYC Status</label>
               <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.dob}</span>
+                <Button 
+                  variant="contained" 
+                  size="small"
+                  color={userData.isKYCVerified ? 'success' : 'error'}
+                >
+                  {userData.isKYCVerified ? 'Verified' : 'Not Verified'}
+                </Button>
               </div>
             </div>
             <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Address</label>
+              <label className="col-lg-4 fw-bold text-muted">Referral Code</label>
               <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.Address}</span>
-              </div>
-            </div>
-            <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Pin Code</label>
-              <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.pincode}</span>
-              </div>
-            </div>
-            <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">City</label>
-              <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.city}</span>
-              </div>
-            </div>
-            <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Country</label>
-              <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.country}</span>
-              </div>
-            </div>
-            <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Created At</label>
-              <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.createdAt}</span>
-              </div>
-            </div>
-            <div className="row mb-6">
-              <label className="col-lg-4 fw-bold text-muted">Updated At</label>
-              <div className="col-lg-8">
-                <span className="fw-bolder fs-6">{userData.updatedAt}</span>
+                <span className="fw-bolder fs-6">{userData.referralCode}</span>
               </div>
             </div>
           </div>
         </div>
       )}
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      )}
     </div>
   );
 };
+

@@ -184,7 +184,7 @@ export const B2BOrders = () => {
   // Function to delete a B2B order
   const deleteOrder = async (id) => {
     try {
-      const response = await axios.delete(`${Base_url}api/b2b_orders/${id}`);
+      const response = await axios.delete(`${Base_url2}b2bOrder/${id}`);
       return response.data;
       setupdate((prev) => prev + 1);
     } catch (error) {
@@ -298,7 +298,7 @@ export const B2BOrders = () => {
                 </Button>
               </Box>
 
-              <Box>
+              {/* <Box>
                 <Button
                   variant="contained"
                   style={{ marginLeft: "20px", background: "#FF8604" }}
@@ -307,7 +307,7 @@ export const B2BOrders = () => {
                 >
                   B2C Order
                 </Button>
-              </Box>
+              </Box> */}
             </Box>
 
             <Box

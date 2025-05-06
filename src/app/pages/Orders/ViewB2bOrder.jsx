@@ -41,47 +41,57 @@ export const ViewB2bOrder = () => {
             <div className="card mb-5 mb-xl-10" id="kt_profile_details_view">
               <div className="card-header cursor-pointer">
                 <div className="card-title m-0">
-                  <div onClick={handelGoBack} style={{ backgroundColor: "#7265bd", width: "35px", height: "35px", display: "flex", justifyContent: "center", alignItems: "center", borderRadius: "10px" }}>
+                  <div onClick={handelGoBack} style={{ backgroundColor: "#7265bd", width: "35px", height: "35px", display: "flex", justifyContent: "center", alignItems: "center", borderRadius: "10px", cursor: "pointer" }}>
                     <ArrowBackIosIcon style={{ fontSize: "16px", color: "#fff" }} />
                   </div>
                   <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "15px" }}>
-                    <h3 className="fw-bolder ">{orderData.orderBy.registerAs} Details</h3>
-                  </div>
-                </div>
-              </div>
-              <div className="card-body p-9">
-                <div className="row mb-6">
-                  <label className="col-lg-4 fw-bold text-muted">Name</label>
-                  <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.orderBy.name}</span>
-                  </div>
-                </div>
-                <div className="row mb-6">
-                  <label className="col-lg-4 fw-bold text-muted">Phone</label>
-                  <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.orderBy.phoneNumber}</span>
+                    <h3 className="fw-bolder ">Order Details</h3>
                   </div>
                 </div>
               </div>
             </div>
 
+            {orderData.orderBy && (
+              <div className="card mb-5 mb-xl-10" id="kt_profile_details_view">
+                <div className="card-header cursor-pointer">
+                  <div className="card-title m-0">
+                    <h3 className="fw-bolder m-0">{orderData.orderBy?.registerAs || 'Order By'} Details</h3>
+                  </div>
+                </div>
+                <div className="card-body p-9">
+                  <div className="row mb-6">
+                    <label className="col-lg-4 fw-bold text-muted">Name</label>
+                    <div className="col-lg-8">
+                      <span className="fw-bolder fs-6">{orderData.orderBy?.name || 'Not Available'}</span>
+                    </div>
+                  </div>
+                  <div className="row mb-6">
+                    <label className="col-lg-4 fw-bold text-muted">Phone</label>
+                    <div className="col-lg-8">
+                      <span className="fw-bolder fs-6">{orderData.orderBy?.phoneNumber || 'Not Available'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="card mb-5 mb-xl-10" id="kt_profile_details_view">
               <div className="card-header cursor-pointer">
                 <div className="card-title m-0">
-                  <h3 className="fw-bolder m-0">{orderData.orderTo.registerAs} Details</h3>
+                  <h3 className="fw-bolder m-0">{orderData.orderTo?.registerAs || 'Recipient'} Details</h3>
                 </div>
               </div>
               <div className="card-body p-9">
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Name</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.orderTo.name}</span>
+                    <span className="fw-bolder fs-6">{orderData.orderTo?.name || 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Phone</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.orderTo.phoneNumber}</span>
+                    <span className="fw-bolder fs-6">{orderData.orderTo?.phoneNumber || 'Not Available'}</span>
                   </div>
                 </div>
               </div>
@@ -98,56 +108,62 @@ export const ViewB2bOrder = () => {
                   <label className="col-lg-4 fw-bold text-muted">Status</label>
                   <div className="col-lg-8">
                     <span className={`fw-bolder fs-6 ${orderData.orderStatus === 'Pending' ? 'text-danger' : orderData.orderStatus === 'Complete' ? 'text-success' : ''}`}>
-                      {orderData.orderStatus.toUpperCase()}
+                      {orderData.orderStatus?.toUpperCase() || 'Not Available'}
                     </span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Order No</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.orderNo}</span>
+                    <span className="fw-bolder fs-6">{orderData.orderNo || 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Date</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{new Date(orderData.createdAt).toLocaleDateString()}</span>
+                    <span className="fw-bolder fs-6">{orderData.createdAt ? new Date(orderData.createdAt).toLocaleDateString() : 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Category</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.category}</span>
+                    <span className="fw-bolder fs-6">{orderData.category || 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Sub Category</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.subCategory}</span>
+                    <span className="fw-bolder fs-6">{orderData.subCategory || 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Weight</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.weight} {orderData.unit}</span>
+                    <span className="fw-bolder fs-6">{orderData.weight ? `${orderData.weight} ${orderData.unit || ''}` : 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
-                  <label className="col-lg-4 fw-bold text-muted">Amount</label>
+                  <label className="col-lg-4 fw-bold text-muted">Value</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">₹ {orderData.totalPrice}</span>
+                    <span className="fw-bolder fs-6">₹ {orderData.value?.toLocaleString() || 'Not Available'}</span>
+                  </div>
+                </div>
+                <div className="row mb-6">
+                  <label className="col-lg-4 fw-bold text-muted">Total Price</label>
+                  <div className="col-lg-8">
+                    <span className="fw-bolder fs-6">₹ {orderData.totalPrice?.toLocaleString() || 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Location</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.location.googleAddress}</span>
+                    <span className="fw-bolder fs-6">{orderData.location?.googleAddress || 'Not Available'}</span>
                   </div>
                 </div>
                 <div className="row mb-6">
                   <label className="col-lg-4 fw-bold text-muted">Notes</label>
                   <div className="col-lg-8">
-                    <span className="fw-bolder fs-6">{orderData.notes}</span>
+                    <span className="fw-bolder fs-6">{orderData.notes || 'Not Available'}</span>
                   </div>
                 </div>
               </div>

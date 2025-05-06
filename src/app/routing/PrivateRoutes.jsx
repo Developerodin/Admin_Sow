@@ -51,6 +51,7 @@ import { MarketRatesView } from '../pages/MarketRates/MarketRatesView'
 import { CreateNotification } from '../pages/Notification/CreateNotification'
 import { B2CVendors } from '../pages/Vendors/B2CVendors'
 import { B2COrders } from '../pages/Orders/B2COrders'
+import { ViewB2cOrder } from '../pages/Orders/ViewB2cOrder'
 
 
 
@@ -201,6 +202,14 @@ const PrivateRoutes = () => {
           element={
             <SuspensedView>
               <EditOrder />
+            </SuspensedView>
+          }
+        />
+        <Route
+          path='orders/view/:id'
+          element={
+            <SuspensedView>
+              <ViewB2cOrder />
             </SuspensedView>
           }
         />

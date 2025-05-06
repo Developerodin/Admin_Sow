@@ -6,7 +6,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Grid';
 import { Box, Card, CardContent, FormControl, InputLabel, Typography } from '@mui/material';
-import { Base_url } from '../../Config/BaseUrl';
+import { Base_url , Base_url2 } from '../../Config/BaseUrl';
 import axios from 'axios';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
@@ -14,17 +14,21 @@ export const EditOrder = () => {
   const { id } = useParams();
   const [orderId, setOrderId] = useState(id);
   const [formData, setFormData] = useState({
-    user: '',
+    orderFrom: '',
+    orderTo: '',
     category: '',
     quantity: 0,
     totalAmount: 0,
-    sub_category: ''
+    sub_category: '',
+    unit: '',
+    weight: ''
   });
 
   const [totalAmount, setTotalAmount] = useState(0);
   const [subCategoryData, setSubCategoryData] = useState([]);
   const [selectedSubcategoryData, setSelectedSubcategoryData] = useState({});
-  const [usersData, setUsersdata] = useState([]);
+  const [b2cUsers, setB2cUsers] = useState([]);
+  const [b2bUsers, setB2bUsers] = useState([]);
   const [CategoriesData, setCategoriesData] = useState([]);
 
   const handleInputChange = (event) => {
@@ -36,28 +40,32 @@ export const EditOrder = () => {
       };
 
       if (name === 'category') {
-        const selectedCategory = CategoriesData.find(cat => cat._id === value);
+        const selectedCategory = CategoriesData.find(cat => cat.name === value);
         if (selectedCategory) {
-          setSubCategoryData(selectedCategory.sub_category);
+          getSubCategoriesByCategoryName(value);
           setFormData({
             ...newFormData,
             sub_category: '',
-            totalAmount: 0
+            totalAmount: 0,
+            unit: '',
+            weight: ''
           });
           setTotalAmount(0);
         }
       } else if (name === 'sub_category') {
         const selectedSubcategory = subCategoryData.find(sub => sub.name === value);
         setSelectedSubcategoryData(selectedSubcategory);
-        const price = selectedSubcategory ? parseFloat(selectedSubcategory.price) : 0;
+        const price = selectedSubcategory ? parseFloat(selectedSubcategory.value) : 0;
         const total = price * formData.quantity;
         setTotalAmount(total);
         setFormData({
           ...newFormData,
-          totalAmount: total
+          totalAmount: total,
+          unit: selectedSubcategory?.unit || '',
+          weight: selectedSubcategory?.weight || ''
         });
       } else if (name === 'quantity') {
-        const price = selectedSubcategoryData.price ? parseFloat(selectedSubcategoryData.price) : 0;
+        const price = selectedSubcategoryData.value ? parseFloat(selectedSubcategoryData.value) : 0;
         const total = parseInt(value) * price;
         setTotalAmount(total);
         setFormData({
@@ -72,23 +80,29 @@ export const EditOrder = () => {
 
   const handleSubmit = () => {
     const Data = {
-      customer: formData.user,
-      details: {
+      items: [{
         category: formData.category,
-        sub_category: formData.sub_category,
-        quantity: formData.quantity,
-      },
-      totalAmount: totalAmount,
-      status: 'not assigned',
+        subCategory: formData.sub_category,
+        value: selectedSubcategoryData.value || 0,
+        unit: formData.unit,
+        weight: formData.weight,
+        totalPrice: totalAmount
+      }],
+      orderStatus: 'New',
+      orderBy: formData.orderFrom,
+      orderTo: formData.orderTo
     };
 
     updateOrder(Data);
     setFormData({
-      user: '',
+      orderFrom: '',
+      orderTo: '',
       category: '',
       quantity: 0,
       totalAmount: 0,
-      sub_category: ''
+      sub_category: '',
+      unit: '',
+      weight: ''
     });
     setTotalAmount(0);
     handelBack();
@@ -96,20 +110,7 @@ export const EditOrder = () => {
 
   const updateOrder = async (Data) => {
     try {
-      await axios.put(`${Base_url}api/orders/${orderId}`, {
-        customer: {
-          name: Data.customer
-        },
-        details: {
-          category: {
-            _id: Data.details.category
-          },
-          sub_category: Data.details.sub_category,
-          quantity: Data.details.quantity
-        },
-        totalAmount: Data.totalAmount,
-        status: Data.status
-      });
+      await axios.put(`${Base_url2}b2cOrder/${orderId}`, Data);
     } catch (error) {
       console.error('Error updating order:', error);
     }
@@ -118,37 +119,24 @@ export const EditOrder = () => {
   const fetchOrderDetails = async () => {
     try {
       if (orderId) {
-        const response = await axios.get(`${Base_url}api/orders/${orderId}`);
+        const response = await axios.get(`${Base_url2}b2cOrder/${orderId}`);
         const data = response.data;
 
-        const customerName = data.customer.name;
-        const category = data.details.category._id;
-        const subCategory = data.details.sub_category;
-        const quantity = data.details.quantity;
-        const totalAmount = data.totalAmount || 0;
+        if (data.items && data.items.length > 0) {
+          const firstItem = data.items[0];
+          setFormData({
+            orderFrom: data.orderBy || '',
+            orderTo: data.orderTo || '',
+            category: firstItem.category,
+            sub_category: firstItem.subCategory,
+            quantity: firstItem.value,
+            totalAmount: firstItem.totalPrice,
+            unit: firstItem.unit,
+            weight: firstItem.weight
+          });
+          setTotalAmount(firstItem.totalPrice);
 
-        setFormData({
-          user: customerName,
-          category: category,
-          sub_category: subCategory,
-          quantity: quantity,
-          totalAmount: totalAmount,
-        });
-
-        const selectedCategory = CategoriesData.find(cat => cat._id === category);
-        if (selectedCategory) {
-          setSubCategoryData(selectedCategory.sub_category);
-          const selectedSubcategory = selectedCategory.sub_category.find(sub => sub.name === subCategory);
-          setSelectedSubcategoryData(selectedSubcategory);
-          if (selectedSubcategory && selectedSubcategory.price) {
-            const price = parseFloat(selectedSubcategory.price);
-            const total = price * quantity;
-            setTotalAmount(total);
-            setFormData(prevState => ({
-              ...prevState,
-              totalAmount: total,
-            }));
-          }
+          await getSubCategoriesByCategoryName(firstItem.category);
         }
       }
     } catch (error) {
@@ -156,13 +144,38 @@ export const EditOrder = () => {
     }
   };
 
-  const fetchUser = async () => {
+  const fetchB2CUsers = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/users`);
+      const response = await axios.get(`${Base_url2}b2cUser`);
       if (response.status === 200) {
-        setUsersdata(response.data);
+        const users = response.data.results.map(user => ({
+          _id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          phoneNumber: user.phoneNumber
+        }));
+        setB2cUsers(users);
       } else {
-        console.error('Error fetching users:', response.statusText);
+        console.error('Error fetching B2C users:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+    }
+  };
+
+  const fetchB2BUsers = async () => {
+    try {
+      const response = await axios.get(`${Base_url2}b2bUser`);
+      if (response.status === 200) {
+        const users = response.data.results.map(user => ({
+          _id: user.id,
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber
+        }));
+        setB2bUsers(users);
+      } else {
+        console.error('Error fetching B2B users:', response.statusText);
       }
     } catch (error) {
       console.error('Error:', error.message);
@@ -171,15 +184,29 @@ export const EditOrder = () => {
 
   const getCategories = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/category`);
+      const response = await axios.get(`${Base_url2}categories`);
       setCategoriesData(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
+  const getSubCategoriesByCategoryName = async (categoryName) => {
+    try {
+      const response = await axios.post(`${Base_url2}subcategories/category`, {
+        categoryName: categoryName
+      });
+      console.log('Subcategories response:', response.data);
+      setSubCategoryData(response.data);
+    } catch (error) {
+      console.error('Error fetching subcategories:', error);
+      setSubCategoryData([]);
+    }
+  };
+
   useEffect(() => {
-    fetchUser();
+    fetchB2CUsers();
+    fetchB2BUsers();
     getCategories();
   }, []);
 
@@ -212,17 +239,36 @@ export const EditOrder = () => {
             <Grid container spacing={2} sx={{ marginTop: "20px" }}>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="user-label">User</InputLabel>
+                  <InputLabel id="order-from-label">Order From (B2C)</InputLabel>
                   <Select
                     fullWidth
-                    label="User"
-                    name="user"
-                    value={formData.user}
+                    label="Order From (B2C)"
+                    name="orderFrom"
+                    value={formData.orderFrom}
                     onChange={handleInputChange}
                   >
-                    {usersData.map((user) => (
+                    {b2cUsers.map((user) => (
                       <MenuItem key={user._id} value={user.name}>
-                        {user.name}
+                        {user.name} ({user.email})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="order-to-label">Order To (B2B)</InputLabel>
+                  <Select
+                    fullWidth
+                    label="Order To (B2B)"
+                    name="orderTo"
+                    value={formData.orderTo}
+                    onChange={handleInputChange}
+                  >
+                    {b2bUsers.map((user) => (
+                      <MenuItem key={user._id} value={user.name}>
+                        {user.name} ({user.email})
                       </MenuItem>
                     ))}
                   </Select>
@@ -240,7 +286,7 @@ export const EditOrder = () => {
                     onChange={handleInputChange}
                   >
                     {CategoriesData.map((category) => (
-                      <MenuItem key={category._id} value={category._id}>
+                      <MenuItem key={category._id} value={category.name}>
                         {category.name}
                       </MenuItem>
                     ))}
@@ -259,8 +305,8 @@ export const EditOrder = () => {
                     onChange={handleInputChange}
                   >
                     {subCategoryData.map((sub) => (
-                      <MenuItem key={sub.name} value={sub.name}>
-                        {sub.name} {sub.price && `${sub.price} / ${sub.unit}`}
+                      <MenuItem key={sub._id} value={sub.name}>
+                        {sub.name} {sub.value && `${sub.value} / ${sub.unit}`}
                       </MenuItem>
                     ))}
                   </Select>
@@ -275,6 +321,26 @@ export const EditOrder = () => {
                   name="quantity"
                   value={formData.quantity}
                   onChange={handleInputChange}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Unit"
+                  name="unit"
+                  value={formData.unit}
+                  InputProps={{ readOnly: true }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Weight"
+                  name="weight"
+                  value={formData.weight}
+                  InputProps={{ readOnly: true }}
                 />
               </Grid>
 
