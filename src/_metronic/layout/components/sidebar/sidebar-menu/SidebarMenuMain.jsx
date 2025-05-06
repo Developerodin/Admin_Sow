@@ -25,27 +25,28 @@ const SidebarMenuMain = () => {
         title={intl.formatMessage({ id: "MENU.DASHBOARD" })}
         fontIcon="bi-app-indicator"
       />
-
-      <SidebarMenuItem
-        to="/vendors"
-        icon={<PeopleIcon style={{ color: "orange", fontSize: "25px" }} />}
-        title="Vendors"
+        <SidebarMenuItem
+        to="/users"
+        icon={
+          <AccountCircleIcon style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Users"
         fontIcon="bi-layers"
       />
-
-      <SidebarMenuItem
-        to="/rates"
-        icon={<LocalAtmIcon style={{ color: "orange", fontSize: "25px" }} />}
-        title="Rates"
-        fontIcon="bi-layers"
-      />
-
-      <SidebarMenuItem
+        <SidebarMenuItem
         to="/orders"
         icon={
           <ShoppingCartIcon style={{ color: "orange", fontSize: "25px" }} />
         }
         title="Orders"
+        fontIcon="bi-layers"
+      />
+
+
+      <SidebarMenuItem
+        to="/vendors"
+        icon={<PeopleIcon style={{ color: "orange", fontSize: "25px" }} />}
+        title="Vendors"
         fontIcon="bi-layers"
       />
 
@@ -57,27 +58,8 @@ const SidebarMenuMain = () => {
         title="Vendors Orders"
         fontIcon="bi-layers"
       />
-      <SidebarMenuItem
-        to="/mandi-rates"
-        icon={
-          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="Master Mandi "
-        fontIcon="bi-layers"
-      />
 
-     <SidebarMenuItem
-        to="/notification"
-        icon={
-          <NotificationsOutlined style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="Notification "
-        fontIcon="bi-layers"
-      />
-
-      
-
-      <SidebarMenuItem
+<SidebarMenuItem
         to="/categories"
         icon={<CategoryIcon style={{ color: "orange", fontSize: "25px" }} />}
         title="Categories"
@@ -85,40 +67,29 @@ const SidebarMenuMain = () => {
       />
 
       <SidebarMenuItem
-        to="/sales"
+        to="/rates"
+        icon={<LocalAtmIcon style={{ color: "orange", fontSize: "25px" }} />}
+        title="Rates"
+        fontIcon="bi-layers"
+      />
+
+    
+     
+
+    
+
+      
+
+      
+       <SidebarMenuItem
+        to="/mandi-rates"
         icon={
-          <MonetizationOnIcon style={{ color: "orange", fontSize: "25px" }} />
+          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
         }
-        title="Sales"
+        title="Master Mandi "
         fontIcon="bi-layers"
       />
-
       <SidebarMenuItem
-        to="/plans"
-        icon={<PaymentsIcon style={{ color: "orange", fontSize: "25px" }} />}
-        title="Plans"
-        fontIcon="bi-layers"
-      />
-
-      <SidebarMenuItem
-        to="/accounts"
-        icon={
-          <ManageAccountsIcon style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="Accounts"
-        fontIcon="bi-layers"
-      />
-
-      <SidebarMenuItem
-        to="/users"
-        icon={
-          <AccountCircleIcon style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="User"
-        fontIcon="bi-layers"
-      />
-
-<SidebarMenuItem
         to="/market-rates"
         icon={
           <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
@@ -135,14 +106,47 @@ const SidebarMenuMain = () => {
         title="Daily Rates"
         fontIcon="bi-layers"
       />
+
 <SidebarMenuItem
-        to="/excel-market-rates"
-        icon={
-          <AnalyticsOutlined style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="Excel Rates"
+        to="/plans"
+        icon={<PaymentsIcon style={{ color: "orange", fontSize: "25px" }} />}
+        title="Plans"
         fontIcon="bi-layers"
       />
+
+      <SidebarMenuItem
+        to="/sales"
+        icon={
+          <MonetizationOnIcon style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Sales"
+        fontIcon="bi-layers"
+      />
+
+     
+
+
+
+      <SidebarMenuItem
+        to="/accounts"
+        icon={
+          <ManageAccountsIcon style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Accounts"
+        fontIcon="bi-layers"
+      />
+
+<SidebarMenuItem
+        to="/notification"
+        icon={
+          <NotificationsOutlined style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="Notification "
+        fontIcon="bi-layers"
+      />
+
+
+
 
 
     </>

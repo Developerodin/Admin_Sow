@@ -114,7 +114,7 @@ export const MarketRates = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${Base_url}api/unifiedPinCode`);
+        const response = await axios.get(`${Base_url2}unifiedPinCode`);
         setApiData(response.data.data); 
         const uniqueStates = [...new Set(response.data.data.map(item => item.state_name))];
         setStates(uniqueStates);
