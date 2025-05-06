@@ -7,7 +7,7 @@ import {Dropdown1} from '../../content/dropdown/Dropdown1'
 import {useThemeMode} from '../../layout/theme-mode/ThemeModeProvider'
 import InventoryIcon from '@mui/icons-material/Inventory';
 import EvStationIcon from '@mui/icons-material/EvStation';
-import { BASE_URL } from '../../../../app/Config/BaseUrl'
+
 import axios, { AxiosResponse } from 'axios';
 
 import { Button, Switch } from '@mui/material'
