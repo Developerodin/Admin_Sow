@@ -264,6 +264,8 @@ export const VendorsView = () => {
   const [teacherData, setTeacherData] = useState(null);
   const [userData, setUserData] = useState(null);
   const [update, setupdate] = useState(0);
+  const [kycData, setKycData] = useState(null);
+  const [kycLoading, setKycLoading] = useState(false);
   const [subCategoryData, setSubCategoryData] = useState({
     name: "",
     price: "",
@@ -321,6 +323,28 @@ export const VendorsView = () => {
     });
   };
 
+  const fetchKycData = async (vendorId) => {
+    console.log("fetchKycData function started with vendorId:", vendorId);
+    console.log("Base_url:", Base_url);
+    console.log("Full URL:", `${Base_url}b2bUser/kyc/${vendorId}`);
+    setKycLoading(true);
+    try {
+      const response = await axios.get(`${Base_url}b2bUser/kyc/${vendorId}`);
+      console.log("KYC Response ========>", response.data);
+      if (response.data && response.data.success) {
+        setKycData(response.data.data);
+      } else {
+        setKycData(null);
+      }
+    } catch (error) {
+      console.error("Error fetching KYC data:", error);
+      console.error("Error details:", error.response?.data);
+      setKycData(null);
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
   const toggleDrawer = (anchor, open) => (event) => {
     if (
       event.type === "keydown" &&
@@ -329,7 +353,20 @@ export const VendorsView = () => {
       return;
     }
 
+    console.log("toggleDrawer called with:", { anchor, open, userData: userData?._id });
     setState({ ...state, [anchor]: open });
+    
+    // Fetch KYC data when drawer opens
+    if (open && userData && userData._id) {
+      console.log("Calling fetchKycData with vendorId:", userData._id);
+      fetchKycData(userData._id);
+    } else {
+      console.log("Not calling fetchKycData because:", { 
+        open, 
+        hasUserData: !!userData, 
+        hasUserId: !!(userData && userData._id) 
+      });
+    }
   };
 
   const list = (anchor) => (
@@ -505,6 +542,127 @@ export const VendorsView = () => {
               }}
             >
               <PhotoSizeSelectActualIcon sx={{ fontSize: "40px" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          height: "30px",
+          backgroundColor: "orange",
+          borderRadius: "20px",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          marginTop: "20px",
+        }}
+      >
+        <p style={{ color: "#fff", marginTop: "10px" }}> KYC Details </p>
+      </div>
+
+      <div>
+        <div style={{ marginTop: "20px" }}>
+          {kycLoading ? (
+            <div style={{ textAlign: "center", padding: "20px" }}>
+              <p>Loading KYC data...</p>
+            </div>
+          ) : kycData ? (
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={{ ...thTdStyle2 }}>GST Number</th>
+                  <th style={thTdStyle2}>Status</th>
+                  <th style={thTdStyle2}></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={thTdStyle2}>{kycData.gstinNumber || "N/A"}</td>
+                  <td style={thTdStyle2}>
+                    <span
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        backgroundColor: kycData.status === "approved" ? "#4CAF50" : 
+                                        kycData.status === "rejected" ? "#f44336" : "#ff9800",
+                        color: "white"
+                      }}
+                    >
+                      {kycData.status ? kycData.status.toUpperCase() : "PENDING"}
+                    </span>
+                  </td>
+                  <td style={thTdStyle2}>
+                    <MoreVertIcon />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          ) : (
+            <h2>No KYC Data Available</h2>
+          )}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "left",
+            alignItems: "center",
+            marginTop: "20px",
+            padding: "10px",
+          }}
+        >
+          <div style={{ marginRight: "20px" }}>
+            <span>Owner Image</span>
+            <div
+              style={{
+                width: "100px",
+                height: "100px",
+                border: "1px solid grey",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                borderRadius: "20px",
+                overflow: "hidden"
+              }}
+            >
+              {kycData && kycData.OwnerImage ? (
+                <img 
+                  src={kycData.OwnerImage} 
+                  alt="Owner" 
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <PhotoSizeSelectActualIcon sx={{ fontSize: "40px" }} />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <span>Warehouse Image</span>
+            <div
+              style={{
+                width: "100px",
+                height: "100px",
+                border: "1px solid grey",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                borderRadius: "20px",
+                overflow: "hidden"
+              }}
+            >
+              {kycData && kycData.WareHouseImage ? (
+                <img 
+                  src={kycData.WareHouseImage} 
+                  alt="Warehouse" 
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                <PhotoSizeSelectActualIcon sx={{ fontSize: "40px" }} />
+              )}
             </div>
           </div>
         </div>
