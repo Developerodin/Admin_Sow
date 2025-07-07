@@ -288,6 +288,12 @@ export const MarketRates = () => {
       const response = await axios.get(`${Base_url}mandiRates`);
       const allData = response.data;
       console.log("get DAta ===>",allData);
+      
+      // Debug: Check for null mandi values
+      const nullMandiItems = allData.filter(item => !item.mandi);
+      if (nullMandiItems.length > 0) {
+        console.warn("Found items with null mandi:", nullMandiItems.length);
+      }
       const latestData = Object.values(
         allData.reduce((acc, curr) => {
           const mandi = curr.mandi;
@@ -307,8 +313,13 @@ export const MarketRates = () => {
       const filteredData = latestData.filter(
         (item) => item.mandi && item.mandi.mandiname
       );
-      const tableRows = allData.flatMap((item, index) =>
-        item.categoryPrices.map((price, subIndex) => {
+      const tableRows = filteredData.flatMap((item, index) => {
+        // Check if categoryPrices exists and is an array
+        if (!item.categoryPrices || !Array.isArray(item.categoryPrices)) {
+          return [];
+        }
+        
+        return item.categoryPrices.map((price, subIndex) => {
           // Format the date properly
           const date = new Date(price.date);
           const formattedDate = date.toISOString().split('T')[0]; // This will give YYYY-MM-DD format
@@ -316,15 +327,15 @@ export const MarketRates = () => {
           return {
             Sno: subIndex + 1,
             date: formattedDate, // Use the formatted date
-            State: item.mandi.state,
-            City: item.mandi.city,
-            Category: price.category,
-            SubCategory: price.subCategory,
-            Price: price.price,
-            "Price Difference": price.priceDifference.difference || 0,
+            State: item.mandi?.state || "N/A",
+            City: item.mandi?.city || "N/A",
+            Category: price.category || "N/A",
+            SubCategory: price.subCategory || "N/A",
+            Price: price.price || 0,
+            "Price Difference": price.priceDifference?.difference || 0,
           };
-        })
-      );
+        });
+      });
       
       console.log("Formatted Table Rows:", tableRows);
       setMarketData(tableRows);
@@ -422,6 +433,12 @@ export const MarketRates = () => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   style={{ marginRight: "10px" }}
                   size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    style: { paddingTop: '8px', paddingBottom: '8px' }
+                  }}
                 />
                 <Button
                   variant="contained"
@@ -524,6 +541,12 @@ selectedState && selectedState !== "All" &&
                 onChange={(e) => setFromDate(e.target.value)}
                 size="small"
                 style={{width: "200px"}}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  style: { paddingTop: '8px', paddingBottom: '8px' }
+                }}
               />
               <Typography>to</Typography>
               <TextField
@@ -533,6 +556,12 @@ selectedState && selectedState !== "All" &&
                 onChange={(e) => setToDate(e.target.value)}
                 size="small"
                 style={{width: "200px"}}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  style: { paddingTop: '8px', paddingBottom: '8px' }
+                }}
               />
             </Box>
           </Box>

@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 import AddIcon from '@mui/icons-material/Add';
 import PropTypes from 'prop-types';
 import { createTheme } from "@mui/material/styles";
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles'; 
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { InfoCard } from '../../../Components/InfoCard';
@@ -90,7 +90,7 @@ export const ViewCategories = () => {
     setSubCategoryAddData({
       name:"",
       price:"",
-      unit:""
+      unit:"kg"
     })
   };
   const [open2, setOpen2] = useState(false);
@@ -101,14 +101,14 @@ export const ViewCategories = () => {
     setSubCategoryAddData({
       name:"",
       price:"",
-      unit:""
+      unit:"kg"
     })
   };
   const [SubCategoriesData, setsubCategoriesData] = useState([]);
   const [subCategoryAddData,setSubCategoryAddData] = useState({
     name:"",
     price:"",
-    unit:""
+    unit:"kg"
   });
   const [CategoryData,setCategoriesData] = useState(null)
   const handleChange = (event, newValue) => {
@@ -156,7 +156,7 @@ export const ViewCategories = () => {
     setSubCategoryAddData({
       name:"",
       price:"",
-      unit:""
+      unit:"kg"
     })
   }
 
@@ -175,7 +175,8 @@ export const ViewCategories = () => {
 
    const addSubcategory = async (categoryId, name, price, unit) => {
     try {
-      const response = await axios.post(`${Base_url}subcategories`, { categoryId, name, description: unit  , price: price });
+      console.log("Adding subcategory with data:", { categoryId, name, description: unit, price: price });
+      const response = await axios.post(`${Base_url}subcategories`, { categoryId, name, description: unit, price: price });
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -186,6 +187,7 @@ export const ViewCategories = () => {
   // Function to update a subcategory
    const updateSubcategory = async (categoryId, subcategoryId, name, price, unit) => {
     try {
+      console.log("Updating subcategory with data:", { categoryId, name, description: unit, price });
       const response = await axios.patch(`${Base_url}subcategories/${subcategoryId}`, { categoryId, name, description: unit,price });
       setUpdate((prev) =>prev+1)
       return response.data;
@@ -382,9 +384,11 @@ export const ViewCategories = () => {
         onChange={handleSubCategoryInputChange}
       />
       <TextField
+        fullWidth
         sx={{ marginTop: "30px" }}
         label="Price"
         name="price"
+        type="number"
         value={subCategoryAddData.price}
         onChange={handleSubCategoryInputChange}
       />
@@ -427,9 +431,11 @@ export const ViewCategories = () => {
         onChange={handleSubCategoryInputChange}
       />
       <TextField
+        fullWidth
         sx={{ marginTop: "30px" }}
         label="Price"
         name="price"
+        type="number"
         value={subCategoryAddData.price}
         onChange={handleSubCategoryInputChange}
       />
