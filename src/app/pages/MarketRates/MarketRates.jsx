@@ -45,12 +45,14 @@ export const MarketRates = () => {
   const [row,setRows] = useState([]);
   const [MarketData, setMarketData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedTime, setSelectedTime] = useState("10:00");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
   const column=[
    {name:"Sno"},
    {name:"Date"},
+   {name:"Time"},
    {name:"State"},
    {name:"City"},
    {name:"Category"},
@@ -156,6 +158,17 @@ export const MarketRates = () => {
   const handleExport = () => {
     const dataToExport = [];
     let serialNumber = 1; // Initialize serial number
+    
+    // Convert 24-hour time to 12-hour format
+    const convertTo12Hour = (time24) => {
+      const [hours, minutes] = time24.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+    };
+    
+    const formattedTime = convertTo12Hour(selectedTime);
   
     filteredMandiData.forEach((mandi) => {
       mandi.categories.forEach((category, catIndex) => {
@@ -173,6 +186,7 @@ export const MarketRates = () => {
               "Sub Category": subCategory.name || "N/A",
               Price: subCategory.newPrice || 0,
               Date: selectedDate,
+              Time: formattedTime,
             });
           });
         } else {
@@ -186,6 +200,7 @@ export const MarketRates = () => {
             "Sub Category": "N/A",
             Price: "0",
             Date: selectedDate,
+            Time: formattedTime,
           });
         }
       });
@@ -198,6 +213,7 @@ export const MarketRates = () => {
   };
 
   const handleImport = (event) => {
+    console.log("handleImport ===>",event);
     const file = event.target.files[0];
     const reader = new FileReader();
   
@@ -211,6 +227,7 @@ export const MarketRates = () => {
   
       // Convert the sheet into JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      console.log("jsonData ===>",jsonData);
   
       // Transform the data into the required format
       const transformedData = jsonData.map((row) => {
@@ -218,6 +235,28 @@ export const MarketRates = () => {
         const subCategory = row["Sub Category"];
         const price = row.Price || "0";
         const date = row.Date || selectedDate;
+        const time = row.Time || "10:00 AM"; // Default time if not provided
+        
+        // Ensure time is in 12-hour format (API expects this format)
+        const formatTime = (timeStr) => {
+          if (!timeStr || timeStr === "N/A") return "10:00 AM";
+          
+          // If already in 12-hour format, return as is
+          if (timeStr.includes('AM') || timeStr.includes('PM')) {
+            return timeStr;
+          }
+          
+          // If in 24-hour format, convert to 12-hour
+          if (timeStr.includes(':')) {
+            const [hours, minutes] = timeStr.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+          }
+          
+          return "10:00 AM"; // Default fallback
+        };
   
         // Lookup mandiId based on the category
         const mandi = mandiData.find((mandi) => mandi.categories.includes(category) && mandi.state === selectedState);
@@ -230,6 +269,7 @@ export const MarketRates = () => {
           subCategory,
           price,
           date,
+          time: formatTime(time),
         };
       });
   
@@ -327,6 +367,7 @@ export const MarketRates = () => {
           return {
             Sno: subIndex + 1,
             date: formattedDate, // Use the formatted date
+            Time: price.time || "N/A",
             State: item.mandi?.state || "N/A",
             City: item.mandi?.city || "N/A",
             Category: price.category || "N/A",
@@ -431,6 +472,19 @@ export const MarketRates = () => {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
+                  style={{ marginRight: "10px" }}
+                  size="small"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  InputProps={{
+                    style: { paddingTop: '8px', paddingBottom: '8px' }
+                  }}
+                />
+                <TextField
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
                   style={{ marginRight: "10px" }}
                   size="small"
                   InputLabelProps={{

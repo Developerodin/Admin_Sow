@@ -122,7 +122,7 @@ export const GenralTabel = (props) => {
         </TableContainer>
         <div>
           <TablePagination
-            rowsPerPageOptions={[10, 20, 30]}
+            rowsPerPageOptions={[10, 50, 100, 500, 1000]}
             component="div"
             count={rows.length}
             rowsPerPage={rowsPerPage}
