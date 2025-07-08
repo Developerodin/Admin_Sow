@@ -241,17 +241,40 @@ export const MarketRates = () => {
         const formatTime = (timeStr) => {
           if (!timeStr || timeStr === "N/A") return "10:00 AM";
           
+          // Convert to string to ensure we can use string methods
+          const timeString = String(timeStr).trim();
+          
           // If already in 12-hour format, return as is
-          if (timeStr.includes('AM') || timeStr.includes('PM')) {
-            return timeStr;
+          if (timeString.includes('AM') || timeString.includes('PM')) {
+            return timeString;
           }
           
-          // If in 24-hour format, convert to 12-hour
-          if (timeStr.includes(':')) {
-            const [hours, minutes] = timeStr.split(':');
-            const hour = parseInt(hours);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour % 12 || 12;
+          // Check if it's a decimal number (Excel time format)
+          const timeNumber = parseFloat(timeString);
+          if (!isNaN(timeNumber) && timeNumber >= 0 && timeNumber < 1) {
+            // Convert Excel decimal time to hours and minutes
+            const totalMinutes = Math.round(timeNumber * 24 * 60);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const hour12 = hours % 12 || 12;
+            return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+          }
+          
+          // If in 24-hour format (with or without seconds), convert to 12-hour
+          if (timeString.includes(':')) {
+            const timeParts = timeString.split(':');
+            const hours = parseInt(timeParts[0]);
+            const minutes = timeParts[1];
+            
+            // Validate hours and minutes
+            if (isNaN(hours) || hours < 0 || hours > 23) {
+              return "10:00 AM"; // Default fallback for invalid hours
+            }
+            
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const hour12 = hours % 12 || 12;
             return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
           }
           
