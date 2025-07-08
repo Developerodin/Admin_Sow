@@ -163,7 +163,7 @@ export const ViewCategories = () => {
   const handelEditSubCategory = (sub_id) =>{
     // console.log('handelAddSubCategory',subCategoryAddData);
     // addSubcategory(id,subCategoryAddData.name,subCategoryAddData.price,subCategoryAddData.unit)
-    updateSubcategory(id,sub_id,subCategoryAddData.name,subCategoryAddData.price,subCategoryAddData.unit)
+    updateSubcategory(id,sub_id,subCategoryAddData.name,subCategoryAddData.price,subCategoryAddData.description)
     handleClose2();
    
   }
@@ -177,6 +177,7 @@ export const ViewCategories = () => {
     try {
       console.log("Adding subcategory with data:", { categoryId, name, description: unit, price: price });
       const response = await axios.post(`${Base_url}subcategories`, { categoryId, name, description: unit, price: price });
+      console.log("Response ==>",response.data)
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -443,7 +444,7 @@ export const ViewCategories = () => {
         sx={{ marginTop: "30px" }}
         label="Unit"
         name="unit"
-        value={subCategoryAddData.unit}
+        value={subCategoryAddData.description}
         onChange={handleSubCategoryInputChange}
       />
           <Box sx={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"15px"}}>

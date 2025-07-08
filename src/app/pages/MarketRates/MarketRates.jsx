@@ -55,6 +55,7 @@ export const MarketRates = () => {
    {name:"Time"},
    {name:"State"},
    {name:"City"},
+   {name:"Mandi Name"},
    {name:"Category"},
    {name:"SubCategory"},
    {name:"Price"},
@@ -281,8 +282,13 @@ export const MarketRates = () => {
           return "10:00 AM"; // Default fallback
         };
   
-        // Lookup mandiId based on the category
-        const mandi = mandiData.find((mandi) => mandi.categories.includes(category) && mandi.state === selectedState);
+        // Lookup mandiId based on the category, state, and mandi name
+        const mandiName = row["Mandi Name"];
+        const mandi = mandiData.find((mandi) => 
+          mandi.categories.includes(category) && 
+          mandi.state === selectedState && 
+          mandi.mandiname === mandiName
+        );
         const mandiId = mandi ? mandi._id : "N/A";
   
         // Return the transformed object
@@ -376,6 +382,7 @@ export const MarketRates = () => {
       const filteredData = latestData.filter(
         (item) => item.mandi && item.mandi.mandiname
       );
+      let globalSno = 1; // Global serial number counter
       const tableRows = filteredData.flatMap((item, index) => {
         // Check if categoryPrices exists and is an array
         if (!item.categoryPrices || !Array.isArray(item.categoryPrices)) {
@@ -388,11 +395,12 @@ export const MarketRates = () => {
           const formattedDate = date.toISOString().split('T')[0]; // This will give YYYY-MM-DD format
           
           return {
-            Sno: subIndex + 1,
+            Sno: globalSno++, // Use global counter and increment
             date: formattedDate, // Use the formatted date
             Time: price.time || "N/A",
             State: item.mandi?.state || "N/A",
             City: item.mandi?.city || "N/A",
+            "Mandi Name": item.mandi?.mandiname || "N/A",
             Category: price.category || "N/A",
             SubCategory: price.subCategory || "N/A",
             Price: price.price || 0,
