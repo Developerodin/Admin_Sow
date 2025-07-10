@@ -160,6 +160,10 @@ export const MarketRates = () => {
     const dataToExport = [];
     let serialNumber = 1; // Initialize serial number
     
+    // Get default date and time if inputs are blank
+    const exportDate = selectedDate || new Date().toISOString().split('T')[0];
+    const exportTime = selectedTime || "10:00";
+    
     // Convert 24-hour time to 12-hour format
     const convertTo12Hour = (time24) => {
       const [hours, minutes] = time24.split(':');
@@ -169,41 +173,20 @@ export const MarketRates = () => {
       return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
     };
     
-    const formattedTime = convertTo12Hour(selectedTime);
+    const formattedTime = convertTo12Hour(exportTime);
   
-    filteredMandiData.forEach((mandi) => {
-      mandi.categories.forEach((category, catIndex) => {
-        const subcategories = subCategoryData[category]; // Fetch subcategories for the category
-  
-        // If subcategories exist, add each subcategory row to the export data
-        if (subcategories && subcategories.length > 0) {
-          subcategories.forEach((subCategory, subCatIndex) => {
-            dataToExport.push({
-              "Sr No": serialNumber++,
-              State: mandi.state || "N/A",
-              City: mandi.city || "N/A",
-              "Mandi Name": mandi.mandiname || "N/A",
-              Category: category || "N/A",
-              "Sub Category": subCategory.name || "N/A",
-              Price: subCategory.newPrice || 0,
-              Date: selectedDate,
-              Time: formattedTime,
-            });
-          });
-        } else {
-          // If no subcategories, add a single row for the category
-          dataToExport.push({
-            "Sr No": serialNumber++,
-            State: mandi.state || "N/A",
-            City: mandi.city || "N/A",
-            "Mandi Name": mandi.mandiname || "N/A",
-            Category: category || "N/A",
-            "Sub Category": "N/A",
-            Price: "0",
-            Date: selectedDate,
-            Time: formattedTime,
-          });
-        }
+    // Use the filtered table data (row) instead of mandi data
+    row.forEach((item) => {
+      dataToExport.push({
+        "Sr No": serialNumber++,
+        State: item.State || "N/A",
+        City: item.City || "N/A",
+        "Mandi Name": item["Mandi Name"] || "N/A",
+        Category: item.Category || "N/A",
+        "Sub Category": item.SubCategory || "N/A",
+        Price: item.Price || 0,
+        Date: item.date || exportDate,
+        Time: item.Time || formattedTime,
       });
     });
   
@@ -230,12 +213,59 @@ export const MarketRates = () => {
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       console.log("jsonData ===>",jsonData);
   
+      // Function to format date to YYYY-MM-DD format
+      const formatDate = (dateStr) => {
+        if (!dateStr || dateStr === "N/A") return selectedDate;
+        
+        const dateString = String(dateStr).trim();
+        
+        // If already in YYYY-MM-DD format, return as is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+          return dateString;
+        }
+        
+        // If in DD-MM-YYYY format, convert to YYYY-MM-DD
+        if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+          const [day, month, year] = dateString.split('-');
+          return `${year}-${month}-${day}`;
+        }
+        
+        // If in DD/MM/YYYY format, convert to YYYY-MM-DD
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+          const [day, month, year] = dateString.split('/');
+          return `${year}-${month}-${day}`;
+        }
+        
+        // Check if it's an Excel date serial number (number format)
+        const dateNumber = parseFloat(dateString);
+        if (!isNaN(dateNumber) && dateNumber > 0) {
+          // Excel date serial numbers start from January 1, 1900
+          // Convert Excel serial number to JavaScript Date
+          const excelEpoch = new Date(1900, 0, 1); // January 1, 1900
+          const millisecondsPerDay = 24 * 60 * 60 * 1000;
+          const dateObj = new Date(excelEpoch.getTime() + (dateNumber - 1) * millisecondsPerDay);
+          
+          if (!isNaN(dateObj.getTime())) {
+            return dateObj.toISOString().split('T')[0];
+          }
+        }
+        
+        // Try to parse as Date object (for other date formats)
+        const dateObj = new Date(dateString);
+        if (!isNaN(dateObj.getTime())) {
+          return dateObj.toISOString().split('T')[0];
+        }
+        
+        // Default fallback
+        return selectedDate;
+      };
+
       // Transform the data into the required format
       const transformedData = jsonData.map((row) => {
         const category = row.Category;
         const subCategory = row["Sub Category"];
         const price = row.Price || "0";
-        const date = row.Date || selectedDate;
+        const date = formatDate(row.Date);
         const time = row.Time || "10:00 AM"; // Default time if not provided
         
         // Ensure time is in 12-hour format (API expects this format)
@@ -390,9 +420,21 @@ export const MarketRates = () => {
         }
         
         return item.categoryPrices.map((price, subIndex) => {
-          // Format the date properly
-          const date = new Date(price.date);
-          const formattedDate = date.toISOString().split('T')[0]; // This will give YYYY-MM-DD format
+          // Format the date properly and handle invalid dates
+          let formattedDate;
+          try {
+            const date = new Date(price.date);
+            if (isNaN(date.getTime())) {
+              // If date is invalid, use today's date as fallback
+              formattedDate = new Date().toISOString().split('T')[0];
+              console.warn("Invalid date found in database:", price.date, "using fallback date:", formattedDate);
+            } else {
+              formattedDate = date.toISOString().split('T')[0]; // This will give YYYY-MM-DD format
+            }
+          } catch (error) {
+            formattedDate = new Date().toISOString().split('T')[0];
+            console.warn("Error processing date:", price.date, "using fallback date:", formattedDate);
+          }
           
           return {
             Sno: globalSno++, // Use global counter and increment
@@ -419,59 +461,84 @@ export const MarketRates = () => {
 
 
   useEffect(() => {
-    if (selectedState && selectedState !== "All") {
-      const filteredData = MarketData.filter(
-        (mandi) => mandi.State === selectedState
-      );
-      console.log("filteredData ===>",filteredData);
-      // Apply date range filter only if both dates are selected
-      if (fromDate && toDate) {
-      console.log("filteredData ===>",filteredData);
-        const dateFilteredData = filteredData.filter(item => {
-          // Convert the item's date to start of day in UTC
-          const itemDate = new Date(item.date);
-          const itemDateStart = new Date(Date.UTC(
-            itemDate.getUTCFullYear(),
-            itemDate.getUTCMonth(),
-            itemDate.getUTCDate()
-          ));
-
-          // Convert from and to dates to start of day in UTC
-          const from = new Date(fromDate + 'T00:00:00.000Z');
-          const to = new Date(toDate + 'T23:59:59.999Z');
-
-          return itemDateStart >= from && itemDateStart <= to;
-        });
-
-        
-        setRows(dateFilteredData);
-      } else {
-        setRows(filteredData);
-      }
-    } else {
-      // Apply only date range filter when no state is selected
-      if (fromDate && toDate) {
-        const dateFilteredData = MarketData.filter(item => {
-          // Convert the item's date to start of day in UTC
-          const itemDate = new Date(item.date);
-          const itemDateStart = new Date(Date.UTC(
-            itemDate.getUTCFullYear(),
-            itemDate.getUTCMonth(),
-            itemDate.getUTCDate()
-          ));
-
-          // Convert from and to dates to start of day in UTC
-          const from = new Date(fromDate + 'T00:00:00.000Z');
-          const to = new Date(toDate + 'T23:59:59.999Z');
-
-          return itemDateStart >= from && itemDateStart <= to;
-        });
-        setRows(dateFilteredData);
-      } else {
-        setRows(MarketData);
-      }
+    let filteredData = [...MarketData]; // Start with all data
+    
+    // Debug: Show available date ranges in the data
+    if (MarketData.length > 0) {
+      const dates = MarketData.map(item => item.date).filter(date => date && date !== "N/A");
+      const uniqueDates = [...new Set(dates)].sort();
+      console.log("Available dates in data:", uniqueDates);
+      console.log("Date range in data:", uniqueDates[0], "to", uniqueDates[uniqueDates.length - 1]);
     }
-  }, [selectedState, MarketData, fromDate, toDate]);
+    
+    // Apply state filter if selected
+    if (selectedState && selectedState !== "All") {
+      filteredData = filteredData.filter(item => item.State === selectedState);
+    }
+    
+    // Apply date range filter if both dates are selected
+    if (fromDate && toDate) {
+      console.log("fromDate ===>",fromDate);
+      console.log("toDate ===>",toDate);
+      console.log("filteredData ===>",filteredData);
+      
+      // Debug: Show what date range would work
+      const availableDates = filteredData.map(item => item.date).filter(date => date && date !== "N/A");
+      const uniqueDates = [...new Set(availableDates)].sort();
+      if (uniqueDates.length > 0) {
+        console.log("Available dates in filtered data:", uniqueDates);
+        console.log("Suggested date range:", uniqueDates[0], "to", uniqueDates[uniqueDates.length - 1]);
+      }
+      filteredData = filteredData.filter(item => {
+        try {
+          // Debug: Log the item date
+          console.log("Processing item date:", item.date, "for item:", item);
+          
+          // Convert the item's date to start of day
+          const itemDate = new Date(item.date);
+          
+          // Check if date is valid
+          if (isNaN(itemDate.getTime())) {
+            console.log("Invalid date found:", item.date, "for item:", item);
+            return false; // Skip invalid dates
+          }
+          
+          // Set time to start of day for comparison
+          const itemDateStart = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+          
+          // Convert from and to dates to start and end of day
+          const from = new Date(fromDate + 'T00:00:00');
+          const to = new Date(toDate + 'T23:59:59.999');
+          
+          console.log("Comparing dates:");
+          console.log("  Item date:", itemDateStart);
+          console.log("  From date:", from);
+          console.log("  To date:", to);
+          console.log("  Is in range:", itemDateStart >= from && itemDateStart <= to);
+          
+          return itemDateStart >= from && itemDateStart <= to;
+        } catch (error) {
+          console.error("Error filtering date:", error, "for item:", item);
+          return false;
+        }
+      });
+    }
+    
+    // Apply search filter if search input is provided
+    if (searchInput && searchInput.trim() !== "") {
+      const searchTerm = searchInput.toLowerCase().trim();
+      filteredData = filteredData.filter(item => 
+        (item.State && item.State.toLowerCase().includes(searchTerm)) ||
+        (item.City && item.City.toLowerCase().includes(searchTerm)) ||
+        (item["Mandi Name"] && item["Mandi Name"].toLowerCase().includes(searchTerm)) ||
+        (item.Category && item.Category.toLowerCase().includes(searchTerm)) ||
+        (item.SubCategory && item.SubCategory.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    console.log("Filtered data:", filteredData);
+    setRows(filteredData);
+  }, [selectedState, MarketData, fromDate, toDate, searchInput]);
  
 
   return (
@@ -497,34 +564,7 @@ export const MarketRates = () => {
                   Market Rates 
                 </Typography>
               </Box>
-              {
-                selectedState !== "All" && <Box>
-                <TextField
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  style={{ marginRight: "10px" }}
-                  size="small"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    style: { paddingTop: '8px', paddingBottom: '8px' }
-                  }}
-                />
-                <TextField
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  style={{ marginRight: "10px" }}
-                  size="small"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    style: { paddingTop: '8px', paddingBottom: '8px' }
-                  }}
-                />
+              <Box>
                 <Button
                   variant="contained"
                   style={{ marginRight: "10px" }}
@@ -544,7 +584,6 @@ export const MarketRates = () => {
                   />
                 </Button>
               </Box>
-              }
             </Box>
 
             <Box
@@ -614,8 +653,6 @@ export const MarketRates = () => {
             </Select>
           </Box>
 
-{
-selectedState && selectedState !== "All" &&
           <Box style={{marginTop:20}}>
             <InputLabel>Filter by Date Range</InputLabel>
             <Box style={{display: 'flex', gap: '10px', alignItems: 'center',marginTop:20}}>
@@ -650,7 +687,6 @@ selectedState && selectedState !== "All" &&
               />
             </Box>
           </Box>
-}
           <Box
             sx={{
               width: "100%",
