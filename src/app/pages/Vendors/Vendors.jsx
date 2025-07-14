@@ -133,7 +133,7 @@ export const Vendors = () => {
 
    const fetchB2BUser = async () => {
     try {
-      const response = await axios.get(`${Base_url}b2bUser`);
+      const response = await axios.get(`${Base_url}b2bUser?limit=1000`);
       const fetchedB2BUsers = response.data.results;
   
       console.log("Fetch users == 125>", fetchedB2BUsers);
@@ -795,27 +795,46 @@ export const Vendors = () => {
                       <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
                         Owner Image
                       </Typography>
-                      <Box
-                        style={{
-                          width: "150px",
-                          height: "150px",
-                          border: "2px solid #ddd",
-                          borderRadius: "10px",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          overflow: "hidden",
-                          backgroundColor: "#f9f9f9"
-                        }}
-                      >
-                        {selectedKycData.OwnerImage ? (
-                          <img 
-                            src={selectedKycData.OwnerImage} 
-                            alt="Owner" 
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          />
+                      <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                        {selectedKycData.OwnerImage && Array.isArray(selectedKycData.OwnerImage) && selectedKycData.OwnerImage.length > 0 ? (
+                          selectedKycData.OwnerImage.map((imageUrl, index) => (
+                            <Box
+                              key={index}
+                              style={{
+                                width: "150px",
+                                height: "150px",
+                                border: "2px solid #ddd",
+                                borderRadius: "10px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                overflow: "hidden",
+                                backgroundColor: "#f9f9f9"
+                              }}
+                            >
+                              <img 
+                                src={imageUrl} 
+                                alt={`Owner ${index + 1}`} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            </Box>
+                          ))
                         ) : (
-                          <PhotoSizeSelectActualIcon sx={{ fontSize: "40px", color: "#ccc" }} />
+                          <Box
+                            style={{
+                              width: "150px",
+                              height: "150px",
+                              border: "2px solid #ddd",
+                              borderRadius: "10px",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              overflow: "hidden",
+                              backgroundColor: "#f9f9f9"
+                            }}
+                          >
+                            <PhotoSizeSelectActualIcon sx={{ fontSize: "40px", color: "#ccc" }} />
+                          </Box>
                         )}
                       </Box>
                     </Box>
@@ -825,27 +844,46 @@ export const Vendors = () => {
                       <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
                         Warehouse Image
                       </Typography>
-                      <Box
-                        style={{
-                          width: "150px",
-                          height: "150px",
-                          border: "2px solid #ddd",
-                          borderRadius: "10px",
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          overflow: "hidden",
-                          backgroundColor: "#f9f9f9"
-                        }}
-                      >
-                        {selectedKycData.WareHouseImage ? (
-                          <img 
-                            src={selectedKycData.WareHouseImage} 
-                            alt="Warehouse" 
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          />
+                      <Box style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                        {selectedKycData.WareHouseImage && Array.isArray(selectedKycData.WareHouseImage) && selectedKycData.WareHouseImage.length > 0 ? (
+                          selectedKycData.WareHouseImage.map((imageUrl, index) => (
+                            <Box
+                              key={index}
+                              style={{
+                                width: "150px",
+                                height: "150px",
+                                border: "2px solid #ddd",
+                                borderRadius: "10px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                overflow: "hidden",
+                                backgroundColor: "#f9f9f9"
+                              }}
+                            >
+                              <img 
+                                src={imageUrl} 
+                                alt={`Warehouse ${index + 1}`} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            </Box>
+                          ))
                         ) : (
-                          <PhotoSizeSelectActualIcon sx={{ fontSize: "40px", color: "#ccc" }} />
+                          <Box
+                            style={{
+                              width: "150px",
+                              height: "150px",
+                              border: "2px solid #ddd",
+                              borderRadius: "10px",
+                              display: "flex",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              overflow: "hidden",
+                              backgroundColor: "#f9f9f9"
+                            }}
+                          >
+                            <PhotoSizeSelectActualIcon sx={{ fontSize: "40px", color: "#ccc" }} />
+                          </Box>
                         )}
                       </Box>
                     </Box>

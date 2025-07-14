@@ -121,7 +121,7 @@ const navigate = useNavigate()
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get(`${Base_url}b2cUser`);
+      const response = await axios.get(`${Base_url}b2cUser?limit=1000`);
 
       if (response.status === 200) {
         const fetchedUsers = response.data;
