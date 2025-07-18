@@ -22,6 +22,7 @@ import { GenralTabel } from '../../TabelComponents/GenralTable';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import BorderColor from '@mui/icons-material/BorderColor';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PhotoSizeSelectActualIcon from '@mui/icons-material/PhotoSizeSelectActual';
 
 const style = {
   position: 'absolute',
@@ -84,11 +85,16 @@ export const Categories = () => {
     setCategoryAddData({
       name: '',
       description: '',
+      image: '',
+      imageKey: ''
     })
+    setSelectedImage(null);
   } 
   const [open2, setOpen2] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [open3, setOpen3] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleOpen2 = () => setOpen2(true);
   const handleClose2 = () =>{
@@ -96,7 +102,11 @@ export const Categories = () => {
     setCategoryAddData({
       name: '',
       description: '',
+      image: '',
+      imageKey: ''
     })
+    setSelectedImage(null);
+    setImagePreview(null);
   } 
   const [value, setValue] = useState(0);
   const [searchInput, setSearchInput] = useState('');
@@ -108,6 +118,8 @@ export const Categories = () => {
   const [categoryAddData, setCategoryAddData] = useState({
     name: '',
     description: '',
+    image: '',
+    imageKey: ''
   });
   const [ActiveCategory,setActiveCategory] = useState("");
   const handleChange = (event, newValue) => {
@@ -178,9 +190,52 @@ export const Categories = () => {
 
   
 
-  const createCategory = async (name, description) => {
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImageToS3 = async (file) => {
     try {
-      const response = await axios.post(`${Base_url}categories`, { name, description });
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${Base_url}files/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        return {
+          url: response.data.data.url,
+          key: response.data.data.key
+        };
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
+  const createCategory = async (name, description, image = '', imageKey = '') => {
+    try {
+      const categoryData = { name, description };
+      if (image && imageKey) {
+        categoryData.image = image;
+        categoryData.imageKey = imageKey;
+      }
+      
+      const response = await axios.post(`${Base_url}categories`, categoryData);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -212,9 +267,15 @@ export const Categories = () => {
   };
   
   // Function to update a category
-  const updateCategory = async (id, name, description) => {
+  const updateCategory = async (id, name, description, image = '', imageKey = '') => {
     try {
-      const response = await axios.patch(`${Base_url}categories/${id}`, { name, description });
+      const categoryData = { name, description };
+      if (image && imageKey) {
+        categoryData.image = image;
+        categoryData.imageKey = imageKey;
+      }
+      
+      const response = await axios.patch(`${Base_url}categories/${id}`, categoryData);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -233,26 +294,61 @@ export const Categories = () => {
     }
   };
   
-  const handelCategorySubmit = ()=>{
-    createCategory(categoryAddData.name, categoryAddData.description);
-    handleClose();
-    setCategoryAddData({
-      name: '',
-      description: '',
-    })
+  const handelCategorySubmit = async () => {
+    try {
+      let imageUrl = '';
+      let imageKey = '';
+      
+      if (selectedImage) {
+        const uploadResult = await uploadImageToS3(selectedImage);
+        imageUrl = uploadResult.url;
+        imageKey = uploadResult.key;
+      }
+      
+      await createCategory(categoryAddData.name, categoryAddData.description, imageUrl, imageKey);
+      handleClose();
+      setCategoryAddData({
+        name: '',
+        description: '',
+        image: '',
+        imageKey: ''
+      });
+      setSelectedImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Error creating category. Please try again.');
+    }
   }
 
-  const handelEditCategorySubmit = ()=>{
-    updateCategory(ActiveCategory,categoryAddData.name, categoryAddData.description);
-    handleClose2();
-    
+  const handelEditCategorySubmit = async () => {
+    try {
+      let imageUrl = categoryAddData.image;
+      let imageKey = categoryAddData.imageKey;
+      
+      if (selectedImage) {
+        const uploadResult = await uploadImageToS3(selectedImage);
+        imageUrl = uploadResult.url;
+        imageKey = uploadResult.key;
+      }
+      
+      await updateCategory(ActiveCategory, categoryAddData.name, categoryAddData.description, imageUrl, imageKey);
+      handleClose2();
+      setSelectedImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error updating category:', error);
+      alert('Error updating category. Please try again.');
+    }
   }
 
-  const handelEditCategoryOpen =(data)=>{
+  const handelEditCategoryOpen = (data) => {
     setActiveCategory(data._id);
-    setCategoryAddData(data)
+    setCategoryAddData(data);
+    if (data.image) {
+      setImagePreview(data.image);
+    }
     handleOpen2();
-
   }
 
   useEffect(()=>{
@@ -295,9 +391,9 @@ export const Categories = () => {
   };
 
   const columns = [
+    { name: 'Image' },
     { name: 'Category' },
     { name: 'Sub Categories' },
-    // {name: 'Tradable'},
     { name: "View Sub Categories" },
     { name: "Update" },
     { name: "Delete" },
@@ -306,9 +402,46 @@ export const Categories = () => {
   const rows = CategoriesData.map((el) => {
     const subCategories = subCategoryData[el.name] || [];
     return {
+      Image: el.image ? (
+        <Box
+          style={{
+            width: "60px",
+            height: "60px",
+            border: "2px solid #ddd",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            overflow: "hidden",
+            backgroundColor: "#f9f9f9",
+            margin: "0 auto"
+          }}
+        >
+          <img 
+            src={el.image} 
+            alt={el.name} 
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </Box>
+      ) : (
+        <Box
+          style={{
+            width: "60px",
+            height: "60px",
+            border: "2px solid #ddd",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#f9f9f9",
+            margin: "0 auto"
+          }}
+        >
+          <PhotoSizeSelectActualIcon sx={{ fontSize: "24px", color: "#ccc" }} />
+        </Box>
+      ),
       Category: el.name,
       "Sub Categories": subCategories.length,
-      // Tradable: el.tradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,
       View: <RemoveRedEyeIcon onClick={()=>handelView(el._id)} />,
       Update: <BorderColor onClick={()=>handelEditCategoryOpen(el)} />,
       Delete: <DeleteIcon onClick={()=>handleDeleteClick(el._id)} />,
@@ -458,6 +591,53 @@ export const Categories = () => {
         onChange={handleCategoryInputChange}
         sx={{ marginTop: "20px" }}
       />
+
+      {/* Image Upload Section */}
+      <Box sx={{ marginTop: "20px" }}>
+        <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
+          Category Image
+        </Typography>
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <Box
+            style={{
+              width: "150px",
+              height: "150px",
+              border: "2px solid #ddd",
+              borderRadius: "10px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              backgroundColor: "#f9f9f9",
+              marginBottom: "10px"
+            }}
+          >
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </Box>
+        )}
+        
+        {/* File Input */}
+        <Button
+          variant="outlined"
+          component="label"
+          fullWidth
+          startIcon={<PhotoSizeSelectActualIcon />}
+        >
+          {selectedImage ? selectedImage.name : "Choose Image"}
+          <input
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+        </Button>
+      </Box>
           
           <Box sx={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"15px"}}>
       <Button variant='contained' size='small' expand sx={{backgroundColor:"black"}} onClick={handelCategorySubmit} >Submit</Button>
@@ -499,6 +679,53 @@ export const Categories = () => {
         onChange={handleCategoryInputChange}
         sx={{ marginTop: "20px" }}
       />
+
+      {/* Image Upload Section */}
+      <Box sx={{ marginTop: "20px" }}>
+        <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
+          Category Image
+        </Typography>
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <Box
+            style={{
+              width: "150px",
+              height: "150px",
+              border: "2px solid #ddd",
+              borderRadius: "10px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              backgroundColor: "#f9f9f9",
+              marginBottom: "10px"
+            }}
+          >
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </Box>
+        )}
+        
+        {/* File Input */}
+        <Button
+          variant="outlined"
+          component="label"
+          fullWidth
+          startIcon={<PhotoSizeSelectActualIcon />}
+        >
+          {selectedImage ? selectedImage.name : "Choose New Image"}
+          <input
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+        </Button>
+      </Box>
           
           <Box sx={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"15px"}}>
       <Button variant='contained' size='small' expand sx={{backgroundColor:"black"}} onClick={handelEditCategorySubmit} >Submit</Button>

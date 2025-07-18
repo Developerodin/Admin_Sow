@@ -22,6 +22,7 @@ import { GenralTabel } from '../../TabelComponents/GenralTable';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
 import BorderColorIcon from '@mui/icons-material/BorderColor';
+import PhotoSizeSelectActualIcon from '@mui/icons-material/PhotoSizeSelectActual';
 
 
 import axios from 'axios';
@@ -84,14 +85,21 @@ export const ViewCategories = () => {
   const [open, setOpen] = useState(false);
   const [update, setUpdate] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false)
     setSubCategoryAddData({
       name:"",
       price:"",
-      unit:"kg"
+      unit:"kg",
+      image: "",
+      imageKey: ""
     })
+    setSelectedImage(null);
+    setImagePreview(null);
   };
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
@@ -101,14 +109,20 @@ export const ViewCategories = () => {
     setSubCategoryAddData({
       name:"",
       price:"",
-      unit:"kg"
+      unit:"kg",
+      image: "",
+      imageKey: ""
     })
+    setSelectedImage(null);
+    setImagePreview(null);
   };
   const [SubCategoriesData, setsubCategoriesData] = useState([]);
   const [subCategoryAddData,setSubCategoryAddData] = useState({
     name:"",
     price:"",
-    unit:"kg"
+    unit:"kg",
+    image: "",
+    imageKey: ""
   });
   const [CategoryData,setCategoriesData] = useState(null)
   const handleChange = (event, newValue) => {
@@ -149,34 +163,111 @@ export const ViewCategories = () => {
     }));
   };
 
-  const handelAddSubCategory = () =>{
-    // console.log('handelAddSubCategory',subCategoryAddData);
-    addSubcategory(id,subCategoryAddData.name,subCategoryAddData.price,subCategoryAddData.unit)
-    handleClose();
-    setSubCategoryAddData({
-      name:"",
-      price:"",
-      unit:"kg"
-    })
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImageToS3 = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${Base_url}files/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        return {
+          url: response.data.data.url,
+          key: response.data.data.key
+        };
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
+  const handelAddSubCategory = async () => {
+    try {
+      let imageUrl = '';
+      let imageKey = '';
+      
+      if (selectedImage) {
+        const uploadResult = await uploadImageToS3(selectedImage);
+        imageUrl = uploadResult.url;
+        imageKey = uploadResult.key;
+      }
+      
+      await addSubcategory(id, subCategoryAddData.name, subCategoryAddData.price, subCategoryAddData.unit, imageUrl, imageKey);
+      handleClose();
+      setSubCategoryAddData({
+        name:"",
+        price:"",
+        unit:"kg",
+        image: "",
+        imageKey: ""
+      });
+      setSelectedImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error creating subcategory:', error);
+      alert('Error creating subcategory. Please try again.');
+    }
   }
 
-  const handelEditSubCategory = (sub_id) =>{
-    // console.log('handelAddSubCategory',subCategoryAddData);
-    // addSubcategory(id,subCategoryAddData.name,subCategoryAddData.price,subCategoryAddData.unit)
-    updateSubcategory(id,sub_id,subCategoryAddData.name,subCategoryAddData.price,subCategoryAddData.description)
-    handleClose2();
-   
+  const handelEditSubCategory = async (sub_id) => {
+    try {
+      let imageUrl = subCategoryAddData.image;
+      let imageKey = subCategoryAddData.imageKey;
+      
+      if (selectedImage) {
+        const uploadResult = await uploadImageToS3(selectedImage);
+        imageUrl = uploadResult.url;
+        imageKey = uploadResult.key;
+      }
+      
+      await updateSubcategory(id, sub_id, subCategoryAddData.name, subCategoryAddData.price, subCategoryAddData.unit, imageUrl, imageKey);
+      handleClose2();
+      setSelectedImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      console.error('Error updating subcategory:', error);
+      alert('Error updating subcategory. Please try again.');
+    }
   }
 
-  const handelSubCategoryEditOpen = (index)=>{
-    setSubCategoryAddData(SubCategoriesData[index]);
+  const handelSubCategoryEditOpen = (index) => {
+    const data = SubCategoriesData[index];
+    setSubCategoryAddData(data);
+    if (data.image) {
+      setImagePreview(data.image);
+    }
     handleOpen2();
   }
 
-   const addSubcategory = async (categoryId, name, price, unit) => {
+   const addSubcategory = async (categoryId, name, price, unit, image = '', imageKey = '') => {
     try {
-      console.log("Adding subcategory with data:", { categoryId, name, description: unit, price: price });
-      const response = await axios.post(`${Base_url}subcategories`, { categoryId, name, description: unit, price: price });
+      console.log("Adding subcategory with data:", { categoryId, name, description: unit, price: price, image, imageKey });
+      const subcategoryData = { categoryId, name, description: unit, price: price };
+      if (image && imageKey) {
+        subcategoryData.image = image;
+        subcategoryData.imageKey = imageKey;
+      }
+      
+      const response = await axios.post(`${Base_url}subcategories`, subcategoryData);
       console.log("Response ==>",response.data)
       setUpdate((prev) =>prev+1)
       return response.data;
@@ -186,10 +277,16 @@ export const ViewCategories = () => {
   };
   
   // Function to update a subcategory
-   const updateSubcategory = async (categoryId, subcategoryId, name, price, unit) => {
+   const updateSubcategory = async (categoryId, subcategoryId, name, price, unit, image = '', imageKey = '') => {
     try {
-      console.log("Updating subcategory with data:", { categoryId, name, description: unit, price });
-      const response = await axios.patch(`${Base_url}subcategories/${subcategoryId}`, { categoryId, name, description: unit,price });
+      console.log("Updating subcategory with data:", { categoryId, name, description: unit, price, image, imageKey });
+      const subcategoryData = { categoryId, name, description: unit, price };
+      if (image && imageKey) {
+        subcategoryData.image = image;
+        subcategoryData.imageKey = imageKey;
+      }
+      
+      const response = await axios.patch(`${Base_url}subcategories/${subcategoryId}`, subcategoryData);
       setUpdate((prev) =>prev+1)
       return response.data;
     } catch (error) {
@@ -265,20 +362,53 @@ export const ViewCategories = () => {
   };
 
   const columns = [
+    { name: 'Image' },
     { name: 'Name' },
     { name: 'Price' },
     { name: 'Tradable' },
     { name: 'Update' },
     { name: 'Delete' },
-
-
   ];
 
   const rows = SubCategoriesData.map((el,index)=>{
     return {
+      Image: el.image ? (
+        <Box
+          style={{
+            width: "60px",
+            height: "60px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            overflow: "hidden",
+            backgroundColor: "#f9f9f9",
+            margin: "0 auto"
+          }}
+        >
+          <img 
+            src={el.image} 
+            alt={el.name} 
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </Box>
+      ) : (
+        <Box
+          style={{
+            width: "60px",
+            height: "60px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#f9f9f9",
+            margin: "0 auto"
+          }}
+        >
+          <PhotoSizeSelectActualIcon sx={{ fontSize: "24px", color: "#ccc" }} />
+        </Box>
+      ),
       Name:el.name,
       Price:`₹${el.price}`,
-      Tradable:el.isTradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,// Unit:el.unit,
+      Tradable:el.isTradable ? <Button variant="outlined" color='success' onClick={()=>updateTradableStatus(el._id,false)} >Active</Button> : <Button variant="outlined" color='error' onClick={()=>updateTradableStatus(el._id,true)} >In Active</Button>,
       Update:<BorderColorIcon  onClick={()=>handelSubCategoryEditOpen(index)}/>,
       Delete:<DeleteIcon onClick={()=>handelDeleteSubCategroy(el._id)}/>
     }
@@ -400,6 +530,54 @@ export const ViewCategories = () => {
         value={subCategoryAddData.unit}
         onChange={handleSubCategoryInputChange}
       />
+
+      {/* Image Upload Section */}
+      <Box sx={{ marginTop: "20px" }}>
+        <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
+          Sub Category Image
+        </Typography>
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <Box
+            style={{
+              width: "150px",
+              height: "150px",
+              border: "2px solid #ddd",
+              borderRadius: "10px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              backgroundColor: "#f9f9f9",
+              marginBottom: "10px"
+            }}
+          >
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </Box>
+        )}
+        
+        {/* File Input */}
+        <Button
+          variant="outlined"
+          component="label"
+          fullWidth
+          startIcon={<PhotoSizeSelectActualIcon />}
+        >
+          {selectedImage ? selectedImage.name : "Choose Image"}
+          <input
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+        </Button>
+      </Box>
+
           <Box sx={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"15px"}}>
       <Button variant='contained' size='small' expand sx={{backgroundColor:"black"}} onClick={handelAddSubCategory}>Submit</Button>
     </Box>
@@ -447,6 +625,54 @@ export const ViewCategories = () => {
         value={subCategoryAddData.description}
         onChange={handleSubCategoryInputChange}
       />
+
+      {/* Image Upload Section */}
+      <Box sx={{ marginTop: "20px" }}>
+        <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
+          Sub Category Image
+        </Typography>
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <Box
+            style={{
+              width: "150px",
+              height: "150px",
+              border: "2px solid #ddd",
+              borderRadius: "10px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              backgroundColor: "#f9f9f9",
+              marginBottom: "10px"
+            }}
+          >
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </Box>
+        )}
+        
+        {/* File Input */}
+        <Button
+          variant="outlined"
+          component="label"
+          fullWidth
+          startIcon={<PhotoSizeSelectActualIcon />}
+        >
+          {selectedImage ? selectedImage.name : "Choose New Image"}
+          <input
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+        </Button>
+      </Box>
+
           <Box sx={{display:"flex",justifyContent:"right",alignItems:"center",marginTop:"15px"}}>
       <Button variant='contained' size='small' expand sx={{backgroundColor:"black"}} onClick={()=>handelEditSubCategory(subCategoryAddData._id)}>Submit</Button>
     </Box>

@@ -789,6 +789,76 @@ export const Vendors = () => {
                   <Typography variant="h6" style={{ fontWeight: "bold", marginBottom: "15px" }}>
                     Documents
                   </Typography>
+                  
+                  {/* Aadhar Card Images */}
+                  <Box style={{ marginBottom: "20px" }}>
+                    <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
+                      Aadhar Card
+                    </Typography>
+                    <Box style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+                      {/* Aadhar Front Image */}
+                      <Box>
+                        <Typography variant="body2" style={{ marginBottom: "8px", fontWeight: "bold", color: "#666" }}>
+                          Front Side
+                        </Typography>
+                        <Box
+                          style={{
+                            width: "200px",
+                            height: "120px",
+                            border: "2px solid #ddd",
+                            borderRadius: "10px",
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            overflow: "hidden",
+                            backgroundColor: "#f9f9f9"
+                          }}
+                        >
+                          {selectedKycData.aadharFrontImage ? (
+                            <img 
+                              src={selectedKycData.aadharFrontImage} 
+                              alt="Aadhar Front" 
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          ) : (
+                            <PhotoSizeSelectActualIcon sx={{ fontSize: "40px", color: "#ccc" }} />
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* Aadhar Back Image */}
+                      <Box>
+                        <Typography variant="body2" style={{ marginBottom: "8px", fontWeight: "bold", color: "#666" }}>
+                          Back Side
+                        </Typography>
+                        <Box
+                          style={{
+                            width: "200px",
+                            height: "120px",
+                            border: "2px solid #ddd",
+                            borderRadius: "10px",
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            overflow: "hidden",
+                            backgroundColor: "#f9f9f9"
+                          }}
+                        >
+                          {selectedKycData.aadharBackImage ? (
+                            <img 
+                              src={selectedKycData.aadharBackImage} 
+                              alt="Aadhar Back" 
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                          ) : (
+                            <PhotoSizeSelectActualIcon sx={{ fontSize: "40px", color: "#ccc" }} />
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Owner and Warehouse Images */}
                   <Box style={{ display: "flex", gap: "20px" }}>
                     {/* Owner Image */}
                     <Box>
