@@ -29,7 +29,7 @@ export const CreateRate = () => {
      console.log("Data ==>",formData);
      try {
         // Send a POST request to the backend API endpoint
-        const response = await axios.post(`${Base_url}api/market_rates/`, formData);
+        const response = await axios.post(`${Base_url}market_rates/`, formData);
         console.log('Response:', response.data);
         setFormData({
             name: '',

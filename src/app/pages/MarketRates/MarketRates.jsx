@@ -175,20 +175,65 @@ export const MarketRates = () => {
     
     const formattedTime = convertTo12Hour(exportTime);
   
-    // Use the filtered table data (row) instead of mandi data
-    row.forEach((item) => {
-      dataToExport.push({
-        "Sr No": serialNumber++,
-        State: item.State || "N/A",
-        City: item.City || "N/A",
-        "Mandi Name": item["Mandi Name"] || "N/A",
-        Category: item.Category || "N/A",
-        "Sub Category": item.SubCategory || "N/A",
-        Price: item.Price || 0,
-        Date: item.date || exportDate,
-        Time: item.Time || formattedTime,
+    // If there's existing data, use it; otherwise create template from mandi data
+    if (row.length > 0) {
+      // Use the filtered table data (row) if available
+      row.forEach((item) => {
+        dataToExport.push({
+          "Sr No": serialNumber++,
+          State: item.State || "N/A",
+          City: item.City || "N/A",
+          "Mandi Name": item["Mandi Name"] || "N/A",
+          Category: item.Category || "N/A",
+          "Sub Category": item.SubCategory || "N/A",
+          Price: item.Price || 0,
+          Date: item.date || exportDate,
+          Time: item.Time || formattedTime,
+        });
       });
-    });
+    } else {
+      // Create template from mandi data when no existing rates
+      const filteredMandiForExport = selectedState && selectedState !== "All" 
+        ? mandiData.filter(mandi => mandi.state === selectedState)
+        : mandiData;
+      
+      filteredMandiForExport.forEach((mandi) => {
+        mandi.categories.forEach((category) => {
+          // Get subcategories for this category
+          const subCategories = subCategoryData[category] || [];
+          
+          if (subCategories.length > 0) {
+            // Create a row for each subcategory
+            subCategories.forEach((subCategory) => {
+              dataToExport.push({
+                "Sr No": serialNumber++,
+                State: mandi.state || "N/A",
+                City: mandi.city || "N/A",
+                "Mandi Name": mandi.mandiname || "N/A",
+                Category: category || "N/A",
+                "Sub Category": subCategory.name || "N/A",
+                Price: 0, // Default price for template
+                Date: exportDate,
+                Time: formattedTime,
+              });
+            });
+          } else {
+            // If no subcategories, create a row with just the category
+            dataToExport.push({
+              "Sr No": serialNumber++,
+              State: mandi.state || "N/A",
+              City: mandi.city || "N/A",
+              "Mandi Name": mandi.mandiname || "N/A",
+              Category: category || "N/A",
+              "Sub Category": "N/A",
+              Price: 0, // Default price for template
+              Date: exportDate,
+              Time: formattedTime,
+            });
+          }
+        });
+      });
+    }
   
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();

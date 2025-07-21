@@ -27,7 +27,7 @@ export const UpdateDailyRates = () => {
      console.log("Data ==>",formData);
      try {
         // Send a POST request to the backend API endpoint
-        const response = await axios.post(`${Base_url}api/daily_rates/`, formData);
+        const response = await axios.post(`${Base_url}daily_rates/`, formData);
         console.log('Response:', response.data);
         setFormData({
             name:'',

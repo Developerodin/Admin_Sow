@@ -68,10 +68,10 @@ export const CreateNotification = () => {
 
   const fetchB2BUser = async () => {
     try {
-      const response = await axios.get(`${Base_url}api/b2b`);
+      const response = await axios.get(`${Base_url}b2bUser?limit=1000`);
 
       if (response.status === 200) {
-        const fetchedB2BUsers = response.data;
+        const fetchedB2BUsers = response.data.results; // Extract the results array
         console.log("Fetch users == >", fetchedB2BUsers);
         setB2BVendors(fetchedB2BUsers);
       } else {
@@ -116,11 +116,11 @@ export const CreateNotification = () => {
               select
             >
               <MenuItem value="all">All</MenuItem>
-              {/* {b2bVendors.map((option) => (
+              {b2bVendors.map((option) => (
                 <MenuItem key={option._id} value={option._id}>
                   {option.name} {option.registerAs}
                 </MenuItem>
-              ))} */}
+              ))}
             </TextField>
               
             <TextField
