@@ -405,7 +405,14 @@ export const Vendors = () => {
   ];
 
   const rows = CollectorsData.map((collector, index) => ({
-    name: collector.name,
+    name: (
+      <span
+        style={{ color: "#1976d2", cursor: "pointer", textDecoration: "underline" }}
+        onClick={() => navigate(`order-history/${collector.id}`)}
+      >
+        {collector.name}
+      </span>
+    ),
     email: collector.email,
     phone: collector.phoneNumber,
     // address: collector.Address,
@@ -419,7 +426,14 @@ export const Vendors = () => {
   }));
 
   const rows2 = WholesalersData.map((wholesaler, index) => ({
-    name: wholesaler.name,
+    name: (
+      <span
+        style={{ color: "#1976d2", cursor: "pointer", textDecoration: "underline" }}
+        onClick={() => navigate(`order-history/${wholesaler.id}`)}
+      >
+        {wholesaler.name}
+      </span>
+    ),
     email: wholesaler.email,
     phone: wholesaler.phoneNumber,
     // address: wholesaler.Address,
@@ -433,7 +447,14 @@ export const Vendors = () => {
   }));
 
   const rows3 = MediatorsData.map((mediator, index) => ({
-    name: mediator.name,
+    name: (
+      <span
+        style={{ color: "#1976d2", cursor: "pointer", textDecoration: "underline" }}
+        onClick={() => navigate(`/rder-history/${mediator.id}`)}
+      >
+        {mediator.name}
+      </span>
+    ),
     email: mediator.email,
     phone: mediator.phoneNumber,
     // address: mediator.Address,
@@ -447,7 +468,14 @@ export const Vendors = () => {
   }));
 
   const rows4 = FactoryData.map((factory, index) => ({
-    name: factory.name,
+    name: (
+      <span
+        style={{ color: "#1976d2", cursor: "pointer", textDecoration: "underline" }}
+        onClick={() => navigate(`order-history/${factory.id}`)}
+      >
+        {factory.name}
+      </span>
+    ),
     email: factory.email,
     phone: factory.phoneNumber,
     // address: factory.Address,

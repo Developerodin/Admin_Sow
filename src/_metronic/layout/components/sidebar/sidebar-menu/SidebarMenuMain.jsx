@@ -25,28 +25,11 @@ const SidebarMenuMain = () => {
         title={intl.formatMessage({ id: "MENU.DASHBOARD" })}
         fontIcon="bi-app-indicator"
       />
-        <SidebarMenuItem
-        to="/users"
-        icon={
-          <AccountCircleIcon style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="Users"
-        fontIcon="bi-layers"
-      />
-        <SidebarMenuItem
-        to="/orders"
-        icon={
-          <ShoppingCartIcon style={{ color: "orange", fontSize: "25px" }} />
-        }
-        title="Orders"
-        fontIcon="bi-layers"
-      />
 
-
-      <SidebarMenuItem
+<SidebarMenuItem
         to="/vendors"
         icon={<PeopleIcon style={{ color: "orange", fontSize: "25px" }} />}
-        title="Vendors"
+        title="B2B Users"
         fontIcon="bi-layers"
       />
 
@@ -55,9 +38,29 @@ const SidebarMenuMain = () => {
         icon={
           <ShoppingCartIcon style={{ color: "orange", fontSize: "25px" }} />
         }
-        title="Vendors Orders"
+        title="B2B Orders"
         fontIcon="bi-layers"
       />
+
+        <SidebarMenuItem
+        to="/users"
+        icon={
+          <AccountCircleIcon style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="B2C Users"
+        fontIcon="bi-layers"
+      />
+        <SidebarMenuItem
+        to="/orders"
+        icon={
+          <ShoppingCartIcon style={{ color: "orange", fontSize: "25px" }} />
+        }
+        title="B2C Orders"
+        fontIcon="bi-layers"
+      />
+
+
+      
 
 <SidebarMenuItem
         to="/categories"
