@@ -556,10 +556,10 @@ export const MarketRates = () => {
           const to = new Date(toDate + 'T23:59:59.999');
           
           console.log("Comparing dates:");
-          console.log("  Item date:", itemDateStart);
-          console.log("  From date:", from);
-          console.log("  To date:", to);
-          console.log("  Is in range:", itemDateStart >= from && itemDateStart <= to);
+          console.log("Item date:", itemDateStart);
+          console.log("From date:", from);
+          console.log("To date:", to);
+          console.log("Is in range:", itemDateStart >= from && itemDateStart <= to);
           
           return itemDateStart >= from && itemDateStart <= to;
         } catch (error) {

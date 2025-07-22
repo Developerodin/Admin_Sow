@@ -175,9 +175,11 @@ export const DailyRate = () => {
                         border: '1px solid #e0e0e0',
                         padding: '20px',
                         borderRadius: '20px',
-                        height: isExpanded ? 'auto' : '275px',
+                        height: isExpanded ? 'auto' : '320px',
                         overflow: 'hidden',
                         position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
                       }}
                     >
                       <div
@@ -185,6 +187,7 @@ export const DailyRate = () => {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          marginBottom: '10px',
                         }}
                       >
                         <span style={{ fontWeight: 'bold', fontSize: '21px' }}>
@@ -197,6 +200,7 @@ export const DailyRate = () => {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          marginBottom: '15px',
                         }}
                       >
                         <span style={{ fontSize: '14px' }}>
@@ -204,60 +208,67 @@ export const DailyRate = () => {
                         </span>
                       </div>
 
-                      <div style={{ textAlign: 'left' }}>
+                      <div 
+                        style={{ 
+                          textAlign: 'left',
+                          flex: 1,
+                          overflow: 'hidden',
+                          marginBottom: '15px',
+                        }}
+                      >
                         {el.text.split(',').map((textPart, idx) => (
-                          <Typography key={idx}>{textPart}</Typography>
+                          <Typography key={idx} style={{ marginBottom: '5px' }}>
+                            {textPart}
+                          </Typography>
                         ))}
                       </div>
 
+                      {/* Action buttons - always visible at bottom */}
                       <div
                         style={{
                           display: 'flex',
-                          justifyContent: 'right',
+                          justifyContent: 'flex-end',
                           alignItems: 'center',
-                          marginTop: '20px',
+                          marginTop: 'auto',
+                          paddingTop: '15px',
+                          borderTop: '1px solid #f0f0f0',
+                          gap: '15px',
                         }}
                       >
-                        <CancelOutlinedIcon
-                          onClick={() => handleDelete(el._id)}
-                          style={{
-                            fontSize: '24px',
-                            color: 'crimson',
-                            marginRight: '20px',
-                          }}
-                        />
-                      </div>
-
-                      {!isExpanded && (
                         <div
-                          style={{
-                            position: 'absolute',
-                            bottom: '20px',
-                            right: '0%',
-                            transform: 'translateX(-50%)',
-                            background: 'white',
-                            
+                          onClick={() => handleReadMore(el.text)}
+                          style={{ 
+                            cursor: 'pointer', 
+                            color: 'white',
+                            backgroundColor: '#1976d2',
+                            padding: '8px 16px',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            transition: 'background-color 0.2s',
+                            ':hover': {
+                              backgroundColor: '#1565c0'
+                            }
                           }}
                         >
-                          <div style={{display:'flex',flexDirection:'row',alignItems:'center',justifyContent:'center'}}>
-
-                          <DeleteIcon
-                            style={{ marginRight: '30px', color: '#c62828',fontSize:'24px' }}
-                            onClick={() => handleDelete(el._id)}
-                          />
-                          <div
-                            onClick={() => handleReadMore(el.text)}
-                            variant="contained"
-                            color="primary"
-                            style={{ cursor: 'pointer', color: 'white',backgroundColor:'#1976d2',padding:'5px 10px',borderRadius:'5px' }}
-                          >
-                            Read More...
-                          </div>
-                          </div>
-                          
-                          
+                          Read More
                         </div>
-                      )}
+                        
+                        <DeleteIcon
+                          style={{ 
+                            color: '#c62828',
+                            fontSize: '34px',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            transition: 'background-color 0.2s',
+                            ':hover': {
+                              backgroundColor: '#ffebee'
+                            }
+                          }}
+                          onClick={() => handleDelete(el._id)}
+                        />
+                      </div>
                     </div>
                   </Grid>
                 );

@@ -971,6 +971,23 @@ export const Vendors = () => {
                   <Typography variant="body2" color="textSecondary">
                     Last Updated: {selectedKycData.updatedAt ? new Date(selectedKycData.updatedAt).toLocaleDateString() : "N/A"}
                   </Typography>
+                  
+                  {/* Display existing remarks if they exist */}
+                  {selectedKycData.remarks && selectedKycData.remarks.trim() !== "" && (
+                    <Box style={{ marginTop: "15px" }}>
+                      <Typography variant="subtitle2" style={{ fontWeight: "bold", marginBottom: "5px", color: "#666" }}>
+                        Current Remarks:
+                      </Typography>
+                      <Typography variant="body2" style={{ 
+                        padding: "10px", 
+                        backgroundColor: "#f5f5f5", 
+                        borderRadius: "5px",
+                        borderLeft: "3px solid #FF8604"
+                      }}>
+                        {selectedKycData.remarks}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
 
                 {/* KYC Status Update Section */}
@@ -1000,6 +1017,7 @@ export const Vendors = () => {
                     </FormControl>
                   </Box>
 
+                  {/* Always show remarks input for every user */}
                   <Box style={{ marginBottom: "20px" }}>
                     <Typography variant="subtitle1" style={{ marginBottom: "10px", fontWeight: "bold" }}>
                       Remarks (Optional)
