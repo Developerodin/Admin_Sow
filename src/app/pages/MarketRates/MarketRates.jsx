@@ -175,8 +175,8 @@ export const MarketRates = () => {
     
     const formattedTime = convertTo12Hour(exportTime);
 
-    // Group data by mandi (State + City + Mandi Name)
-    const groupKey = (item) => `${item.State || item.state || ''}|${item.City || item.city || ''}|${item["Mandi Name"] || item.mandiname || ''}`;
+    // Group data by subcategory instead of mandi
+    const groupKey = (item) => `${item.Category || item.category || ''}|${item["Sub Category"] || item.subCategory || ''}`;
     let grouped = {};
     let dataSource = row.length > 0 ? row : null;
     if (!dataSource) {
@@ -218,13 +218,13 @@ export const MarketRates = () => {
         });
       });
     }
-    // Group rows by mandi
+    // Group rows by subcategory
     dataSource.forEach((item) => {
       const key = groupKey(item);
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
-    // Export with Sr No only for first row of each mandi
+    // Export with Sr No only for first row of each subcategory
     Object.keys(grouped).forEach((key) => {
       const rows = grouped[key];
       rows.forEach((item, idx) => {
@@ -326,30 +326,29 @@ export const MarketRates = () => {
         return selectedDate;
       };
 
-      // Import: Track last non-blank Sr No and mandi info
-      let lastMandi = { state: '', city: '', mandiName: '' };
+      // Import: Track last non-blank Sr No and subcategory info
+      let lastSubCategory = { category: '', subCategory: '' };
       // Transform the data into the required format (using new column order)
       const transformedData = jsonData.map((row) => {
         const srNo = row["Sr No"];
-        let state = row.State;
-        let city = row.City;
-        let mandiName = row["Mandi Name"];
+        let category = row.Category;
+        let subCategory = row["Sub Category"];
         if (srNo !== undefined && srNo !== null && srNo !== "" && srNo !== '') {
-          // New mandi
-          lastMandi = { state, city, mandiName };
+          // New subcategory
+          lastSubCategory = { category, subCategory };
         } else {
-          // Use last mandi info
-          state = lastMandi.state;
-          city = lastMandi.city;
-          mandiName = lastMandi.mandiName;
+          // Use last subcategory info
+          category = lastSubCategory.category;
+          subCategory = lastSubCategory.subCategory;
         }
-        const category = row.Category;
-        const subCategory = row["Sub Category"];
+        const state = row.State;
+        const city = row.City;
+        const mandiName = row["Mandi Name"];
         const price = row.Price || "0";
         const date = formatDate(row.Date);
         const time = row.Time || "10:00 AM";
         const unit = row.Unit || "Kg";
-        // Find mandi based on state and mandi name, regardless of selectedState
+        // Find mandi based on state, city, and mandi name
         const mandi = mandiData.find((mandi) => 
           mandi.categories.includes(category) && 
           mandi.state === state && 
