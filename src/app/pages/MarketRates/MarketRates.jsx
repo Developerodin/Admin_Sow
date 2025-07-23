@@ -184,11 +184,11 @@ export const MarketRates = () => {
           State: item.State || "N/A",
           City: item.City || "N/A",
           "Mandi Name": item["Mandi Name"] || "N/A",
+          Date: item.date || exportDate,
           Category: item.Category || "N/A",
           "Sub Category": item.SubCategory || "N/A",
-          Price: item.Price || 0,
-          Date: item.date || exportDate,
           Time: item.Time || formattedTime,
+          Price: item.Price || 0,
         });
       });
     } else {
@@ -210,11 +210,11 @@ export const MarketRates = () => {
                 State: mandi.state || "N/A",
                 City: mandi.city || "N/A",
                 "Mandi Name": mandi.mandiname || "N/A",
+                Date: exportDate,
                 Category: category || "N/A",
                 "Sub Category": subCategory.name || "N/A",
-                Price: 0, // Default price for template
-                Date: exportDate,
                 Time: formattedTime,
+                Price: 0, // Default price for template
               });
             });
           } else {
@@ -224,11 +224,11 @@ export const MarketRates = () => {
               State: mandi.state || "N/A",
               City: mandi.city || "N/A",
               "Mandi Name": mandi.mandiname || "N/A",
+              Date: exportDate,
               Category: category || "N/A",
               "Sub Category": "N/A",
-              Price: 0, // Default price for template
-              Date: exportDate,
               Time: formattedTime,
+              Price: 0, // Default price for template
             });
           }
         });
@@ -236,6 +236,18 @@ export const MarketRates = () => {
     }
   
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    // Set custom column widths
+    worksheet['!cols'] = [
+      { wch: 10 }, // Sr No
+      { wch: 20 }, // State
+      { wch: 20 }, // City
+      { wch: 20 }, // Mandi Name
+      { wch: 12 }, // Date
+      { wch: 20 }, // Category
+      { wch: 20 }, // Sub Category
+      { wch: 10 }, // Time
+      { wch: 10 }, // Price
+    ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Market Rates");
     XLSX.writeFile(workbook, "MarketRates.xlsx");
@@ -305,79 +317,30 @@ export const MarketRates = () => {
         return selectedDate;
       };
 
-      // Transform the data into the required format
+      // Transform the data into the required format (using new column order)
       const transformedData = jsonData.map((row) => {
         const category = row.Category;
         const subCategory = row["Sub Category"];
         const price = row.Price || "0";
         const date = formatDate(row.Date);
-        const time = row.Time || "10:00 AM"; // Default time if not provided
-        
-        // Ensure time is in 12-hour format (API expects this format)
-        const formatTime = (timeStr) => {
-          if (!timeStr || timeStr === "N/A") return "10:00 AM";
-          
-          // Convert to string to ensure we can use string methods
-          const timeString = String(timeStr).trim();
-          
-          // If already in 12-hour format, return as is
-          if (timeString.includes('AM') || timeString.includes('PM')) {
-            return timeString;
-          }
-          
-          // Check if it's a decimal number (Excel time format)
-          const timeNumber = parseFloat(timeString);
-          if (!isNaN(timeNumber) && timeNumber >= 0 && timeNumber < 1) {
-            // Convert Excel decimal time to hours and minutes
-            const totalMinutes = Math.round(timeNumber * 24 * 60);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            const hour12 = hours % 12 || 12;
-            return `${hour12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-          }
-          
-          // If in 24-hour format (with or without seconds), convert to 12-hour
-          if (timeString.includes(':')) {
-            const timeParts = timeString.split(':');
-            const hours = parseInt(timeParts[0]);
-            const minutes = timeParts[1];
-            
-            // Validate hours and minutes
-            if (isNaN(hours) || hours < 0 || hours > 23) {
-              return "10:00 AM"; // Default fallback for invalid hours
-            }
-            
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            const hour12 = hours % 12 || 12;
-            return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
-          }
-          
-          return "10:00 AM"; // Default fallback
-        };
-  
-        // Lookup mandiId based on the category, state, and mandi name
-        const mandiName = row["Mandi Name"];
+        const time = row.Time || "10:00 AM";
         const state = row.State;
-        
+        const city = row.City;
+        const mandiName = row["Mandi Name"];
         // Find mandi based on state and mandi name, regardless of selectedState
         const mandi = mandiData.find((mandi) => 
           mandi.categories.includes(category) && 
           mandi.state === state && 
           mandi.mandiname === mandiName
         );
-        
         const mandiId = mandi ? mandi._id : "N/A";
-  
-        // Return the transformed object
         return {
           mandiId,
           category,
           subCategory,
           price,
           date,
-          time: formatTime(time),
+          time,
         };
       });
   
