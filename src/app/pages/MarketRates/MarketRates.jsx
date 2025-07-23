@@ -359,11 +359,15 @@ export const MarketRates = () => {
   
         // Lookup mandiId based on the category, state, and mandi name
         const mandiName = row["Mandi Name"];
+        const state = row.State;
+        
+        // Find mandi based on state and mandi name, regardless of selectedState
         const mandi = mandiData.find((mandi) => 
           mandi.categories.includes(category) && 
-          mandi.state === selectedState && 
+          mandi.state === state && 
           mandi.mandiname === mandiName
         );
+        
         const mandiId = mandi ? mandi._id : "N/A";
   
         // Return the transformed object
@@ -386,28 +390,36 @@ export const MarketRates = () => {
       const handleSaveAll = async (changes) => {
         console.log("Saving changes", changes);
       
-        if (changes.length === 0) {
-          alert("No category prices to save.");
+        // Filter out invalid entries (those with mandiId: "N/A")
+        const validChanges = changes.filter(change => change.mandiId !== "N/A");
+        const invalidCount = changes.length - validChanges.length;
+        
+        if (validChanges.length === 0) {
+          alert(`No valid entries to save. ${invalidCount} entries were skipped due to invalid mandi data.`);
           return;
+        }
+        
+        if (invalidCount > 0) {
+          alert(`Warning: ${invalidCount} entries were skipped due to invalid mandi data. Only ${validChanges.length} valid entries will be saved.`);
         }
       
         try {
           const result = await axios.post(
             `${Base_url}mandiRates/mandi-prices`,
             {
-              mandiPrices: changes,
+              mandiPrices: validChanges,
             }
           );
 
           // console.log("Category prices saved successfully:", result);
           setUpdate((prev)=>prev+1)
           if (result.status === 200) {
-            alert("Category prices saved successfully.");
+            alert(`Category prices saved successfully. ${validChanges.length} entries processed.`);
           }
 
         } catch (error) {
           console.error("Error saving category prices:", error);
-          alert("Failed to save category prices.");
+          alert("Failed to save category prices: " + (error.response?.data?.message || error.message));
         }
       };
 
