@@ -199,6 +199,7 @@ export const MarketRates = () => {
                 "Sub Category": subCategory.name || "N/A",
                 Time: formattedTime,
                 Price: 0,
+                Unit: "Kg"
               });
             });
           } else {
@@ -211,6 +212,7 @@ export const MarketRates = () => {
               "Sub Category": "N/A",
               Time: formattedTime,
               Price: 0,
+              Unit: "Kg"
             });
           }
         });
@@ -236,6 +238,7 @@ export const MarketRates = () => {
           "Sub Category": item["Sub Category"] || "N/A",
           Time: item.Time || formattedTime,
           Price: item.Price || 0,
+          Unit: item.Unit || "Kg"
         });
       });
     });
@@ -252,6 +255,7 @@ export const MarketRates = () => {
       { wch: 20 }, // Sub Category
       { wch: 10 }, // Time
       { wch: 10 }, // Price
+      { wch: 8 },  // Unit
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Market Rates");
@@ -344,6 +348,7 @@ export const MarketRates = () => {
         const price = row.Price || "0";
         const date = formatDate(row.Date);
         const time = row.Time || "10:00 AM";
+        const unit = row.Unit || "Kg";
         // Find mandi based on state and mandi name, regardless of selectedState
         const mandi = mandiData.find((mandi) => 
           mandi.categories.includes(category) && 
@@ -359,6 +364,7 @@ export const MarketRates = () => {
           price,
           date,
           time,
+          unit
         };
       });
   
