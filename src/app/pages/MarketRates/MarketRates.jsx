@@ -174,39 +174,23 @@ export const MarketRates = () => {
     };
     
     const formattedTime = convertTo12Hour(exportTime);
-  
-    // If there's existing data, use it; otherwise create template from mandi data
-    if (row.length > 0) {
-      // Use the filtered table data (row) if available
-      row.forEach((item) => {
-        dataToExport.push({
-          "Sr No": serialNumber++,
-          State: item.State || "N/A",
-          City: item.City || "N/A",
-          "Mandi Name": item["Mandi Name"] || "N/A",
-          Date: item.date || exportDate,
-          Category: item.Category || "N/A",
-          "Sub Category": item.SubCategory || "N/A",
-          Time: item.Time || formattedTime,
-          Price: item.Price || 0,
-        });
-      });
-    } else {
-      // Create template from mandi data when no existing rates
+
+    // Group data by mandi (State + City + Mandi Name)
+    const groupKey = (item) => `${item.State || item.state || ''}|${item.City || item.city || ''}|${item["Mandi Name"] || item.mandiname || ''}`;
+    let grouped = {};
+    let dataSource = row.length > 0 ? row : null;
+    if (!dataSource) {
+      // Build dataSource from mandiData and subCategoryData as before, but in the new column order
+      dataSource = [];
       const filteredMandiForExport = selectedState && selectedState !== "All" 
         ? mandiData.filter(mandi => mandi.state === selectedState)
         : mandiData;
-      
       filteredMandiForExport.forEach((mandi) => {
         mandi.categories.forEach((category) => {
-          // Get subcategories for this category
           const subCategories = subCategoryData[category] || [];
-          
           if (subCategories.length > 0) {
-            // Create a row for each subcategory
             subCategories.forEach((subCategory) => {
-              dataToExport.push({
-                "Sr No": serialNumber++,
+              dataSource.push({
                 State: mandi.state || "N/A",
                 City: mandi.city || "N/A",
                 "Mandi Name": mandi.mandiname || "N/A",
@@ -214,13 +198,11 @@ export const MarketRates = () => {
                 Category: category || "N/A",
                 "Sub Category": subCategory.name || "N/A",
                 Time: formattedTime,
-                Price: 0, // Default price for template
+                Price: 0,
               });
             });
           } else {
-            // If no subcategories, create a row with just the category
-            dataToExport.push({
-              "Sr No": serialNumber++,
+            dataSource.push({
               State: mandi.state || "N/A",
               City: mandi.city || "N/A",
               "Mandi Name": mandi.mandiname || "N/A",
@@ -228,13 +210,36 @@ export const MarketRates = () => {
               Category: category || "N/A",
               "Sub Category": "N/A",
               Time: formattedTime,
-              Price: 0, // Default price for template
+              Price: 0,
             });
           }
         });
       });
     }
-  
+    // Group rows by mandi
+    dataSource.forEach((item) => {
+      const key = groupKey(item);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(item);
+    });
+    // Export with Sr No only for first row of each mandi
+    Object.keys(grouped).forEach((key) => {
+      const rows = grouped[key];
+      rows.forEach((item, idx) => {
+        dataToExport.push({
+          "Sr No": idx === 0 ? serialNumber++ : '',
+          State: item.State || "N/A",
+          City: item.City || "N/A",
+          "Mandi Name": item["Mandi Name"] || "N/A",
+          Date: item.Date || item.date || exportDate,
+          Category: item.Category || "N/A",
+          "Sub Category": item["Sub Category"] || "N/A",
+          Time: item.Time || formattedTime,
+          Price: item.Price || 0,
+        });
+      });
+    });
+
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     // Set custom column widths
     worksheet['!cols'] = [
@@ -317,20 +322,33 @@ export const MarketRates = () => {
         return selectedDate;
       };
 
+      // Import: Track last non-blank Sr No and mandi info
+      let lastMandi = { state: '', city: '', mandiName: '' };
       // Transform the data into the required format (using new column order)
       const transformedData = jsonData.map((row) => {
+        const srNo = row["Sr No"];
+        let state = row.State;
+        let city = row.City;
+        let mandiName = row["Mandi Name"];
+        if (srNo !== undefined && srNo !== null && srNo !== "" && srNo !== '') {
+          // New mandi
+          lastMandi = { state, city, mandiName };
+        } else {
+          // Use last mandi info
+          state = lastMandi.state;
+          city = lastMandi.city;
+          mandiName = lastMandi.mandiName;
+        }
         const category = row.Category;
         const subCategory = row["Sub Category"];
         const price = row.Price || "0";
         const date = formatDate(row.Date);
         const time = row.Time || "10:00 AM";
-        const state = row.State;
-        const city = row.City;
-        const mandiName = row["Mandi Name"];
         // Find mandi based on state and mandi name, regardless of selectedState
         const mandi = mandiData.find((mandi) => 
           mandi.categories.includes(category) && 
           mandi.state === state && 
+          mandi.city === city &&
           mandi.mandiname === mandiName
         );
         const mandiId = mandi ? mandi._id : "N/A";
