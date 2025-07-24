@@ -158,7 +158,6 @@ export const MarketRates = () => {
 
   const handleExport = () => {
     const dataToExport = [];
-    let serialNumber = 1; // Initialize serial number
     
     // Get default date and time if inputs are blank
     const exportDate = selectedDate || new Date().toISOString().split('T')[0];
@@ -224,12 +223,11 @@ export const MarketRates = () => {
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
-    // Export with Sr No only for first row of each subcategory
+    // Export without Sr No
     Object.keys(grouped).forEach((key) => {
       const rows = grouped[key];
-      rows.forEach((item, idx) => {
+      rows.forEach((item) => {
         dataToExport.push({
-          "Sr No": idx === 0 ? serialNumber++ : '',
           State: item.State || "N/A",
           City: item.City || "N/A",
           "Mandi Name": item["Mandi Name"] || "N/A",
@@ -244,9 +242,8 @@ export const MarketRates = () => {
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    // Set custom column widths
+    // Set custom column widths (removed Sr No column)
     worksheet['!cols'] = [
-      { wch: 10 }, // Sr No
       { wch: 20 }, // State
       { wch: 20 }, // City
       { wch: 20 }, // Mandi Name
@@ -326,46 +323,76 @@ export const MarketRates = () => {
         return selectedDate;
       };
 
-      // Import: Track last non-blank Sr No and subcategory info
-      let lastSubCategory = { category: '', subCategory: '' };
-      // Transform the data into the required format (using new column order)
-      const transformedData = jsonData.map((row) => {
-        const srNo = row["Sr No"];
-        let category = row.Category;
-        let subCategory = row["Sub Category"];
-        if (srNo !== undefined && srNo !== null && srNo !== "" && srNo !== '') {
-          // New subcategory
-          lastSubCategory = { category, subCategory };
-        } else {
-          // Use last subcategory info
-          category = lastSubCategory.category;
-          subCategory = lastSubCategory.subCategory;
-        }
-        const state = row.State;
-        const city = row.City;
-        const mandiName = row["Mandi Name"];
-        const price = row.Price || "0";
-        const date = formatDate(row.Date);
-        const time = row.Time || "10:00 AM";
-        const unit = row.Unit || "Kg";
-        // Find mandi based on state, city, and mandi name
-        const mandi = mandiData.find((mandi) => 
-          mandi.categories.includes(category) && 
-          mandi.state === state && 
-          mandi.city === city &&
-          mandi.mandiname === mandiName
-        );
-        const mandiId = mandi ? mandi._id : "N/A";
-        return {
-          mandiId,
-          category,
-          subCategory,
-          price,
-          date,
-          time,
-          unit
-        };
-      });
+      // Transform the data into the required format with case-insensitive matching
+      const transformedData = jsonData
+        .map((row) => {
+          const category = row.Category;
+          const subCategory = row["Sub Category"];
+          const state = row.State;
+          const city = row.City;
+          const mandiName = row["Mandi Name"];
+          const price = row.Price || "0";
+          const date = formatDate(row.Date);
+          // Time conversion: handle Excel decimal time
+          let time = row.Time;
+          if (typeof time === 'number' || (!isNaN(time) && time !== null && time !== undefined && time !== '')) {
+            // Excel time as decimal (e.g., 0.416666...)
+            const excelTime = parseFloat(time);
+            if (!isNaN(excelTime) && excelTime >= 0 && excelTime < 1) {
+              const totalMinutes = Math.round(excelTime * 24 * 60);
+              let hours = Math.floor(totalMinutes / 60);
+              let minutes = totalMinutes % 60;
+              const ampm = hours >= 12 ? 'PM' : 'AM';
+              hours = hours % 12;
+              if (hours === 0) hours = 12;
+              time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+            }
+          }
+          if (!time || time === 'N/A') time = '10:00 AM';
+          const unit = row.Unit || "Kg";
+          
+          // Case-insensitive mandi lookup with null checks
+          const mandi = mandiData.find((mandi) => 
+            (mandi.categories || []).some(cat => (cat || '').toLowerCase() === (category || '').toLowerCase()) && 
+            (mandi.state || '').toLowerCase() === (state || '').toLowerCase() && 
+            (mandi.city || '').toLowerCase() === (city || '').toLowerCase() &&
+            (mandi.mandiname || '').toLowerCase() === (mandiName || '').toLowerCase()
+          );
+          const mandiId = mandi ? mandi._id : "N/A";
+          return {
+            mandiId,
+            category,
+            subCategory,
+            price,
+            date,
+            time,
+            unit
+          };
+        })
+        .filter(item => {
+          // Convert price to number if possible
+          const priceValue = typeof item.price === 'string' ? item.price.trim() : item.price;
+          const priceNum = Number(priceValue);
+
+          // Skip if price is not a valid number, is 0, or is blank/NA
+          const isValidPrice = (
+            priceValue !== '' &&
+            priceValue !== null &&
+            priceValue !== undefined &&
+            priceValue.toString().toLowerCase() !== 'na' &&
+            priceValue.toString().toLowerCase() !== 'n/a' &&
+            !isNaN(priceNum) &&
+            priceNum !== 0
+          );
+
+          // Skip rows where mandiId is "N/A" (no matching mandi found)
+          const isValidMandi = item.mandiId !== "N/A";
+
+          // If valid, also set price as a number
+          if (isValidPrice && isValidMandi) item.price = priceNum;
+
+          return isValidPrice && isValidMandi;
+        });
   
       handleSaveAll(transformedData);
     };
