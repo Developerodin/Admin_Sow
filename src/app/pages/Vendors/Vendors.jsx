@@ -794,6 +794,78 @@ export const Vendors = () => {
                   </Typography>
                 </Box>
 
+                {/* PAN Card Details */}
+                <Box style={{ marginBottom: "20px" }}>
+                  <Typography variant="h6" style={{ fontWeight: "bold", marginBottom: "10px" }}>
+                    PAN Card Details
+                  </Typography>
+                  {selectedKycData.panKycData ? (
+                    <Box style={{ 
+                      padding: "15px", 
+                      backgroundColor: "#f8f9fa", 
+                      borderRadius: "8px",
+                      border: "1px solid #e9ecef"
+                    }}>
+                      <Box style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                        <Box>
+                          <Typography variant="subtitle2" style={{ fontWeight: "bold", color: "#666", marginBottom: "5px" }}>
+                            Name
+                          </Typography>
+                          <Typography variant="body2" style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px", border: "1px solid #ddd" }}>
+                            {selectedKycData.panKycData.data?.Name || selectedKycData.panKycData.name || "Not available"}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="subtitle2" style={{ fontWeight: "bold", color: "#666", marginBottom: "5px" }}>
+                            PAN Number
+                          </Typography>
+                          <Typography variant="body2" style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px", border: "1px solid #ddd" }}>
+                            {selectedKycData.panKycData.data?.PanNumber || selectedKycData.panKycData.panNumber || "Not available"}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="subtitle2" style={{ fontWeight: "bold", color: "#666", marginBottom: "5px" }}>
+                            Status
+                          </Typography>
+                          <Typography variant="body2" style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px", border: "1px solid #ddd" }}>
+                            {selectedKycData.panKycData.data?.STATUS || selectedKycData.panKycData.panStatus || "Not available"}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="subtitle2" style={{ fontWeight: "bold", color: "#666", marginBottom: "5px" }}>
+                            Holder Type
+                          </Typography>
+                          <Typography variant="body2" style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px", border: "1px solid #ddd" }}>
+                            {selectedKycData.panKycData.data?.panHolderStatusType || selectedKycData.panKycData.panHolderType || "Not available"}
+                          </Typography>
+                        </Box>
+                        <Box style={{ gridColumn: "1 / -1" }}>
+                          <Typography variant="subtitle2" style={{ fontWeight: "bold", color: "#666", marginBottom: "5px" }}>
+                            Verification Date
+                          </Typography>
+                          <Typography variant="body2" style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px", border: "1px solid #ddd" }}>
+                            {selectedKycData.panKycData.data?.verificationDate || selectedKycData.panKycData.panVerificationDate ? 
+                              new Date(selectedKycData.panKycData.data?.verificationDate || selectedKycData.panKycData.panVerificationDate).toLocaleDateString() : 
+                              "Not available"
+                            }
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ) : (
+                    <Box style={{ 
+                      padding: "15px", 
+                      backgroundColor: "#fff3cd", 
+                      borderRadius: "8px",
+                      border: "1px solid #ffeaa7"
+                    }}>
+                      <Typography variant="body2" style={{ color: "#856404", fontStyle: "italic" }}>
+                        PAN card details not available
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
                 {/* Status */}
                 <Box style={{ marginBottom: "20px" }}>
                   <Typography variant="h6" style={{ fontWeight: "bold", marginBottom: "10px" }}>
