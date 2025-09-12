@@ -844,8 +844,8 @@ export const Vendors = () => {
                             Verification Date
                           </Typography>
                           <Typography variant="body2" style={{ padding: "8px", backgroundColor: "white", borderRadius: "4px", border: "1px solid #ddd" }}>
-                            {selectedKycData.panKycData.data?.verificationDate || selectedKycData.panKycData.panVerificationDate ? 
-                              new Date(selectedKycData.panKycData.data?.verificationDate || selectedKycData.panKycData.panVerificationDate).toLocaleDateString() : 
+                            {selectedKycData.panKycData.verificationDate || selectedKycData.panKycData.panVerificationDate ? 
+                              new Date(selectedKycData.panKycData.verificationDate || selectedKycData.panKycData.panVerificationDate).toLocaleDateString() : 
                               "Not available"
                             }
                           </Typography>
