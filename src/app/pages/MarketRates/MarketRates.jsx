@@ -60,6 +60,7 @@ export const MarketRates = () => {
    {name:"SubCategory"},
    {name:"Price"},
    {name:"Price Diffrence"},
+   {name:"Unit"},
 ]
 
   const handleChange = (event, newValue) => {
@@ -517,6 +518,7 @@ export const MarketRates = () => {
             SubCategory: price.subCategory || "N/A",
             Price: price.price || 0,
             "Price Difference": price.priceDifference?.difference || 0,
+            Unit: price.unit || "Kg",
           };
         });
       });
