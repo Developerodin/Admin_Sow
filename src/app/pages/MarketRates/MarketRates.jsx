@@ -175,7 +175,7 @@ export const MarketRates = () => {
     const formattedTime = convertTo12Hour(exportTime);
 
     // Group data by subcategory instead of mandi
-    const groupKey = (item) => `${item.Category || item.category || ''}|${item["Sub Category"] || item.subCategory || ''}`;
+    const groupKey = (item) => `${item.Category || item.category || ''}|${item["Sub Category"] || item.SubCategory || item.subCategory || ''}`;
     let grouped = {};
     let dataSource = row.length > 0 ? row : null;
     if (!dataSource) {
@@ -233,7 +233,7 @@ export const MarketRates = () => {
           "Mandi Name": item["Mandi Name"] || "N/A",
           Date: item.Date || item.date || exportDate,
           Category: item.Category || "N/A",
-          "Sub Category": item["Sub Category"] || "N/A",
+          "Sub Category": item["Sub Category"] || item.SubCategory || item.subCategory || "N/A",
           Time: item.Time || formattedTime,
           Price: item.Price || 0,
           Unit: item.Unit || "Kg"
