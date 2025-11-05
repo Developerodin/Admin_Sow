@@ -17,11 +17,12 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import DeleteIcon from "@mui/icons-material/Delete";
 import * as XLSX from "xlsx";
 
 import { useNavigate } from "react-router-dom";
@@ -61,6 +62,7 @@ export const MarketRates = () => {
    {name:"Price"},
    {name:"Price Diffrence"},
    {name:"Unit"},
+   {name:"Action"},
 ]
 
   const handleChange = (event, newValue) => {
@@ -191,8 +193,6 @@ export const MarketRates = () => {
           if (subCategories.length > 0) {
             subCategories.forEach((subCategory) => {
               dataSource.push({
-                State: mandi.state || "N/A",
-                City: mandi.city || "N/A",
                 "Mandi Name": mandi.mandiname || "N/A",
                 Date: exportDate,
                 Category: category || "N/A",
@@ -204,8 +204,6 @@ export const MarketRates = () => {
             });
           } else {
             dataSource.push({
-              State: mandi.state || "N/A",
-              City: mandi.city || "N/A",
               "Mandi Name": mandi.mandiname || "N/A",
               Date: exportDate,
               Category: category || "N/A",
@@ -224,13 +222,11 @@ export const MarketRates = () => {
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
-    // Export without Sr No
+    // Export without Sr No, State, and City
     Object.keys(grouped).forEach((key) => {
       const rows = grouped[key];
       rows.forEach((item) => {
         dataToExport.push({
-          State: item.State || "N/A",
-          City: item.City || "N/A",
           "Mandi Name": item["Mandi Name"] || "N/A",
           Date: item.Date || item.date || exportDate,
           Category: item.Category || "N/A",
@@ -243,10 +239,8 @@ export const MarketRates = () => {
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    // Set custom column widths (removed Sr No column)
+    // Set custom column widths (removed Sr No, State, and City columns)
     worksheet['!cols'] = [
-      { wch: 20 }, // State
-      { wch: 20 }, // City
       { wch: 20 }, // Mandi Name
       { wch: 12 }, // Date
       { wch: 20 }, // Category
@@ -329,8 +323,6 @@ export const MarketRates = () => {
         .map((row) => {
           const category = row.Category;
           const subCategory = row["Sub Category"];
-          const state = row.State;
-          const city = row.City;
           const mandiName = row["Mandi Name"];
           const price = row.Price || "0";
           const date = formatDate(row.Date);
@@ -352,11 +344,9 @@ export const MarketRates = () => {
           if (!time || time === 'N/A') time = '10:00 AM';
           const unit = row.Unit || "Kg";
           
-          // Case-insensitive mandi lookup with null checks
+          // Case-insensitive mandi lookup by Mandi Name and Category only
           const mandi = mandiData.find((mandi) => 
             (mandi.categories || []).some(cat => (cat || '').toLowerCase() === (category || '').toLowerCase()) && 
-            (mandi.state || '').toLowerCase() === (state || '').toLowerCase() && 
-            (mandi.city || '').toLowerCase() === (city || '').toLowerCase() &&
             (mandi.mandiname || '').toLowerCase() === (mandiName || '').toLowerCase()
           );
           const mandiId = mandi ? mandi._id : "N/A";
@@ -453,6 +443,40 @@ export const MarketRates = () => {
         return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
       };
 
+      const handleDelete = useCallback(async (mandiId, category, subCategory) => {
+        if (!mandiId || !category || !subCategory) {
+          alert("Missing required information to delete this price.");
+          return;
+        }
+
+        // Confirm deletion
+        const confirmDelete = window.confirm(
+          `Are you sure you want to delete the price for ${category} - ${subCategory}?`
+        );
+
+        if (!confirmDelete) {
+          return;
+        }
+
+        try {
+          // Encode category and subCategory for URL
+          const encodedCategory = encodeURIComponent(category);
+          const encodedSubCategory = encodeURIComponent(subCategory);
+          
+          const response = await axios.delete(
+            `${Base_url}mandiRates/${mandiId}/${encodedCategory}/${encodedSubCategory}`
+          );
+
+          if (response.status === 200) {
+            alert("Price deleted successfully!");
+            setUpdate((prev) => prev + 1); // Refresh data
+          }
+        } catch (error) {
+          console.error("Error deleting price:", error);
+          alert("Failed to delete price: " + (error.response?.data?.message || error.message));
+        }
+      }, []);
+
   const getAllData = async () => {
     try {
       const response = await axios.get(`${Base_url}mandiRates`);
@@ -519,6 +543,8 @@ export const MarketRates = () => {
             Price: price.price || 0,
             "Price Difference": price.priceDifference?.difference || 0,
             Unit: price.unit || "Kg",
+            mandiId: item.mandi?._id || null,
+            Action: null, // Will be set in useEffect for filtered data
           };
         });
       });
@@ -608,9 +634,43 @@ export const MarketRates = () => {
       );
     }
     
+    // Add delete button to each row and filter out mandiId from display
+    const columnNames = column.map(col => col.name);
+    // Map column names to actual data keys
+    const columnToKeyMap = {
+      "Date": "date",
+      "Price Diffrence": "Price Difference",
+    };
+    
+    filteredData = filteredData.map(item => {
+      // Create a new object with only the columns we want to display
+      const displayRow = {};
+      columnNames.forEach(colName => {
+        if (colName === "Action") {
+          displayRow[colName] = (
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={() => handleDelete(item.mandiId, item.Category, item.SubCategory)}
+              disabled={!item.mandiId || item.Category === "N/A" || item.SubCategory === "N/A"}
+            >
+              Delete
+            </Button>
+          );
+        } else {
+          // Use mapped key if exists, otherwise use column name as-is
+          const dataKey = columnToKeyMap[colName] || colName;
+          displayRow[colName] = item[dataKey];
+        }
+      });
+      return displayRow;
+    });
+    
     console.log("Filtered data:", filteredData);
     setRows(filteredData);
-  }, [selectedState, MarketData, fromDate, toDate, searchInput]);
+  }, [selectedState, MarketData, fromDate, toDate, searchInput, handleDelete, column]);
  
 
   return (
