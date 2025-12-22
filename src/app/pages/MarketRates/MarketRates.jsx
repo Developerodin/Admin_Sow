@@ -29,6 +29,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Base_url } from "../../Config/BaseUrl";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
+import { MarketRatesAIModal } from "./MarketRatesAIModal";
 
 export const MarketRates = () => {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ export const MarketRates = () => {
   const [selectedTime, setSelectedTime] = useState("10:00");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   const column=[
    {name:"Sno"},
@@ -707,6 +709,7 @@ export const MarketRates = () => {
                 <Button
                   variant="contained"
                   component="label"
+                  style={{ marginRight: "10px" }}
                 >
                   Upload Excel
                   <input
@@ -714,6 +717,13 @@ export const MarketRates = () => {
                     hidden
                     onChange={handleImport}
                   />
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => setAiModalOpen(true)}
+                  sx={{ backgroundColor: "#65be34" }}
+                >
+                  Market Rates AI
                 </Button>
               </Box>
             </Box>
@@ -838,6 +848,13 @@ export const MarketRates = () => {
           </Box>
         </CardContent>
       </Card>
+      <MarketRatesAIModal
+        modalVisible={aiModalOpen}
+        setModalVisible={setAiModalOpen}
+        onSuccess={() => {
+          setUpdate((prev) => prev + 1);
+        }}
+      />
     </Box>
   );
 };
