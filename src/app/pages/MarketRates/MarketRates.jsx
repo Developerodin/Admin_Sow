@@ -31,6 +31,21 @@ import { Base_url } from "../../Config/BaseUrl";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import { MarketRatesAIModal } from "./MarketRatesAIModal";
 
+const column = [
+  {name:"Sno"},
+  {name:"Date"},
+  {name:"Time"},
+  {name:"State"},
+  {name:"City"},
+  {name:"Mandi Name"},
+  {name:"Category"},
+  {name:"SubCategory"},
+  {name:"Price"},
+  {name:"Price Diffrence"},
+  {name:"Unit"},
+  {name:"Action"},
+];
+
 export const MarketRates = () => {
   const navigate = useNavigate();
   const [states, setStates] = useState([]);
@@ -51,21 +66,6 @@ export const MarketRates = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [aiModalOpen, setAiModalOpen] = useState(false);
-
-  const column=[
-   {name:"Sno"},
-   {name:"Date"},
-   {name:"Time"},
-   {name:"State"},
-   {name:"City"},
-   {name:"Mandi Name"},
-   {name:"Category"},
-   {name:"SubCategory"},
-   {name:"Price"},
-   {name:"Price Diffrence"},
-   {name:"Unit"},
-   {name:"Action"},
-]
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -563,14 +563,6 @@ export const MarketRates = () => {
   useEffect(() => {
     let filteredData = [...MarketData]; // Start with all data
     
-    // Debug: Show available date ranges in the data
-    if (MarketData.length > 0) {
-      const dates = MarketData.map(item => item.date).filter(date => date && date !== "N/A");
-      const uniqueDates = [...new Set(dates)].sort();
-      console.log("Available dates in data:", uniqueDates);
-      console.log("Date range in data:", uniqueDates[0], "to", uniqueDates[uniqueDates.length - 1]);
-    }
-    
     // Apply state filter if selected
     if (selectedState && selectedState !== "All") {
       filteredData = filteredData.filter(item => item.State === selectedState);
@@ -578,28 +570,13 @@ export const MarketRates = () => {
     
     // Apply date range filter if both dates are selected
     if (fromDate && toDate) {
-      console.log("fromDate ===>",fromDate);
-      console.log("toDate ===>",toDate);
-      console.log("filteredData ===>",filteredData);
-      
-      // Debug: Show what date range would work
-      const availableDates = filteredData.map(item => item.date).filter(date => date && date !== "N/A");
-      const uniqueDates = [...new Set(availableDates)].sort();
-      if (uniqueDates.length > 0) {
-        console.log("Available dates in filtered data:", uniqueDates);
-        console.log("Suggested date range:", uniqueDates[0], "to", uniqueDates[uniqueDates.length - 1]);
-      }
       filteredData = filteredData.filter(item => {
         try {
-          // Debug: Log the item date
-          console.log("Processing item date:", item.date, "for item:", item);
-          
           // Convert the item's date to start of day
           const itemDate = new Date(item.date);
           
           // Check if date is valid
           if (isNaN(itemDate.getTime())) {
-            console.log("Invalid date found:", item.date, "for item:", item);
             return false; // Skip invalid dates
           }
           
@@ -609,12 +586,6 @@ export const MarketRates = () => {
           // Convert from and to dates to start and end of day
           const from = new Date(fromDate + 'T00:00:00');
           const to = new Date(toDate + 'T23:59:59.999');
-          
-          console.log("Comparing dates:");
-          console.log("Item date:", itemDateStart);
-          console.log("From date:", from);
-          console.log("To date:", to);
-          console.log("Is in range:", itemDateStart >= from && itemDateStart <= to);
           
           return itemDateStart >= from && itemDateStart <= to;
         } catch (error) {
@@ -670,9 +641,8 @@ export const MarketRates = () => {
       return displayRow;
     });
     
-    console.log("Filtered data:", filteredData);
     setRows(filteredData);
-  }, [selectedState, MarketData, fromDate, toDate, searchInput, handleDelete, column]);
+  }, [selectedState, MarketData, fromDate, toDate, searchInput, handleDelete]);
  
 
   return (
