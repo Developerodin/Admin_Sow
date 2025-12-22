@@ -252,9 +252,11 @@ export const ViewCategories = () => {
   const handelSubCategoryEditOpen = (index) => {
     const data = SubCategoriesData[index];
     // Map description to unit if description exists but unit doesn't
+    // Remove description to avoid conflicts
+    const { description, ...restData } = data;
     const mappedData = {
-      ...data,
-      unit: data.unit || data.description || "kg"
+      ...restData,
+      unit: String(data.unit || data.description || "kg")
     };
     setSubCategoryAddData(mappedData);
     if (data.image) {
@@ -628,7 +630,7 @@ export const ViewCategories = () => {
         sx={{ marginTop: "30px" }}
         label="Unit"
         name="unit"
-        value={subCategoryAddData.unit || subCategoryAddData.description || ""}
+        value={subCategoryAddData.unit ?? ""}
         onChange={handleSubCategoryInputChange}
       />
 
