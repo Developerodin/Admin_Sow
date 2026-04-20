@@ -68,17 +68,19 @@ export const DailyRate = () => {
     navigate('create-daily-rates');
   };
 
+  /** Calendar date in Indian Standard Time (matches how rates are intended for India) */
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear() % 100;
-
-    const formattedDay = day < 10 ? `0${day}` : day;
-    const formattedMonth = month < 10 ? `0${month}` : month;
-    const formattedYear = year < 10 ? `0${year}` : year;
-
-    return `${formattedDay}:${formattedMonth}:${formattedYear}`;
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+    }).formatToParts(new Date(dateString));
+    const day = parts.find((p) => p.type === 'day')?.value;
+    const month = parts.find((p) => p.type === 'month')?.value;
+    const year = parts.find((p) => p.type === 'year')?.value;
+    if (!day || !month || !year) return '';
+    return `${day}:${month}:${year}`;
   };
 
   const handleReadMore = (content) => {
@@ -205,6 +207,7 @@ export const DailyRate = () => {
                       >
                         <span style={{ fontSize: '14px' }}>
                           Date: {formatDate(el.date)}
+                          {el.time != null && el.time !== '' ? ` · Time: ${el.time}` : ''}
                         </span>
                       </div>
 
