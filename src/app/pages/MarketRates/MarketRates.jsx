@@ -739,9 +739,10 @@ export const MarketRates = () => {
       // Transform the data into the required format with case-insensitive matching
       const transformedData = jsonData
         .map((row) => {
-          const category = row.Category;
-          const subCategory = row["Sub Category"];
-          const mandiName = row["Mandi Name"];
+          // Trim + preserve for DB write; matching uses .toLowerCase() below
+          const category = (row.Category != null ? String(row.Category) : '').trim();
+          const subCategory = (row["Sub Category"] != null ? String(row["Sub Category"]) : '').trim();
+          const mandiName = (row["Mandi Name"] != null ? String(row["Mandi Name"]) : '').trim();
           const price = row.Price || "0";
           const date = formatDate(row.Date);
           // Time conversion: handle Excel decimal time
