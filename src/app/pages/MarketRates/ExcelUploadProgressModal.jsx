@@ -27,15 +27,28 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { Base_url } from '../../Config/BaseUrl';
 
-const PROGRESS_STEPS = [
-  'Preparing rows…',
-  'Validating mandi IDs…',
-  'Sending to server…',
-  'Saving rates to database…',
-  'Notifying users…',
+// Time-aware progress labels — picked based on elapsed seconds. We do NOT
+// cycle a fixed step list any more because the looping "Step 1 of 5 → 5 of 5
+// → 1 of 5" misled users on long uploads.
+const PROGRESS_STAGES = [
+  { until: 3,   label: 'Preparing rows…' },
+  { until: 8,   label: 'Sending to server…' },
+  { until: 20,  label: 'Saving rates to database…' },
+  { until: 60,  label: 'Still working — finishing up on the server…' },
+  { until: Infinity, label: 'This is taking longer than usual. Server may still be processing your batch.' },
 ];
 
-const STEP_INTERVAL_MS = 1800;
+const getProgressLabel = (elapsedSec) => {
+  const stage = PROGRESS_STAGES.find((s) => elapsedSec < s.until);
+  return stage ? stage.label : PROGRESS_STAGES[PROGRESS_STAGES.length - 1].label;
+};
+
+const formatElapsed = (sec) => {
+  if (sec < 60) return `${sec}s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+};
 
 const downloadSkippedRowsExcel = (skippedEntries, fileName) => {
   if (!skippedEntries || skippedEntries.length === 0) return;
@@ -81,21 +94,15 @@ export const ExcelUploadProgressModal = ({
   onSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [stepIdx, setStepIdx] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
   const startedAtRef = useRef(0);
-  const stepIntervalRef = useRef(null);
   const elapsedIntervalRef = useRef(null);
   const inFlightRef = useRef(false);
 
   const clearTimers = () => {
-    if (stepIntervalRef.current) {
-      clearInterval(stepIntervalRef.current);
-      stepIntervalRef.current = null;
-    }
     if (elapsedIntervalRef.current) {
       clearInterval(elapsedIntervalRef.current);
       elapsedIntervalRef.current = null;
@@ -114,7 +121,6 @@ export const ExcelUploadProgressModal = ({
       clearTimers();
       inFlightRef.current = false;
       setLoading(false);
-      setStepIdx(0);
       setElapsedSec(0);
       setResult(null);
       setError(null);
@@ -127,16 +133,12 @@ export const ExcelUploadProgressModal = ({
     setLoading(true);
     setResult(null);
     setError(null);
-    setStepIdx(0);
     setElapsedSec(0);
 
     startedAtRef.current = Date.now();
 
-    // The API call is a single POST so we can't stream real per-step state.
-    // Cycle status text + elapsed timer so the user sees ongoing activity.
-    stepIntervalRef.current = setInterval(() => {
-      setStepIdx((idx) => (idx + 1) % PROGRESS_STEPS.length);
-    }, STEP_INTERVAL_MS);
+    // The API call is a single POST; we can't stream real per-step state.
+    // Elapsed timer drives a time-aware status label (no looping steps).
     elapsedIntervalRef.current = setInterval(() => {
       setElapsedSec(Math.floor((Date.now() - startedAtRef.current) / 1000));
     }, 1000);
@@ -223,25 +225,29 @@ export const ExcelUploadProgressModal = ({
                 <Stack spacing={2}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <CircularProgress size={28} />
-                    <Box>
+                    <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                         Uploading {submittedCount} rate{submittedCount === 1 ? '' : 's'}…
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {PROGRESS_STEPS[stepIdx]}
+                        {getProgressLabel(elapsedSec)}
                       </Typography>
                     </Box>
                   </Box>
 
                   <LinearProgress />
 
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="caption" color="text.secondary">
-                      Step {stepIdx + 1} of {PROGRESS_STEPS.length}
+                      {elapsedSec < 20
+                        ? 'Bulk save in progress…'
+                        : 'Still working — please be patient.'}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Elapsed: {elapsedSec}s
-                    </Typography>
+                    <Chip
+                      size="small"
+                      label={`Elapsed: ${formatElapsed(elapsedSec)}`}
+                      color={elapsedSec > 60 ? 'warning' : 'default'}
+                    />
                   </Box>
 
                   <Typography variant="caption" color="text.secondary">

@@ -28,13 +28,29 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { Base_url } from '../../Config/BaseUrl';
 
-const PROGRESS_STEPS = [
-  'Parsing message with AI...',
-  'Matching categories & sub-categories...',
-  'Matching mandis against database...',
-  'Saving rates to database...',
-  'Finalizing...',
+// Time-aware progress labels — picked by elapsed seconds so the message
+// reflects what is most likely happening on the server right now, instead
+// of looping the same 5 steps over and over.
+const PROGRESS_STAGES = [
+  { until: 15,  label: 'Parsing your message with AI…' },
+  { until: 45,  label: 'Matching categories & sub-categories…' },
+  { until: 90,  label: 'Matching mandis against database…' },
+  { until: 180, label: 'Saving rates to database…' },
+  { until: 360, label: 'Still processing — large messages can take a few minutes…' },
+  { until: Infinity, label: 'This is taking longer than usual. The job may still finish — you can also close this window and check Market Rates in a moment.' },
 ];
+
+const getProgressLabel = (elapsedSec) => {
+  const stage = PROGRESS_STAGES.find((s) => elapsedSec < s.until);
+  return stage ? stage.label : PROGRESS_STAGES[PROGRESS_STAGES.length - 1].label;
+};
+
+const formatElapsed = (sec) => {
+  if (sec < 60) return `${sec}s`;
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${String(s).padStart(2, '0')}s`;
+};
 
 const POLL_INTERVAL_MS = 2500;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 min safety cap
@@ -80,7 +96,6 @@ const downloadFailedRatesExcel = (failedRates, parsed) => {
 export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess }) => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [progressStepIdx, setProgressStepIdx] = useState(0);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [progressNote, setProgressNote] = useState('');
   const [response, setResponse] = useState(null);
@@ -89,7 +104,6 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
 
   // Refs to keep polling/cleanup safe across renders + unmount
   const pollTimerRef = useRef(null);
-  const stepIntervalRef = useRef(null);
   const elapsedIntervalRef = useRef(null);
   const startedAtRef = useRef(0);
   const cancelledRef = useRef(false);
@@ -98,10 +112,6 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
     if (pollTimerRef.current) {
       clearTimeout(pollTimerRef.current);
       pollTimerRef.current = null;
-    }
-    if (stepIntervalRef.current) {
-      clearInterval(stepIntervalRef.current);
-      stepIntervalRef.current = null;
     }
     if (elapsedIntervalRef.current) {
       clearInterval(elapsedIntervalRef.current);
@@ -118,23 +128,17 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
 
   const resetProgress = () => {
     clearTimers();
-    setProgressStepIdx(0);
     setElapsedSec(0);
     setProgressNote('');
   };
 
   const startProgressTickers = () => {
     startedAtRef.current = Date.now();
-    setProgressStepIdx(0);
     setElapsedSec(0);
 
-    // Cycle the step label so the user sees ongoing activity for the long
-    // OpenAI + vector-matching call. Real per-step state isn't streamed by
-    // the API so we cycle visually until completion.
-    stepIntervalRef.current = setInterval(() => {
-      setProgressStepIdx((idx) => (idx + 1) % PROGRESS_STEPS.length);
-    }, 2500);
-
+    // The label is derived from elapsedSec via getProgressLabel(); we no
+    // longer cycle through a fixed step list because the loop misled users
+    // on long-running jobs (e.g. "Step 1 of 5" still showing at 8+ minutes).
     elapsedIntervalRef.current = setInterval(() => {
       setElapsedSec(Math.floor((Date.now() - startedAtRef.current) / 1000));
     }, 1000);
@@ -306,25 +310,31 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
                 <Stack spacing={2}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <CircularProgress size={28} />
-                    <Box>
+                    <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        Processing your market rates...
+                        Processing your market rates…
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {PROGRESS_STEPS[progressStepIdx]}
+                        {getProgressLabel(elapsedSec)}
                       </Typography>
                     </Box>
                   </Box>
 
                   <LinearProgress />
 
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="caption" color="text.secondary">
-                      Step {progressStepIdx + 1} of {PROGRESS_STEPS.length}
+                      {elapsedSec < 60
+                        ? 'AI parsing in progress…'
+                        : elapsedSec < 180
+                        ? 'Still working — this is normal for larger messages.'
+                        : 'Backend is still processing — please be patient.'}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Elapsed: {elapsedSec}s
-                    </Typography>
+                    <Chip
+                      size="small"
+                      label={`Elapsed: ${formatElapsed(elapsedSec)}`}
+                      color={elapsedSec > 180 ? 'warning' : 'default'}
+                    />
                   </Box>
 
                   {progressNote && (
@@ -334,8 +344,8 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
                   )}
 
                   <Typography variant="caption" color="text.secondary">
-                    Please keep this window open. Large messages can take 30–60 seconds while the AI
-                    matches mandis and categories.
+                    Please keep this window open. Typical runs finish in 30–60 seconds; messages
+                    with many mandis can take longer.
                   </Typography>
                 </Stack>
               </Paper>
