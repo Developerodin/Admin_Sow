@@ -31,6 +31,7 @@ import { Base_url } from "../../Config/BaseUrl";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import { MarketRatesAIModal } from "./MarketRatesAIModal";
 import { ExcelValidationModal } from "./ExcelValidationModal";
+import { ExcelUploadProgressModal } from "./ExcelUploadProgressModal";
 
 // Excel template — must stay in sync with handleExport() and the AI modal's
 // "Download Failed Rates Excel". Validation is performed against these headers
@@ -452,6 +453,11 @@ export const MarketRates = () => {
     totalRowsCount: 0,
     pendingValidRows: [],
   });
+  const [uploadProgress, setUploadProgress] = useState({
+    open: false,
+    rows: [],
+    fileName: "",
+  });
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -797,7 +803,7 @@ export const MarketRates = () => {
           return isValidPrice && isValidMandi;
         });
   
-      handleSaveAll(transformedData);
+      handleSaveAll(transformedData, file.name);
     };
 
     reader.readAsArrayBuffer(file);
@@ -815,49 +821,59 @@ export const MarketRates = () => {
    */
   const handleProceedWithValidRows = () => {
     const validRows = excelValidation.pendingValidRows || [];
+    const fileName = excelValidation.fileName;
     setExcelValidation((prev) => ({ ...prev, open: false }));
     if (validRows.length === 0) return;
-    handleSaveAll(validRows);
+    handleSaveAll(validRows, fileName);
   };
 
   const handleCloseExcelValidation = () => {
     setExcelValidation((prev) => ({ ...prev, open: false }));
   };
+
+  const handleCloseUploadProgress = () => {
+    setUploadProgress({ open: false, rows: [], fileName: "" });
+  };
       
-      const handleSaveAll = async (changes) => {
-        console.log("Saving changes", changes);
-      
-        // Filter out invalid entries (those with mandiId: "N/A")
-        const validChanges = changes.filter(change => change.mandiId !== "N/A");
-        const invalidCount = changes.length - validChanges.length;
-        
+      /**
+       * Open the live upload progress modal — the modal performs the POST and
+       * renders progress / success / partial / error states, plus a table of
+       * any server-skipped rows. Replaces the old `alert()` flow so the user
+       * no longer sees a stale browser alert after the validation modal closes.
+       */
+      const handleSaveAll = (changes, fileName = "") => {
+        const validChanges = (changes || []).filter(
+          (c) => c && c.mandiId && c.mandiId !== "N/A"
+        );
+
         if (validChanges.length === 0) {
-          alert(`No valid entries to save. ${invalidCount} entries were skipped due to invalid mandi data.`);
+          // Re-open the validation modal in a final "nothing to upload" state
+          // instead of using a native alert, so the messaging is consistent.
+          setExcelValidation({
+            open: true,
+            fileName: fileName || "",
+            issues: {
+              fileIssues: [
+                {
+                  issue:
+                    "No valid rows left to upload. Fix the issues listed previously and try again.",
+                },
+              ],
+              columnIssues: [],
+              rowIssues: [],
+            },
+            validRowsCount: 0,
+            totalRowsCount: (changes || []).length,
+            pendingValidRows: [],
+          });
           return;
         }
-        
-        if (invalidCount > 0) {
-          alert(`Warning: ${invalidCount} entries were skipped due to invalid mandi data. Only ${validChanges.length} valid entries will be saved.`);
-        }
-      
-        try {
-          const result = await axios.post(
-            `${Base_url}mandiRates/mandi-prices`,
-            {
-              mandiPrices: validChanges,
-            }
-          );
 
-          // console.log("Category prices saved successfully:", result);
-          setUpdate((prev)=>prev+1)
-          if (result.status === 200) {
-            alert(`Category prices saved successfully. ${validChanges.length} entries processed.`);
-          }
-
-        } catch (error) {
-          console.error("Error saving category prices:", error);
-          alert("Failed to save category prices: " + (error.response?.data?.message || error.message));
-        }
+        setUploadProgress({
+          open: true,
+          rows: validChanges,
+          fileName: fileName || "",
+        });
       };
 
       const formatDateTime = (isoString) => {
@@ -1264,6 +1280,13 @@ export const MarketRates = () => {
         totalRowsCount={excelValidation.totalRowsCount}
         onClose={handleCloseExcelValidation}
         onProceed={handleProceedWithValidRows}
+      />
+      <ExcelUploadProgressModal
+        open={uploadProgress.open}
+        rows={uploadProgress.rows}
+        fileName={uploadProgress.fileName}
+        onClose={handleCloseUploadProgress}
+        onSuccess={() => setUpdate((prev) => prev + 1)}
       />
     </Box>
   );
