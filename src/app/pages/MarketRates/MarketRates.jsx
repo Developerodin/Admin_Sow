@@ -30,6 +30,384 @@ import axios from "axios";
 import { Base_url } from "../../Config/BaseUrl";
 import { GenralTabel } from "../../TabelComponents/GenralTable";
 import { MarketRatesAIModal } from "./MarketRatesAIModal";
+import { ExcelValidationModal } from "./ExcelValidationModal";
+
+// Excel template — must stay in sync with handleExport() and the AI modal's
+// "Download Failed Rates Excel". Validation is performed against these headers
+// in this exact order, case-sensitive, no extra spaces.
+const EXCEL_HEADERS = ["Mandi Name", "Date", "Category", "Sub Category", "Time", "Price", "Unit"];
+
+/**
+ * Parse a value into a YYYY-MM-DD string. Returns null if the input cannot be
+ * recognized as a date. Supports:
+ *   YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY, Excel serial number, JS Date string.
+ */
+const parseFlexibleDate = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  const s = String(value).trim();
+  if (!s || s === "N/A") return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
+    const [d, m, y] = s.split("-");
+    return `${y}-${m}-${d}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+    const [d, m, y] = s.split("/");
+    return `${y}-${m}-${d}`;
+  }
+  const n = parseFloat(s);
+  if (!Number.isNaN(n) && n > 0 && /^[\d.]+$/.test(s)) {
+    const excelEpoch = new Date(1900, 0, 1);
+    const ms = (n - 1) * 24 * 60 * 60 * 1000;
+    const d = new Date(excelEpoch.getTime() + ms);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().split("T")[0];
+  }
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return d.toISOString().split("T")[0];
+  return null;
+};
+
+/**
+ * Parse a value into 12h "hh:mm AM/PM". Returns null if unrecognized.
+ * Supports the existing format and Excel decimal time (0.0–1.0).
+ */
+const parseFlexibleTime = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  if (typeof value === "number" || (!Number.isNaN(parseFloat(value)) && String(value).trim() !== "")) {
+    const n = parseFloat(value);
+    if (!Number.isNaN(n) && n >= 0 && n < 1) {
+      const total = Math.round(n * 24 * 60);
+      let h = Math.floor(total / 60);
+      const min = total % 60;
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")} ${ampm}`;
+    }
+  }
+  const s = String(value).trim();
+  if (!s || s === "N/A") return null;
+  if (/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM|am|pm)$/.test(s)) {
+    return s.toUpperCase().replace(/\s+/g, " ");
+  }
+  return null;
+};
+
+/**
+ * Pre-flight validation of an uploaded workbook.
+ * Collects ALL issues (file / column / row level) up front so the user sees
+ * everything in one popup instead of one-by-one alerts.
+ */
+const validateExcelStructure = (workbook, mandiData) => {
+  const fileIssues = [];
+  const columnIssues = [];
+  const rowIssues = [];
+  let validRowsCount = 0;
+  let totalRowsCount = 0;
+  let normalizedRows = [];
+
+  if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+    fileIssues.push({ issue: "Workbook contains no sheets" });
+    return { fileIssues, columnIssues, rowIssues, validRowsCount, totalRowsCount, normalizedRows };
+  }
+
+  if (!Array.isArray(mandiData) || mandiData.length === 0) {
+    fileIssues.push({
+      issue:
+        "Mandi list is not loaded yet. Wait a moment and re-upload, or reload the page if the issue persists.",
+    });
+  }
+
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const rawRows = XLSX.utils.sheet_to_json(worksheet, {
+    header: 1,
+    defval: "",
+    raw: false,
+    blankrows: false,
+  });
+
+  if (rawRows.length === 0) {
+    fileIssues.push({ issue: `Sheet "${sheetName}" is empty` });
+    return { fileIssues, columnIssues, rowIssues, validRowsCount, totalRowsCount, normalizedRows };
+  }
+
+  if (rawRows.length === 1) {
+    fileIssues.push({
+      issue: `Sheet "${sheetName}" contains only the header row — no data rows to upload`,
+    });
+  }
+
+  const rawHeaders = (rawRows[0] || []).map((h) => (h === null || h === undefined ? "" : String(h)));
+  const trimmedHeaders = rawHeaders.map((h) => h.trim());
+
+  // 1) Empty header cells
+  rawHeaders.forEach((h, idx) => {
+    if (!h || h.trim() === "") {
+      columnIssues.push({
+        column: `Column ${idx + 1}`,
+        expected: "Non-empty header",
+        received: "",
+        issue: "Header cell is empty",
+        severity: "error",
+      });
+    }
+  });
+
+  // 2) Extra leading/trailing whitespace in headers
+  rawHeaders.forEach((h, idx) => {
+    if (h && h !== h.trim()) {
+      columnIssues.push({
+        column: h.trim() || `Column ${idx + 1}`,
+        expected: h.trim(),
+        received: h,
+        issue: "Extra spaces detected in column name",
+        severity: "error",
+      });
+    }
+  });
+
+  // 3) Duplicate column headers
+  const counts = {};
+  trimmedHeaders.forEach((h) => {
+    if (h) counts[h] = (counts[h] || 0) + 1;
+  });
+  Object.entries(counts).forEach(([h, c]) => {
+    if (c > 1) {
+      columnIssues.push({
+        column: h,
+        expected: "Single occurrence",
+        received: `${c} occurrences`,
+        issue: "Duplicate column header",
+        severity: "error",
+      });
+    }
+  });
+
+  // 4) Missing required columns (with case-mismatch hint)
+  EXCEL_HEADERS.forEach((expected) => {
+    if (!trimmedHeaders.includes(expected)) {
+      const fuzzy = trimmedHeaders.find((h) => h.toLowerCase() === expected.toLowerCase());
+      if (fuzzy) {
+        columnIssues.push({
+          column: expected,
+          expected,
+          received: fuzzy,
+          issue: `Column name case mismatch — expected "${expected}"`,
+          severity: "error",
+        });
+      } else {
+        columnIssues.push({
+          column: expected,
+          expected,
+          received: "",
+          issue: "Required column is missing",
+          severity: "error",
+        });
+      }
+    }
+  });
+
+  // 5) Unknown / extra columns (warning — will be ignored)
+  trimmedHeaders.forEach((h) => {
+    if (!h) return;
+    if (EXCEL_HEADERS.includes(h)) return;
+    // skip if it's a case-mismatch we've already flagged
+    if (EXCEL_HEADERS.some((e) => e.toLowerCase() === h.toLowerCase())) return;
+    columnIssues.push({
+      column: h,
+      expected: EXCEL_HEADERS.join(" | "),
+      received: h,
+      issue: "Unknown column — will be ignored during upload",
+      severity: "warning",
+    });
+  });
+
+  // If column-level errors exist, skip row-level validation (nothing to map to)
+  const hasColumnErrors = columnIssues.some((c) => c.severity !== "warning");
+  if (hasColumnErrors) {
+    totalRowsCount = Math.max(rawRows.length - 1, 0);
+    return { fileIssues, columnIssues, rowIssues, validRowsCount, totalRowsCount, normalizedRows };
+  }
+
+  // Map header → column index
+  const headerIdx = {};
+  trimmedHeaders.forEach((h, i) => {
+    if (EXCEL_HEADERS.includes(h)) headerIdx[h] = i;
+  });
+
+  const dataRows = rawRows.slice(1);
+  const mandiList = Array.isArray(mandiData) ? mandiData : [];
+
+  dataRows.forEach((row, idx) => {
+    const excelRowNumber = idx + 2; // header is row 1
+    const isEmpty = (row || []).every((v) => v === "" || v === null || v === undefined);
+    if (isEmpty) return;
+
+    totalRowsCount += 1;
+
+    const getCell = (col) => {
+      const i = headerIdx[col];
+      return i === undefined ? "" : row[i];
+    };
+
+    const mandiName = String(getCell("Mandi Name") ?? "").trim();
+    const category = String(getCell("Category") ?? "").trim();
+    const subCategory = String(getCell("Sub Category") ?? "").trim();
+    const dateRaw = getCell("Date");
+    const timeRaw = getCell("Time");
+    const priceRaw = getCell("Price");
+    const unitRaw = String(getCell("Unit") ?? "").trim();
+
+    const issuesForRow = [];
+
+    if (!mandiName) {
+      issuesForRow.push({
+        field: "Mandi Name",
+        expected: "Non-empty",
+        received: mandiName,
+        issue: "Required field is empty",
+      });
+    }
+    if (!category) {
+      issuesForRow.push({
+        field: "Category",
+        expected: "Non-empty",
+        received: category,
+        issue: "Required field is empty",
+      });
+    }
+    if (!subCategory) {
+      issuesForRow.push({
+        field: "Sub Category",
+        expected: "Non-empty",
+        received: subCategory,
+        issue: "Required field is empty",
+      });
+    }
+
+    // Price — must be a positive number
+    let parsedPrice = null;
+    if (priceRaw === "" || priceRaw === null || priceRaw === undefined) {
+      issuesForRow.push({
+        field: "Price",
+        expected: "Positive number",
+        received: priceRaw ?? "",
+        issue: "Price is required",
+      });
+    } else {
+      const n = Number(String(priceRaw).trim());
+      if (Number.isNaN(n)) {
+        issuesForRow.push({
+          field: "Price",
+          expected: "Positive number",
+          received: priceRaw,
+          issue: "Price is not a valid number",
+        });
+      } else if (n <= 0) {
+        issuesForRow.push({
+          field: "Price",
+          expected: "Positive number (> 0)",
+          received: priceRaw,
+          issue: "Price must be greater than zero",
+        });
+      } else {
+        parsedPrice = n;
+      }
+    }
+
+    // Date — optional but must be recognizable when present
+    let parsedDate = null;
+    if (dateRaw !== "" && dateRaw !== null && dateRaw !== undefined) {
+      parsedDate = parseFlexibleDate(dateRaw);
+      if (!parsedDate) {
+        issuesForRow.push({
+          field: "Date",
+          expected: "YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY or Excel date",
+          received: dateRaw,
+          issue: "Date format not recognized",
+        });
+      }
+    }
+
+    // Time — optional but must be recognizable
+    let parsedTime = null;
+    if (timeRaw !== "" && timeRaw !== null && timeRaw !== undefined) {
+      parsedTime = parseFlexibleTime(timeRaw);
+      if (!parsedTime) {
+        issuesForRow.push({
+          field: "Time",
+          expected: "hh:mm AM/PM or Excel decimal time",
+          received: timeRaw,
+          issue: "Time format not recognized",
+        });
+      }
+    }
+
+    // Unit — backend only accepts Kg / Ton (case-sensitive)
+    if (unitRaw && !["Kg", "Ton"].includes(unitRaw)) {
+      const fuzzy = ["Kg", "Ton"].find((u) => u.toLowerCase() === unitRaw.toLowerCase());
+      issuesForRow.push({
+        field: "Unit",
+        expected: 'Kg or Ton (case-sensitive)',
+        received: unitRaw,
+        issue: fuzzy
+          ? `Case mismatch — use "${fuzzy}" exactly`
+          : 'Unit must be exactly "Kg" or "Ton"',
+      });
+    }
+
+    // Mandi Name + Category combination must exist in DB
+    let mandiId = null;
+    if (mandiName && category && mandiList.length > 0) {
+      const match = mandiList.find(
+        (m) =>
+          (m.categories || []).some(
+            (c) => (c || "").toLowerCase() === category.toLowerCase()
+          ) && (m.mandiname || "").toLowerCase() === mandiName.toLowerCase()
+      );
+      if (!match) {
+        issuesForRow.push({
+          field: "Mandi Name + Category",
+          expected: "Existing mandi that has this category",
+          received: `${mandiName} / ${category}`,
+          issue:
+            "No mandi found with this Mandi Name + Category combination. Add the mandi/category in Mandi Rates first.",
+        });
+      } else {
+        mandiId = match._id;
+      }
+    }
+
+    if (issuesForRow.length > 0) {
+      rowIssues.push({
+        rowNumber: excelRowNumber,
+        rowData: {
+          "Mandi Name": mandiName,
+          Category: category,
+          "Sub Category": subCategory,
+          Date: dateRaw,
+          Time: timeRaw,
+          Price: priceRaw,
+          Unit: unitRaw,
+        },
+        issues: issuesForRow,
+      });
+    } else {
+      validRowsCount += 1;
+      normalizedRows.push({
+        mandiId,
+        category,
+        subCategory,
+        price: parsedPrice,
+        date: parsedDate, // may be null → backend allows it
+        time: parsedTime || "10:00 AM",
+        unit: unitRaw || "Kg",
+      });
+    }
+  });
+
+  return { fileIssues, columnIssues, rowIssues, validRowsCount, totalRowsCount, normalizedRows };
+};
 
 const column = [
   {name:"Sno"},
@@ -66,6 +444,14 @@ export const MarketRates = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [excelValidation, setExcelValidation] = useState({
+    open: false,
+    fileName: "",
+    issues: null,
+    validRowsCount: 0,
+    totalRowsCount: 0,
+    pendingValidRows: [],
+  });
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -257,21 +643,45 @@ export const MarketRates = () => {
   };
 
   const handleImport = (event) => {
-    console.log("handleImport ===>",event);
     const file = event.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
-  
     reader.onload = (e) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: "array" });
-  
-      // Get the first sheet's name and its content
+
+      // 1) Pre-flight: validate ALL issues at once (file + columns + rows).
+      //    This blocks the upload entirely if structural problems exist, and
+      //    surfaces row-level problems with a per-row table so the user
+      //    immediately sees what to fix instead of getting a vague alert.
+      const validation = validateExcelStructure(workbook, mandiData);
+      const hasAnyIssue =
+        validation.fileIssues.length > 0 ||
+        validation.columnIssues.length > 0 ||
+        validation.rowIssues.length > 0;
+
+      if (hasAnyIssue) {
+        setExcelValidation({
+          open: true,
+          fileName: file.name,
+          issues: {
+            fileIssues: validation.fileIssues,
+            columnIssues: validation.columnIssues,
+            rowIssues: validation.rowIssues,
+          },
+          validRowsCount: validation.validRowsCount,
+          totalRowsCount: validation.totalRowsCount,
+          pendingValidRows: validation.normalizedRows,
+        });
+        return;
+      }
+
+      // 2) Clean file → proceed with the existing transform path (kept intact
+      //    for backward compat / Excel date / time edge-cases).
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-  
-      // Convert the sheet into JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
-      console.log("jsonData ===>",jsonData);
   
       // Function to format date to YYYY-MM-DD format
       const formatDate = (dateStr) => {
@@ -389,8 +799,29 @@ export const MarketRates = () => {
   
       handleSaveAll(transformedData);
     };
-  
+
     reader.readAsArrayBuffer(file);
+
+    // Allow the same file to be re-selected after the user fixes issues.
+    // Without this, the input's value stays set and onChange won't fire again
+    // for the same filename.
+    event.target.value = "";
+  };
+
+  /**
+   * Called from ExcelValidationModal when the user explicitly chooses to
+   * upload only the valid rows after seeing the issue list. Row-level errors
+   * are skipped; structural / column errors block this path entirely.
+   */
+  const handleProceedWithValidRows = () => {
+    const validRows = excelValidation.pendingValidRows || [];
+    setExcelValidation((prev) => ({ ...prev, open: false }));
+    if (validRows.length === 0) return;
+    handleSaveAll(validRows);
+  };
+
+  const handleCloseExcelValidation = () => {
+    setExcelValidation((prev) => ({ ...prev, open: false }));
   };
       
       const handleSaveAll = async (changes) => {
@@ -824,6 +1255,15 @@ export const MarketRates = () => {
         onSuccess={() => {
           setUpdate((prev) => prev + 1);
         }}
+      />
+      <ExcelValidationModal
+        open={excelValidation.open}
+        fileName={excelValidation.fileName}
+        issues={excelValidation.issues}
+        validRowsCount={excelValidation.validRowsCount}
+        totalRowsCount={excelValidation.totalRowsCount}
+        onClose={handleCloseExcelValidation}
+        onProceed={handleProceedWithValidRows}
       />
     </Box>
   );
