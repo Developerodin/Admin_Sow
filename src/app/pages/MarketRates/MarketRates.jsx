@@ -893,39 +893,47 @@ export const MarketRates = () => {
         return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
       };
 
-      const handleDelete = useCallback(async (mandiId, category, subCategory) => {
-        if (!mandiId || !category || !subCategory) {
-          alert("Missing required information to delete this price.");
-          return;
-        }
+      const handleDelete = useCallback(
+        async (mandiRatesDocId, priceEntryId, category, subCategoryRaw) => {
+          if (!mandiRatesDocId || !priceEntryId) {
+            alert("Missing required information to delete this price.");
+            return;
+          }
 
-        // Confirm deletion
-        const confirmDelete = window.confirm(
-          `Are you sure you want to delete the price for ${category} - ${subCategory}?`
-        );
+          const subLabel =
+            subCategoryRaw == null || subCategoryRaw === ""
+              ? "(no sub-category)"
+              : subCategoryRaw;
 
-        if (!confirmDelete) {
-          return;
-        }
-
-        try {
-          // Encode category and subCategory for URL
-          const encodedCategory = encodeURIComponent(category);
-          const encodedSubCategory = encodeURIComponent(subCategory);
-          
-          const response = await axios.delete(
-            `${Base_url}mandiRates/${mandiId}/${encodedCategory}/${encodedSubCategory}`
+          const confirmDelete = window.confirm(
+            `Are you sure you want to delete the price for ${category} - ${subLabel}?`
           );
 
-          if (response.status === 200) {
-            alert("Price deleted successfully!");
-            setUpdate((prev) => prev + 1); // Refresh data
+          if (!confirmDelete) {
+            return;
           }
-        } catch (error) {
-          console.error("Error deleting price:", error);
-          alert("Failed to delete price: " + (error.response?.data?.message || error.message));
-        }
-      }, []);
+
+          try {
+            const response = await axios.delete(
+              `${Base_url}mandiRates/prices/${mandiRatesDocId}/${priceEntryId}`
+            );
+
+            if (response.status === 200) {
+              setMarketData((prev) =>
+                prev.filter((row) => row.priceEntryId !== priceEntryId)
+              );
+              setUpdate((prev) => prev + 1);
+            }
+          } catch (error) {
+            console.error("Error deleting price:", error);
+            alert(
+              "Failed to delete price: " +
+                (error.response?.data?.message || error.message)
+            );
+          }
+        },
+        []
+      );
 
   const getAllData = async () => {
     try {
@@ -942,7 +950,7 @@ export const MarketRates = () => {
         allData.reduce((acc, curr) => {
           const mandi = curr.mandi;
           if (mandi && mandi._id) {
-            const mandiId = mandi._id;
+            const mandiId = String(mandi._id);
             if (
               !acc[mandiId] ||
               new Date(acc[mandiId].updatedAt) < new Date(curr.updatedAt)
@@ -990,6 +998,10 @@ export const MarketRates = () => {
             "Mandi Name": item.mandi?.mandiname || "N/A",
             Category: price.category || "N/A",
             SubCategory: price.subCategory || "N/A",
+            categoryRaw: price.category,
+            subCategoryRaw: price.subCategory,
+            mandiRatesDocId: item._id,
+            priceEntryId: price._id,
             Price: price.price || 0,
             "Price Difference": price.priceDifference?.difference || 0,
             Unit: price.unit || "Kg",
@@ -1074,8 +1086,15 @@ export const MarketRates = () => {
               color="error"
               size="small"
               startIcon={<DeleteIcon />}
-              onClick={() => handleDelete(item.mandiId, item.Category, item.SubCategory)}
-              disabled={!item.mandiId || item.Category === "N/A" || item.SubCategory === "N/A"}
+              onClick={() =>
+                handleDelete(
+                  item.mandiRatesDocId,
+                  item.priceEntryId,
+                  item.categoryRaw,
+                  item.subCategoryRaw
+                )
+              }
+              disabled={!item.mandiRatesDocId || !item.priceEntryId}
             >
               Delete
             </Button>
