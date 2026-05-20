@@ -220,6 +220,35 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
     tick();
   };
 
+  // Retry POST /parse on transient network errors (backend may be restarting in dev)
+  const postParseWithRetry = async (msgText, attempt = 1) => {
+    const MAX_ATTEMPTS = 4;
+    const RETRY_DELAY_MS = 1500;
+    try {
+      return await axios.post(
+        `${Base_url}market-rates/parse`,
+        { message: msgText },
+        { headers: { 'Content-Type': 'application/json' }, timeout: 60000 }
+      );
+    } catch (err) {
+      const isNetworkError =
+        err.code === 'ERR_NETWORK' ||
+        err.message === 'Network Error' ||
+        err.code === 'ECONNABORTED' ||
+        err.code === 'ECONNREFUSED';
+
+      if (isNetworkError && attempt < MAX_ATTEMPTS) {
+        setProgressNote(
+          `Backend not reachable — retrying (${attempt}/${MAX_ATTEMPTS - 1})…`
+        );
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        if (cancelledRef.current) throw err;
+        return postParseWithRetry(msgText, attempt + 1);
+      }
+      throw err;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!message.trim()) {
       setError('Please enter a message');
@@ -233,11 +262,7 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
     startProgressTickers();
 
     try {
-      const result = await axios.post(
-        `${Base_url}market-rates/parse`,
-        { message: message.trim() },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
+      const result = await postParseWithRetry(message.trim());
 
       const body = result.data || {};
 
@@ -256,10 +281,15 @@ export const MarketRatesAIModal = ({ modalVisible, setModalVisible, onSuccess })
       }
     } catch (err) {
       console.error('Error parsing market rates:', err);
+      const isNetworkError =
+        err.code === 'ERR_NETWORK' || err.message === 'Network Error';
       finishWithError(
         err.response?.data?.message ||
-          err.message ||
-          'Failed to parse market rates. Please try again.'
+          (isNetworkError
+            ? 'Cannot reach the backend at ' +
+              Base_url +
+              '. Make sure the API server is running on the expected port, then try again.'
+            : err.message || 'Failed to parse market rates. Please try again.')
       );
     }
   };
