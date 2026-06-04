@@ -327,6 +327,18 @@ const validateExcelStructure = (workbook, mandiData) => {
           received: dateRaw,
           issue: "Date format not recognized",
         });
+      } else {
+        const parsedDay = new Date(`${parsedDate}T12:00:00`);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        if (parsedDay > todayEnd) {
+          issuesForRow.push({
+            field: "Date",
+            expected: "Today or a past date",
+            received: dateRaw,
+            issue: "Future date — live rates sort by date; use today or the actual rate date",
+          });
+        }
       }
     }
 
@@ -431,6 +443,7 @@ export const MarketRates = () => {
   const [selectedState, setSelectedState] = useState("All"); // State to store the selected state
   const [apiData, setApiData] = useState([]);
   const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [update, setUpdate] = useState(0);
   const [mandiData, setMandiData] = useState([]);
   const [filteredMandiData, setFilteredMandiData] = useState([]);
@@ -480,8 +493,18 @@ export const MarketRates = () => {
 
   useEffect(() => {
     getMandi();
-    getAllData();
   }, [update]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput.trim());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  useEffect(() => {
+    getAllData(debouncedSearch);
+  }, [update, debouncedSearch]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -935,9 +958,10 @@ export const MarketRates = () => {
         []
       );
 
-  const getAllData = async () => {
+  const getAllData = async (search = "") => {
     try {
-      const response = await axios.get(`${Base_url}mandiRates`);
+      const params = search ? { search } : {};
+      const response = await axios.get(`${Base_url}mandiRates`, { params });
       const allData = response.data;
       console.log("get DAta ===>",allData);
       
@@ -1055,18 +1079,6 @@ export const MarketRates = () => {
       });
     }
     
-    // Apply search filter if search input is provided
-    if (searchInput && searchInput.trim() !== "") {
-      const searchTerm = searchInput.toLowerCase().trim();
-      filteredData = filteredData.filter(item => 
-        (item.State && item.State.toLowerCase().includes(searchTerm)) ||
-        (item.City && item.City.toLowerCase().includes(searchTerm)) ||
-        (item["Mandi Name"] && item["Mandi Name"].toLowerCase().includes(searchTerm)) ||
-        (item.Category && item.Category.toLowerCase().includes(searchTerm)) ||
-        (item.SubCategory && item.SubCategory.toLowerCase().includes(searchTerm))
-      );
-    }
-    
     // Add delete button to each row and filter out mandiId from display
     const columnNames = column.map(col => col.name);
     // Map column names to actual data keys
@@ -1109,7 +1121,7 @@ export const MarketRates = () => {
     });
     
     setRows(filteredData);
-  }, [selectedState, MarketData, fromDate, toDate, searchInput, handleDelete]);
+  }, [selectedState, MarketData, fromDate, toDate, handleDelete]);
  
 
   return (
