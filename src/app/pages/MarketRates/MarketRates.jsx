@@ -16,8 +16,9 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Checkbox,
 } from "@mui/material";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 
 
 import SearchIcon from "@mui/icons-material/Search";
@@ -423,6 +424,7 @@ const validateExcelStructure = (workbook, mandiData) => {
 };
 
 const column = [
+  {name:"Select"},
   {name:"Sno"},
   {name:"Date"},
   {name:"Time"},
@@ -436,6 +438,9 @@ const column = [
   {name:"Unit"},
   {name:"Action"},
 ];
+
+const getEntryKey = (mandiRatesDocId, priceEntryId) =>
+  `${mandiRatesDocId}:${priceEntryId}`;
 
 export const MarketRates = () => {
   const navigate = useNavigate();
@@ -471,6 +476,8 @@ export const MarketRates = () => {
     rows: [],
     fileName: "",
   });
+  const [selectedEntries, setSelectedEntries] = useState(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -945,6 +952,11 @@ export const MarketRates = () => {
               setMarketData((prev) =>
                 prev.filter((row) => row.priceEntryId !== priceEntryId)
               );
+              setSelectedEntries((prev) => {
+                const next = new Set(prev);
+                next.delete(getEntryKey(mandiRatesDocId, priceEntryId));
+                return next;
+              });
               setUpdate((prev) => prev + 1);
             }
           } catch (error) {
@@ -957,6 +969,72 @@ export const MarketRates = () => {
         },
         []
       );
+
+      const toggleEntrySelection = useCallback((mandiRatesDocId, priceEntryId) => {
+        if (!mandiRatesDocId || !priceEntryId) return;
+        const key = getEntryKey(mandiRatesDocId, priceEntryId);
+        setSelectedEntries((prev) => {
+          const next = new Set(prev);
+          if (next.has(key)) {
+            next.delete(key);
+          } else {
+            next.add(key);
+          }
+          return next;
+        });
+      }, []);
+
+      const handleBulkDelete = useCallback(async () => {
+        if (selectedEntries.size === 0) {
+          alert("Select at least one price entry to delete.");
+          return;
+        }
+
+        const confirmDelete = window.confirm(
+          `Are you sure you want to delete ${selectedEntries.size} selected price entries? This removes only those rows, not entire categories or mandi records.`
+        );
+
+        if (!confirmDelete) {
+          return;
+        }
+
+        const entries = Array.from(selectedEntries).map((key) => {
+          const [documentId, priceEntryId] = key.split(":");
+          return { documentId, priceEntryId };
+        });
+
+        setBulkDeleting(true);
+        try {
+          const response = await axios.post(
+            `${Base_url}mandiRates/prices/bulk-delete`,
+            { entries }
+          );
+
+          if (response.status === 200) {
+            const deletedIds = new Set(response.data.deletedEntryIds || []);
+            setMarketData((prev) =>
+              prev.filter((row) => !deletedIds.has(String(row.priceEntryId)))
+            );
+            setSelectedEntries(new Set());
+            setUpdate((prev) => prev + 1);
+
+            const notFoundCount = response.data.notFound?.length || 0;
+            if (notFoundCount > 0) {
+              alert(
+                `Deleted ${response.data.deletedCount} entries. ${notFoundCount} could not be found.`
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error bulk deleting prices:", error);
+          alert(
+            "Failed to delete selected prices: " +
+              (error.response?.data?.message || error.message)
+          );
+        } finally {
+          setBulkDeleting(false);
+        }
+      }, [selectedEntries]);
 
   const getAllData = async (search = "") => {
     try {
@@ -1044,33 +1122,27 @@ export const MarketRates = () => {
   };
 
 
-  useEffect(() => {
-    let filteredData = [...MarketData]; // Start with all data
-    
-    // Apply state filter if selected
+  const filteredMarketData = useMemo(() => {
+    let filteredData = [...MarketData];
+
     if (selectedState && selectedState !== "All") {
-      filteredData = filteredData.filter(item => item.State === selectedState);
+      filteredData = filteredData.filter((item) => item.State === selectedState);
     }
-    
-    // Apply date range filter if both dates are selected
+
     if (fromDate && toDate) {
-      filteredData = filteredData.filter(item => {
+      filteredData = filteredData.filter((item) => {
         try {
-          // Convert the item's date to start of day
           const itemDate = new Date(item.date);
-          
-          // Check if date is valid
           if (isNaN(itemDate.getTime())) {
-            return false; // Skip invalid dates
+            return false;
           }
-          
-          // Set time to start of day for comparison
-          const itemDateStart = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
-          
-          // Convert from and to dates to start and end of day
-          const from = new Date(fromDate + 'T00:00:00');
-          const to = new Date(toDate + 'T23:59:59.999');
-          
+          const itemDateStart = new Date(
+            itemDate.getFullYear(),
+            itemDate.getMonth(),
+            itemDate.getDate()
+          );
+          const from = new Date(fromDate + "T00:00:00");
+          const to = new Date(toDate + "T23:59:59.999");
           return itemDateStart >= from && itemDateStart <= to;
         } catch (error) {
           console.error("Error filtering date:", error, "for item:", item);
@@ -1078,20 +1150,68 @@ export const MarketRates = () => {
         }
       });
     }
-    
-    // Add delete button to each row and filter out mandiId from display
+
+    return filteredData;
+  }, [MarketData, selectedState, fromDate, toDate]);
+
+  const selectableVisibleRows = useMemo(
+    () =>
+      filteredMarketData.filter(
+        (item) => item.mandiRatesDocId && item.priceEntryId
+      ),
+    [filteredMarketData]
+  );
+
+  const allVisibleSelected =
+    selectableVisibleRows.length > 0 &&
+    selectableVisibleRows.every((item) =>
+      selectedEntries.has(getEntryKey(item.mandiRatesDocId, item.priceEntryId))
+    );
+
+  const someVisibleSelected =
+    selectableVisibleRows.some((item) =>
+      selectedEntries.has(getEntryKey(item.mandiRatesDocId, item.priceEntryId))
+    ) && !allVisibleSelected;
+
+  const toggleSelectAllVisible = useCallback(() => {
+    setSelectedEntries((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        selectableVisibleRows.forEach((item) => {
+          next.delete(getEntryKey(item.mandiRatesDocId, item.priceEntryId));
+        });
+      } else {
+        selectableVisibleRows.forEach((item) => {
+          next.add(getEntryKey(item.mandiRatesDocId, item.priceEntryId));
+        });
+      }
+      return next;
+    });
+  }, [allVisibleSelected, selectableVisibleRows]);
+
+  useEffect(() => {
     const columnNames = column.map(col => col.name);
-    // Map column names to actual data keys
     const columnToKeyMap = {
       "Date": "date",
       "Price Diffrence": "Price Difference",
     };
     
-    filteredData = filteredData.map(item => {
-      // Create a new object with only the columns we want to display
+    const displayRows = filteredMarketData.map(item => {
       const displayRow = {};
       columnNames.forEach(colName => {
-        if (colName === "Action") {
+        if (colName === "Select") {
+          const entryKey = getEntryKey(item.mandiRatesDocId, item.priceEntryId);
+          displayRow[colName] = (
+            <Checkbox
+              checked={selectedEntries.has(entryKey)}
+              onChange={() =>
+                toggleEntrySelection(item.mandiRatesDocId, item.priceEntryId)
+              }
+              disabled={!item.mandiRatesDocId || !item.priceEntryId}
+              inputProps={{ "aria-label": `Select ${item.Category} - ${item.SubCategory}` }}
+            />
+          );
+        } else if (colName === "Action") {
           displayRow[colName] = (
             <Button
               variant="contained"
@@ -1120,8 +1240,13 @@ export const MarketRates = () => {
       return displayRow;
     });
     
-    setRows(filteredData);
-  }, [selectedState, MarketData, fromDate, toDate, handleDelete]);
+    setRows(displayRows);
+  }, [
+    filteredMarketData,
+    handleDelete,
+    selectedEntries,
+    toggleEntrySelection,
+  ]);
  
 
   return (
@@ -1292,6 +1417,44 @@ export const MarketRates = () => {
                 Selected State: {selectedState}
               </Typography>
             )}
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                mt: 2,
+                mb: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Checkbox
+                  checked={allVisibleSelected}
+                  indeterminate={someVisibleSelected}
+                  onChange={toggleSelectAllVisible}
+                  disabled={selectableVisibleRows.length === 0}
+                  inputProps={{ "aria-label": "Select all visible rows" }}
+                />
+                <Typography variant="body2">
+                  Select all visible ({selectableVisibleRows.length})
+                </Typography>
+              </Box>
+              {selectedEntries.size > 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  {selectedEntries.size} selected
+                </Typography>
+              )}
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleBulkDelete}
+                disabled={selectedEntries.size === 0 || bulkDeleting}
+              >
+                {bulkDeleting ? "Deleting..." : "Delete Selected"}
+              </Button>
+            </Box>
             
             <GenralTabel rows={row} column={column} />
           </Box>
