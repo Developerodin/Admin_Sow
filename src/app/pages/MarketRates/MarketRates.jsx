@@ -6,7 +6,6 @@ import {
   InputAdornment,
   Typography,
   TextField,
-  InputLabel,
   Select,
   MenuItem,
   Table,
@@ -22,14 +21,13 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 
 
 import SearchIcon from "@mui/icons-material/Search";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import DeleteIcon from "@mui/icons-material/Delete";
 import * as XLSX from "xlsx";
 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Base_url } from "../../Config/BaseUrl";
-import { GenralTabel } from "../../TabelComponents/GenralTable";
+import { ServerPaginatedTable } from "../../TabelComponents/ServerPaginatedTable";
 import { MarketRatesAIModal } from "./MarketRatesAIModal";
 import { ExcelValidationModal } from "./ExcelValidationModal";
 import { ExcelUploadProgressModal } from "./ExcelUploadProgressModal";
@@ -478,6 +476,10 @@ export const MarketRates = () => {
   });
   const [selectedEntries, setSelectedEntries] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [tablePage, setTablePage] = useState(0);
+  const [tableRowsPerPage, setTableRowsPerPage] = useState(50);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [tableTotal, setTableTotal] = useState(0);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -510,8 +512,85 @@ export const MarketRates = () => {
   }, [searchInput]);
 
   useEffect(() => {
-    getAllData(debouncedSearch);
-  }, [update, debouncedSearch]);
+    setTablePage(0);
+    setTableTotal(0);
+    setSelectedEntries(new Set());
+  }, [debouncedSearch, selectedState, fromDate, toDate]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadAdminTableData = async () => {
+      setTableLoading(true);
+      try {
+        const params = {
+          page: tablePage + 1,
+          limit: tableRowsPerPage,
+          sortBy: "date",
+          sortOrder: "desc",
+        };
+        if (debouncedSearch) params.search = debouncedSearch;
+        if (selectedState && selectedState !== "All") params.state = selectedState;
+        if (fromDate && toDate) {
+          params.fromDate = fromDate;
+          params.toDate = toDate;
+        }
+
+        const response = await axios.get(`${Base_url}mandiRates/admin-table`, {
+          params,
+          signal: controller.signal,
+        });
+        const { rows, pagination } = response.data;
+
+        const mapped = (rows || []).map((r) => ({
+          Sno: r.sno,
+          date: r.date,
+          Time: r.time,
+          State: r.state,
+          City: r.city,
+          "Mandi Name": r.mandiName,
+          Category: r.category,
+          SubCategory: r.subCategory,
+          categoryRaw: r.category,
+          subCategoryRaw: r.subCategory,
+          mandiRatesDocId: r.mandiRatesDocId,
+          priceEntryId: r.priceEntryId,
+          Price: r.price,
+          "Price Difference": r.priceDifference,
+          Unit: r.unit,
+          mandiId: r.mandiId,
+        }));
+
+        setMarketData(mapped);
+        setTableTotal(pagination?.total ?? 0);
+      } catch (error) {
+        if (controller.signal.aborted || error.code === "ERR_CANCELED") {
+          return;
+        }
+        console.error("Error fetching admin table data:", error);
+        setMarketData([]);
+        setTableTotal(0);
+      } finally {
+        if (!controller.signal.aborted) {
+          setTableLoading(false);
+        }
+      }
+    };
+
+    loadAdminTableData();
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    tablePage,
+    tableRowsPerPage,
+    debouncedSearch,
+    selectedState,
+    fromDate,
+    toDate,
+    update,
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -548,8 +627,24 @@ export const MarketRates = () => {
   };
 
   const handleStateChange = (event) => {
-    setSelectedState(event.target.value); // Update the selected state
+    setSelectedState(event.target.value);
   };
+
+  const handleClearFilters = () => {
+    setSearchInput("");
+    setDebouncedSearch("");
+    setSelectedState("All");
+    setFromDate("");
+    setToDate("");
+    setTablePage(0);
+    setSelectedEntries(new Set());
+  };
+
+  const hasActiveFilters =
+    Boolean(debouncedSearch) ||
+    (selectedState && selectedState !== "All") ||
+    Boolean(fromDate) ||
+    Boolean(toDate);
 
   const getSubCategoriesByCategoryName = async (categoryName) => {
     // console.log('Getting SubCategories', categoryName);
@@ -583,14 +678,12 @@ export const MarketRates = () => {
     });
   }, [mandiData]);
 
-  const handleExport = () => {
+  const handleExportTemplate = () => {
     const dataToExport = [];
     
-    // Get default date and time if inputs are blank
     const exportDate = selectedDate || new Date().toISOString().split('T')[0];
     const exportTime = selectedTime || "10:00";
     
-    // Convert 24-hour time to 12-hour format
     const convertTo12Hour = (time24) => {
       const [hours, minutes] = time24.split(':');
       const hour = parseInt(hours);
@@ -601,52 +694,45 @@ export const MarketRates = () => {
     
     const formattedTime = convertTo12Hour(exportTime);
 
-    // Group data by subcategory instead of mandi
     const groupKey = (item) => `${item.Category || item.category || ''}|${item["Sub Category"] || item.SubCategory || item.subCategory || ''}`;
     let grouped = {};
-    let dataSource = row.length > 0 ? row : null;
-    if (!dataSource) {
-      // Build dataSource from mandiData and subCategoryData as before, but in the new column order
-      dataSource = [];
-      const filteredMandiForExport = selectedState && selectedState !== "All" 
-        ? mandiData.filter(mandi => mandi.state === selectedState)
-        : mandiData;
-      filteredMandiForExport.forEach((mandi) => {
-        mandi.categories.forEach((category) => {
-          const subCategories = subCategoryData[category] || [];
-          if (subCategories.length > 0) {
-            subCategories.forEach((subCategory) => {
-              dataSource.push({
-                "Mandi Name": mandi.mandiname || "N/A",
-                Date: exportDate,
-                Category: category || "N/A",
-                "Sub Category": subCategory.name || "N/A",
-                Time: formattedTime,
-                Price: 0,
-                Unit: "Kg"
-              });
-            });
-          } else {
+    const dataSource = [];
+    const filteredMandiForExport = selectedState && selectedState !== "All" 
+      ? mandiData.filter(mandi => mandi.state === selectedState)
+      : mandiData;
+    filteredMandiForExport.forEach((mandi) => {
+      mandi.categories.forEach((category) => {
+        const subCategories = subCategoryData[category] || [];
+        if (subCategories.length > 0) {
+          subCategories.forEach((subCategory) => {
             dataSource.push({
               "Mandi Name": mandi.mandiname || "N/A",
               Date: exportDate,
               Category: category || "N/A",
-              "Sub Category": "N/A",
+              "Sub Category": subCategory.name || "N/A",
               Time: formattedTime,
               Price: 0,
               Unit: "Kg"
             });
-          }
-        });
+          });
+        } else {
+          dataSource.push({
+            "Mandi Name": mandi.mandiname || "N/A",
+            Date: exportDate,
+            Category: category || "N/A",
+            "Sub Category": "N/A",
+            Time: formattedTime,
+            Price: 0,
+            Unit: "Kg"
+          });
+        }
       });
-    }
-    // Group rows by subcategory
+    });
     dataSource.forEach((item) => {
       const key = groupKey(item);
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(item);
     });
-    // Export without Sr No, State, and City
     Object.keys(grouped).forEach((key) => {
       const rows = grouped[key];
       rows.forEach((item) => {
@@ -663,19 +749,68 @@ export const MarketRates = () => {
     });
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    // Set custom column widths (removed Sr No, State, and City columns)
     worksheet['!cols'] = [
-      { wch: 20 }, // Mandi Name
-      { wch: 12 }, // Date
-      { wch: 20 }, // Category
-      { wch: 20 }, // Sub Category
-      { wch: 10 }, // Time
-      { wch: 10 }, // Price
-      { wch: 8 },  // Unit
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 10 },
+      { wch: 10 },
+      { wch: 8 },
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Market Rates");
-    XLSX.writeFile(workbook, "MarketRates.xlsx");
+    XLSX.writeFile(workbook, "MarketRates_Template.xlsx");
+  };
+
+  const handleExportRates = async () => {
+    try {
+      const params = { sortBy: "date", sortOrder: "desc" };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (selectedState && selectedState !== "All") params.state = selectedState;
+      if (fromDate && toDate) {
+        params.fromDate = fromDate;
+        params.toDate = toDate;
+      }
+
+      const response = await axios.get(`${Base_url}mandiRates/admin-table/export`, { params });
+      const exportRows = response.data.rows || [];
+
+      if (exportRows.length === 0) {
+        alert("No rates match the current filters.");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      worksheet['!cols'] = [
+        { wch: 20 },
+        { wch: 12 },
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 10 },
+        { wch: 10 },
+        { wch: 8 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 16 },
+      ];
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Market Rates");
+      XLSX.writeFile(workbook, "MarketRates_Export.xlsx");
+    } catch (error) {
+      alert(
+        "Failed to export rates: " +
+          (error.response?.data?.message || error.message)
+      );
+    }
+  };
+
+  const handleExport = () => {
+    if (hasActiveFilters) {
+      handleExportRates();
+    } else {
+      handleExportTemplate();
+    }
   };
 
   const handleImport = (event) => {
@@ -949,9 +1084,6 @@ export const MarketRates = () => {
             );
 
             if (response.status === 200) {
-              setMarketData((prev) =>
-                prev.filter((row) => row.priceEntryId !== priceEntryId)
-              );
               setSelectedEntries((prev) => {
                 const next = new Set(prev);
                 next.delete(getEntryKey(mandiRatesDocId, priceEntryId));
@@ -1012,10 +1144,15 @@ export const MarketRates = () => {
 
           if (response.status === 200) {
             const deletedIds = new Set(response.data.deletedEntryIds || []);
-            setMarketData((prev) =>
-              prev.filter((row) => !deletedIds.has(String(row.priceEntryId)))
-            );
-            setSelectedEntries(new Set());
+            setSelectedEntries((prev) => {
+              const next = new Set(prev);
+              deletedIds.forEach((id) => {
+                for (const key of prev) {
+                  if (key.endsWith(`:${id}`)) next.delete(key);
+                }
+              });
+              return next;
+            });
             setUpdate((prev) => prev + 1);
 
             const notFoundCount = response.data.notFound?.length || 0;
@@ -1036,158 +1173,54 @@ export const MarketRates = () => {
         }
       }, [selectedEntries]);
 
-  const getAllData = async (search = "") => {
-    try {
-      const params = search ? { search } : {};
-      const response = await axios.get(`${Base_url}mandiRates`, { params });
-      const allData = response.data;
-      console.log("get DAta ===>",allData);
-      
-      // Debug: Check for null mandi values
-      const nullMandiItems = allData.filter(item => !item.mandi);
-      if (nullMandiItems.length > 0) {
-        console.warn("Found items with null mandi:", nullMandiItems.length);
-      }
-      const latestData = Object.values(
-        allData.reduce((acc, curr) => {
-          const mandi = curr.mandi;
-          if (mandi && mandi._id) {
-            const mandiId = String(mandi._id);
-            if (
-              !acc[mandiId] ||
-              new Date(acc[mandiId].updatedAt) < new Date(curr.updatedAt)
-            ) {
-              acc[mandiId] = curr;
-            }
-          }
-          return acc;
-        }, {})
-      );
-      
-      const filteredData = latestData.filter(
-        (item) => item.mandi && item.mandi.mandiname
-      );
-      let globalSno = 1; // Global serial number counter
-      const tableRows = filteredData.flatMap((item, index) => {
-        // Check if categoryPrices exists and is an array
-        if (!item.categoryPrices || !Array.isArray(item.categoryPrices)) {
-          return [];
-        }
-        
-        return item.categoryPrices.map((price, subIndex) => {
-          // Format the date properly and handle invalid dates
-          let formattedDate;
-          try {
-            const date = new Date(price.date);
-            if (isNaN(date.getTime())) {
-              // If date is invalid, use today's date as fallback
-              formattedDate = new Date().toISOString().split('T')[0];
-              console.warn("Invalid date found in database:", price.date, "using fallback date:", formattedDate);
-            } else {
-              formattedDate = date.toISOString().split('T')[0]; // This will give YYYY-MM-DD format
-            }
-          } catch (error) {
-            formattedDate = new Date().toISOString().split('T')[0];
-            console.warn("Error processing date:", price.date, "using fallback date:", formattedDate);
-          }
-          
-          return {
-            Sno: globalSno++, // Use global counter and increment
-            date: formattedDate, // Use the formatted date
-            Time: price.time || "N/A",
-            State: item.mandi?.state || "N/A",
-            City: item.mandi?.city || "N/A",
-            "Mandi Name": item.mandi?.mandiname || "N/A",
-            Category: price.category || "N/A",
-            SubCategory: price.subCategory || "N/A",
-            categoryRaw: price.category,
-            subCategoryRaw: price.subCategory,
-            mandiRatesDocId: item._id,
-            priceEntryId: price._id,
-            Price: price.price || 0,
-            "Price Difference": price.priceDifference?.difference || 0,
-            Unit: price.unit || "Kg",
-            mandiId: item.mandi?._id || null,
-            Action: null, // Will be set in useEffect for filtered data
-          };
-        });
-      });
-      
-      console.log("Formatted Table Rows:", tableRows);
-      setMarketData(tableRows);
-      setRows(tableRows);
-    } catch (error) {
-      console.error("Error fetching all data:", error);
-    }
-  };
-
-
-  const filteredMarketData = useMemo(() => {
-    let filteredData = [...MarketData];
-
-    if (selectedState && selectedState !== "All") {
-      filteredData = filteredData.filter((item) => item.State === selectedState);
-    }
-
-    if (fromDate && toDate) {
-      filteredData = filteredData.filter((item) => {
-        try {
-          const itemDate = new Date(item.date);
-          if (isNaN(itemDate.getTime())) {
-            return false;
-          }
-          const itemDateStart = new Date(
-            itemDate.getFullYear(),
-            itemDate.getMonth(),
-            itemDate.getDate()
-          );
-          const from = new Date(fromDate + "T00:00:00");
-          const to = new Date(toDate + "T23:59:59.999");
-          return itemDateStart >= from && itemDateStart <= to;
-        } catch (error) {
-          console.error("Error filtering date:", error, "for item:", item);
-          return false;
-        }
-      });
-    }
-
-    return filteredData;
-  }, [MarketData, selectedState, fromDate, toDate]);
-
-  const selectableVisibleRows = useMemo(
+  const selectablePageRows = useMemo(
     () =>
-      filteredMarketData.filter(
+      MarketData.filter(
         (item) => item.mandiRatesDocId && item.priceEntryId
       ),
-    [filteredMarketData]
+    [MarketData]
   );
 
-  const allVisibleSelected =
-    selectableVisibleRows.length > 0 &&
-    selectableVisibleRows.every((item) =>
+  const allPageSelected =
+    selectablePageRows.length > 0 &&
+    selectablePageRows.every((item) =>
       selectedEntries.has(getEntryKey(item.mandiRatesDocId, item.priceEntryId))
     );
 
-  const someVisibleSelected =
-    selectableVisibleRows.some((item) =>
+  const somePageSelected =
+    selectablePageRows.some((item) =>
       selectedEntries.has(getEntryKey(item.mandiRatesDocId, item.priceEntryId))
-    ) && !allVisibleSelected;
+    ) && !allPageSelected;
 
-  const toggleSelectAllVisible = useCallback(() => {
+  const toggleSelectAllPage = useCallback(() => {
     setSelectedEntries((prev) => {
       const next = new Set(prev);
-      if (allVisibleSelected) {
-        selectableVisibleRows.forEach((item) => {
+      if (allPageSelected) {
+        selectablePageRows.forEach((item) => {
           next.delete(getEntryKey(item.mandiRatesDocId, item.priceEntryId));
         });
       } else {
-        selectableVisibleRows.forEach((item) => {
+        selectablePageRows.forEach((item) => {
           next.add(getEntryKey(item.mandiRatesDocId, item.priceEntryId));
         });
       }
       return next;
     });
-  }, [allVisibleSelected, selectableVisibleRows]);
+  }, [allPageSelected, selectablePageRows]);
+
+  const tableRangeStart = tableTotal === 0 ? 0 : tablePage * tableRowsPerPage + 1;
+  const tableRangeEnd = Math.min((tablePage + 1) * tableRowsPerPage, tableTotal);
+
+  const handleTablePageChange = (_event, newPage) => {
+    setTablePage(newPage);
+    setSelectedEntries(new Set());
+  };
+
+  const handleTableRowsPerPageChange = (event) => {
+    setTableRowsPerPage(parseInt(event.target.value, 10));
+    setTablePage(0);
+    setSelectedEntries(new Set());
+  };
 
   useEffect(() => {
     const columnNames = column.map(col => col.name);
@@ -1196,8 +1229,8 @@ export const MarketRates = () => {
       "Price Diffrence": "Price Difference",
     };
     
-    const displayRows = filteredMarketData.map(item => {
-      const displayRow = {};
+    const displayRows = MarketData.map((item) => {
+      const displayRow = { _rowKey: item.priceEntryId };
       columnNames.forEach(colName => {
         if (colName === "Select") {
           const entryKey = getEntryKey(item.mandiRatesDocId, item.priceEntryId);
@@ -1242,7 +1275,7 @@ export const MarketRates = () => {
     
     setRows(displayRows);
   }, [
-    filteredMarketData,
+    MarketData,
     handleDelete,
     selectedEntries,
     toggleEntrySelection,
@@ -1277,13 +1310,25 @@ export const MarketRates = () => {
                   variant="contained"
                   style={{ marginRight: "10px" }}
                   onClick={handleExport}
+                  disabled={tableLoading}
                 >
-                  Download Excel
+                  {hasActiveFilters ? "Download Rates" : "Download Template"}
                 </Button>
+                {hasActiveFilters && (
+                  <Button
+                    variant="outlined"
+                    style={{ marginRight: "10px" }}
+                    onClick={handleExportTemplate}
+                    disabled={tableLoading}
+                  >
+                    Download Template
+                  </Button>
+                )}
                 <Button
                   variant="contained"
                   component="label"
                   style={{ marginRight: "10px" }}
+                  disabled={tableLoading}
                 >
                   Upload Excel
                   <input
@@ -1308,7 +1353,7 @@ export const MarketRates = () => {
                 borderColor: "divider",
                 marginTop: "20px",
               }}
-            ></Box>
+            >            </Box>
 
             <Box
               sx={{
@@ -1316,6 +1361,8 @@ export const MarketRates = () => {
                 marginTop: "20px",
                 justifyContent: "left",
                 alignItems: "center",
+                flexWrap: "wrap",
+                gap: 1,
               }}
             >
               <TextField
@@ -1334,75 +1381,73 @@ export const MarketRates = () => {
                 onChange={(e) => setSearchInput(e.target.value)}
               />
 
-              <Button
-                variant="contained"
-                style={{
-                  marginLeft: "20px",
-                  background: "black",
-                  height: "33px",
-                }}
-                startIcon={<FilterListIcon />}
+              <Select
+                value={selectedState}
+                onChange={handleStateChange}
+                size="small"
+                displayEmpty
+                sx={{ m: 1, minWidth: 180 }}
               >
-                A-Z
-              </Button>
-            </Box>
-          </Box>
-      
-          <Box style={{marginTop:20}}>
-            <InputLabel>Select a State to download particular Excel</InputLabel>
-            <Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              value={selectedState}
-              label="State"
-              onChange={handleStateChange}
-              style={{width:"260px"}}
-            >
-              <MenuItem value={"All"}>
-                All
-              </MenuItem>
-              {states.map((state, index) => (
-                <MenuItem key={index} value={state}>
-                  {state}
-                </MenuItem>
-              ))}
-            </Select>
-          </Box>
+                <MenuItem value="All">All States</MenuItem>
+                {states.map((state, index) => (
+                  <MenuItem key={index} value={state}>
+                    {state}
+                  </MenuItem>
+                ))}
+              </Select>
 
-          <Box style={{marginTop:20}}>
-            <InputLabel>Filter by Date Range</InputLabel>
-            <Box style={{display: 'flex', gap: '10px', alignItems: 'center',marginTop:20}}>
               <TextField
                 type="date"
                 label="From Date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 size="small"
-                style={{width: "200px"}}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  style: { paddingTop: '8px', paddingBottom: '8px' }
-                }}
+                sx={{ m: 1, width: 160 }}
+                InputLabelProps={{ shrink: true }}
               />
-              <Typography>to</Typography>
+              <Typography sx={{ mx: 0.5 }}>to</Typography>
               <TextField
                 type="date"
                 label="To Date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 size="small"
-                style={{width: "200px"}}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                InputProps={{
-                  style: { paddingTop: '8px', paddingBottom: '8px' }
-                }}
+                sx={{ m: 1, width: 160 }}
+                InputLabelProps={{ shrink: true }}
               />
+
+              {hasActiveFilters && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleClearFilters}
+                  sx={{ m: 1, height: 40 }}
+                >
+                  Clear filters
+                </Button>
+              )}
             </Box>
           </Box>
+      
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 2,
+              flexWrap: "wrap",
+              gap: 1,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              {tableLoading
+                ? "Loading rates..."
+                : tableTotal === 0
+                ? "No rates found"
+                : `Showing ${tableRangeStart}–${tableRangeEnd} of ${tableTotal.toLocaleString()} rates`}
+            </Typography>
+          </Box>
+
           <Box
             sx={{
               width: "100%",
@@ -1411,13 +1456,7 @@ export const MarketRates = () => {
               overflow: "auto",
             }}
           >
-            {/* Display the selected state */}
-            {selectedState && (
-              <Typography variant="h6" sx={{ mt: 2 }}>
-                Selected State: {selectedState}
-              </Typography>
-            )}
-
+            {/* Bulk selection toolbar */}
             <Box
               sx={{
                 display: "flex",
@@ -1430,14 +1469,14 @@ export const MarketRates = () => {
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Checkbox
-                  checked={allVisibleSelected}
-                  indeterminate={someVisibleSelected}
-                  onChange={toggleSelectAllVisible}
-                  disabled={selectableVisibleRows.length === 0}
-                  inputProps={{ "aria-label": "Select all visible rows" }}
+                  checked={allPageSelected}
+                  indeterminate={somePageSelected}
+                  onChange={toggleSelectAllPage}
+                  disabled={selectablePageRows.length === 0 || tableLoading}
+                  inputProps={{ "aria-label": "Select all rows on this page" }}
                 />
                 <Typography variant="body2">
-                  Select all visible ({selectableVisibleRows.length})
+                  Select all on this page ({selectablePageRows.length})
                 </Typography>
               </Box>
               {selectedEntries.size > 0 && (
@@ -1450,13 +1489,29 @@ export const MarketRates = () => {
                 color="error"
                 startIcon={<DeleteIcon />}
                 onClick={handleBulkDelete}
-                disabled={selectedEntries.size === 0 || bulkDeleting}
+                disabled={selectedEntries.size === 0 || bulkDeleting || tableLoading}
               >
                 {bulkDeleting ? "Deleting..." : "Delete Selected"}
               </Button>
             </Box>
             
-            <GenralTabel rows={row} column={column} />
+            <ServerPaginatedTable
+              rows={row}
+              column={column}
+              count={tableTotal}
+              page={tablePage}
+              rowsPerPage={tableRowsPerPage}
+              onPageChange={handleTablePageChange}
+              onRowsPerPageChange={handleTableRowsPerPageChange}
+              loading={tableLoading}
+              loadingMessage="Loading market rates..."
+              emptyMessage={
+                hasActiveFilters
+                  ? "No rates match your filters. Try adjusting search or date range."
+                  : "No market rates found."
+              }
+              rowKeyField="_rowKey"
+            />
           </Box>
         </CardContent>
       </Card>
@@ -1464,6 +1519,7 @@ export const MarketRates = () => {
         modalVisible={aiModalOpen}
         setModalVisible={setAiModalOpen}
         onSuccess={() => {
+          setTablePage(0);
           setUpdate((prev) => prev + 1);
         }}
       />
@@ -1481,7 +1537,10 @@ export const MarketRates = () => {
         rows={uploadProgress.rows}
         fileName={uploadProgress.fileName}
         onClose={handleCloseUploadProgress}
-        onSuccess={() => setUpdate((prev) => prev + 1)}
+        onSuccess={() => {
+          setTablePage(0);
+          setUpdate((prev) => prev + 1);
+        }}
       />
     </Box>
   );
